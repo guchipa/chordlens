@@ -1,6 +1,6 @@
 import { EVAL_THRESHOLD } from '../constants';
 import { getJustFrequencies } from './calcJustFreq';
-import { formtype } from '@/app/page';
+import { formType } from '@/app/page';
 
 /**
  * 演奏された音の評価
@@ -12,7 +12,7 @@ import { formtype } from '@/app/page';
 export function evaluateSpectrum(
   spec: Float32Array, // AnalyserNode から取得する生データ
   freq: number[],
-  pitchNameList: formtype[],
+  pitchNameList: formType[],
   EVAL_RANGE: number = 50 // デフォルト50セント
 ): (number | null)[] {
   const estFreqs = getJustFrequencies(pitchNameList);
@@ -90,6 +90,8 @@ export function evaluateSpectrum(
       }
     }
   }
+
+  console.log(evalList);
 
   return evalList;
 }

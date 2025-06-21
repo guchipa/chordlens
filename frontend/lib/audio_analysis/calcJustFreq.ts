@@ -1,5 +1,5 @@
 import { A4_FREQ, OCTAVE_NUM_LIST, PITCH_NAME_LIST, JUST_RATIOS } from "../constants";
-import { formtype } from "@/app/page";
+import { formType } from "@/app/page";
 
 const calcSemitoneIdx = (pitchName: string, octaveNum: number) => {
   return PITCH_NAME_LIST.indexOf(pitchName) + 12 * OCTAVE_NUM_LIST.indexOf(octaveNum);
@@ -16,7 +16,7 @@ for (let i = 0; i < PITCH_NAME_LIST.length * OCTAVE_NUM_LIST.length; i++) {
  * @param pitchNameList 取得対象の音名、オクターブ番号、根音であるかの情報
  * @returns 各音の純正律での周波数（Hz）
  */
-export function getJustFrequencies(pitchNameList: formtype[]): number[] {
+export function getJustFrequencies(pitchNameList: formType[]): number[] {
   const justFrequencies: number[] = [];
 
   const rootData = pitchNameList.filter((data) => {
@@ -53,8 +53,6 @@ export function getJustFrequencies(pitchNameList: formtype[]): number[] {
       )
     }
   });
-
-  console.log(justFrequencies);
 
   return justFrequencies;
 }

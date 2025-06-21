@@ -71,3 +71,5 @@ export const METER_GOOD_RANGE_DEGREES = 5;    // 例: 中央±5度を「良い�
  */
 export const MESSAGE_MIC_ACCESS_DENIED = "マイクへのアクセスが拒否されました。ブラウザの設定を確認してください。";
 export const MESSAGE_ANALYSIS_ERROR = "音声解析中にエラーが発生しました。";
+
+export const DEFAULT_INITIAL_PITCH_LIST = [{ pitchName: "C", octaveNum: 4, isRoot: true }, { pitchName: "E", octaveNum: 4, isRoot: false }, { pitchName: "G", octaveNum: 4, isRoot: false }];
