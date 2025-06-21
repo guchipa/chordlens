@@ -1,6 +1,6 @@
-import { EVAL_THRESHOLD } from '../constants';
-import { getJustFrequencies } from './calcJustFreq';
-import { formType } from '@/app/page';
+import { EVAL_THRESHOLD } from "../constants";
+import { getJustFrequencies } from "./calcJustFreq";
+import { formType } from "@/app/page";
 
 /**
  * 演奏された音の評価
@@ -13,7 +13,7 @@ export function evaluateSpectrum(
   spec: Float32Array, // AnalyserNode から取得する生データ
   freq: number[],
   pitchNameList: formType[],
-  EVAL_RANGE: number = 50 // デフォルト50セント
+  EVAL_RANGE: number = 50, // デフォルト50セント
 ): (number | null)[] {
   const estFreqs = getJustFrequencies(pitchNameList);
 
@@ -40,8 +40,8 @@ export function evaluateSpectrum(
     }
 
     // ±EVAL_RANGE cents の周波数範囲を計算
-    const minFreq = est_f * (2 ** (-EVAL_RANGE / 1200));
-    const maxFreq = est_f * (2 ** (EVAL_RANGE / 1200));
+    const minFreq = est_f * 2 ** (-EVAL_RANGE / 1200);
+    const maxFreq = est_f * 2 ** (EVAL_RANGE / 1200);
 
     // 周波数範囲に対応するスペクトルインデックスの範囲を計算
     // freq[1] - freq[0] は周波数ビンの刻み幅
@@ -49,9 +49,10 @@ export function evaluateSpectrum(
 
     // 中央のビンを基準に範囲を調整
     // targetIdx を中心とした近似的な範囲
-    const rangeMinIdxApprox = targetIdx - Math.floor((targetFreq - minFreq) / freqStep);
-    const rangeMaxIdxApprox = targetIdx + Math.ceil((maxFreq - targetFreq) / freqStep);
-
+    const rangeMinIdxApprox =
+      targetIdx - Math.floor((targetFreq - minFreq) / freqStep);
+    const rangeMaxIdxApprox =
+      targetIdx + Math.ceil((maxFreq - targetFreq) / freqStep);
 
     const evalRangeMin = Math.max(0, rangeMinIdxApprox);
     const evalRangeMax = Math.min(spec.length, rangeMaxIdxApprox);

@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 export const A4_FREQ = 442;
 
@@ -32,7 +32,20 @@ export const EVAL_THRESHOLD = -100;
 /**
  * 解析対象とする音名のリスト
  */
-export const PITCH_NAME_LIST: string[] = ["C", "C#", "D", "E♭", "E", "F", "F#", "G", "G#", "A", "B♭", "B"];
+export const PITCH_NAME_LIST: string[] = [
+  "C",
+  "C#",
+  "D",
+  "E♭",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "B♭",
+  "B",
+];
 
 /**
  * オクターブ番号のリスト
@@ -54,7 +67,7 @@ export const JUST_RATIOS: number[] = [
   8 / 5,
   5 / 3,
   16 / 9,
-  15 / 8
+  15 / 8,
 ];
 
 // --- UI & Visualization Constants ---
@@ -64,12 +77,17 @@ export const JUST_RATIOS: number[] = [
  * ここはメーターコンポーネントの実装に合わせて調整してください。
  */
 export const METER_MAX_DEVIATION_DEGREES = 90; // 例: 針が中心から左右に最大90度動く
-export const METER_GOOD_RANGE_DEGREES = 5;    // 例: 中央±5度を「良い」範囲とする
+export const METER_GOOD_RANGE_DEGREES = 5; // 例: 中央±5度を「良い」範囲とする
 
 /**
  * マイクアクセスやエラーメッセージなど、ユーザーに表示するテキスト定数。
  */
-export const MESSAGE_MIC_ACCESS_DENIED = "マイクへのアクセスが拒否されました。ブラウザの設定を確認してください。";
+export const MESSAGE_MIC_ACCESS_DENIED =
+  "マイクへのアクセスが拒否されました。ブラウザの設定を確認してください。";
 export const MESSAGE_ANALYSIS_ERROR = "音声解析中にエラーが発生しました。";
 
-export const DEFAULT_INITIAL_PITCH_LIST = [{ pitchName: "C", octaveNum: 4, isRoot: true }, { pitchName: "E", octaveNum: 4, isRoot: false }, { pitchName: "G", octaveNum: 4, isRoot: false }];
+export const DEFAULT_INITIAL_PITCH_LIST = [
+  { pitchName: "C", octaveNum: 4, isRoot: true },
+  { pitchName: "E", octaveNum: 4, isRoot: false },
+  { pitchName: "G", octaveNum: 4, isRoot: false },
+];

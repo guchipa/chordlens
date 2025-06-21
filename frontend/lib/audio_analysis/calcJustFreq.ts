@@ -1,9 +1,16 @@
-import { A4_FREQ, OCTAVE_NUM_LIST, PITCH_NAME_LIST, JUST_RATIOS } from "../constants";
+import {
+  A4_FREQ,
+  OCTAVE_NUM_LIST,
+  PITCH_NAME_LIST,
+  JUST_RATIOS,
+} from "../constants";
 import { formType } from "@/app/page";
 
 const calcSemitoneIdx = (pitchName: string, octaveNum: number) => {
-  return PITCH_NAME_LIST.indexOf(pitchName) + 12 * OCTAVE_NUM_LIST.indexOf(octaveNum);
-}
+  return (
+    PITCH_NAME_LIST.indexOf(pitchName) + 12 * OCTAVE_NUM_LIST.indexOf(octaveNum)
+  );
+};
 
 const equalFrequencies: number[] = [];
 const A4_INDEX = calcSemitoneIdx("A", 4);
@@ -33,24 +40,27 @@ export function getJustFrequencies(pitchNameList: formType[]): number[] {
     return [];
   }
 
-  const rootSemitoneIdx = calcSemitoneIdx(rootData[0].pitchName, rootData[0].octaveNum)
+  const rootSemitoneIdx = calcSemitoneIdx(
+    rootData[0].pitchName,
+    rootData[0].octaveNum,
+  );
 
-  pitchNameList.forEach(data => {
+  pitchNameList.forEach((data) => {
     const semitoneIdx = calcSemitoneIdx(data.pitchName, data.octaveNum);
     const semitoneDistance = semitoneIdx - rootSemitoneIdx;
 
     if (semitoneDistance > 0) {
       justFrequencies.push(
-        equalFrequencies[rootSemitoneIdx]
-        * JUST_RATIOS[semitoneDistance % 12]
-        * (Math.pow(2, Math.floor(semitoneDistance / 12)))
-      )
+        equalFrequencies[rootSemitoneIdx] *
+          JUST_RATIOS[semitoneDistance % 12] *
+          Math.pow(2, Math.floor(semitoneDistance / 12)),
+      );
     } else {
       justFrequencies.push(
-        equalFrequencies[rootSemitoneIdx]
-        * JUST_RATIOS[semitoneDistance % 12]
-        * Math.pow(2, Math.ceil(Math.floor(semitoneDistance / 12)))
-      )
+        equalFrequencies[rootSemitoneIdx] *
+          JUST_RATIOS[semitoneDistance % 12] *
+          Math.pow(2, Math.ceil(Math.floor(semitoneDistance / 12))),
+      );
     }
   });
 
