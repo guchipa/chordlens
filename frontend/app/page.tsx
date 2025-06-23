@@ -1,4 +1,3 @@
-// frontend/app/page.tsx
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -66,7 +65,7 @@ export default function HomePage() {
   >(null);
   // ユーザーが設定する評価対象音のリストを管理
   const [currentPitchList, setCurrentPitchList] = useState<formType[]>(
-    DEFAULT_INITIAL_PITCH_LIST,
+    DEFAULT_INITIAL_PITCH_LIST
   );
 
   // フォームの初期化
@@ -108,7 +107,7 @@ export default function HomePage() {
       const sampleRate = audioContextRef.current.sampleRate;
       const freqBins: number[] = Array.from(
         { length: bufferLength },
-        (_, i) => (sampleRate / 2) * (i / bufferLength),
+        (_, i) => (sampleRate / 2) * (i / bufferLength)
       );
 
       const analyzeLoop = () => {
@@ -168,7 +167,7 @@ export default function HomePage() {
     // 同じ音名・オクターブの音があれば更新、なければ追加
     setCurrentPitchList((prevList) => {
       const existingIndex = prevList.findIndex(
-        (p) => p.pitchName === data.pitchName && p.octaveNum === data.octaveNum,
+        (p) => p.pitchName === data.pitchName && p.octaveNum === data.octaveNum
       );
       if (existingIndex > -1) {
         const newList = [...prevList];
@@ -187,39 +186,38 @@ export default function HomePage() {
   // 評価対象音をリストから削除する関数
   const removePitch = useCallback((indexToRemove: number) => {
     setCurrentPitchList((prevList) =>
-      prevList.filter((_, index) => index !== indexToRemove),
+      prevList.filter((_, index) => index !== indexToRemove)
     );
   }, []);
 
   return (
-    <div className="p-20 flex flex-col gap-8 items-center">
-      {" "}
-      {/* 全体を中央寄せに調整 */}
-      <h1 className="text-4xl font-extrabold text-gray-800">
-        和音チューナー Web版
-      </h1>
-      <h2 className="text-xl text-gray-600 text-center max-w-2xl">
-        マイクから音声を入力し、設定した和音の純正律からの音程のズレをリアルタイムで解析します。
-      </h2>
+    <main className="container mx-auto flex min-h-screen flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
+      <div className="text-center">
+        <h1 className="text-3xl font-extrabold text-gray-800 sm:text-4xl">
+          和音チューナー
+        </h1>
+        <h2 className="mt-2 max-w-2xl text-base text-gray-600 sm:text-lg">
+          マイクから音声を入力し、設定した和音の純正律からの音程のズレをリアルタイムで解析します。
+        </h2>
+      </div>
       {/* 音程設定フォーム */}
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-2xl font-semibold mb-4 text-gray-700">
+      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-md">
+        <h3 className="mb-4 text-xl font-semibold text-gray-700 sm:text-2xl">
           評価する音の追加
         </h3>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-4"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="pitchName"
               render={({ field }) => (
-                <FormItem className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                  <FormLabel className="w-20">音名</FormLabel>
+                <FormItem className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                  <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
+                    音名
+                  </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="flex-grow">
+                      <SelectTrigger>
                         <SelectValue placeholder="音名を選んでください" />
                       </SelectTrigger>
                     </FormControl>
@@ -231,7 +229,7 @@ export default function HomePage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="sm:ml-28" />
                 </FormItem>
               )}
             />
@@ -239,14 +237,16 @@ export default function HomePage() {
               control={form.control}
               name="octaveNum"
               render={({ field }) => (
-                <FormItem className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                  <FormLabel className="w-20">オクターブ</FormLabel>
+                <FormItem className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                  <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
+                    オクターブ
+                  </FormLabel>
                   <Select
                     onValueChange={(val) => field.onChange(Number(val))}
                     value={field.value?.toString()}
                   >
                     <FormControl>
-                      <SelectTrigger className="flex-grow">
+                      <SelectTrigger>
                         <SelectValue placeholder="オクターブ番号を選んでください" />
                       </SelectTrigger>
                     </FormControl>
@@ -261,7 +261,7 @@ export default function HomePage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="sm:ml-28" />
                 </FormItem>
               )}
             />
@@ -269,15 +269,20 @@ export default function HomePage() {
               control={form.control}
               name="isRoot"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 pt-2">
                   <FormControl>
                     <Checkbox
                       checked={!!field.value}
                       onCheckedChange={field.onChange}
+                      id="is-root-checkbox"
                     />
                   </FormControl>
-                  <FormLabel className="leading-none">根音として設定</FormLabel>
-                  <FormMessage />
+                  <FormLabel
+                    htmlFor="is-root-checkbox"
+                    className="cursor-pointer leading-none"
+                  >
+                    根音として設定
+                  </FormLabel>
                 </FormItem>
               )}
             />
@@ -288,8 +293,8 @@ export default function HomePage() {
         </Form>
       </div>
       {/* 現在の構成音リスト */}
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md mt-4">
-        <h3 className="text-2xl font-semibold mb-4 text-gray-700">
+      <div className="mt-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-md">
+        <h3 className="mb-4 text-xl font-semibold text-gray-700 sm:text-2xl">
           現在の評価対象音
         </h3>
         {currentPitchList.length === 0 ? (
@@ -297,13 +302,17 @@ export default function HomePage() {
             まだ評価する音がありません。上のフォームから追加してください。
           </p>
         ) : (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             {currentPitchList.map((data, index) => (
               <div
                 key={`${data.pitchName}-${data.octaveNum}-${index}`}
-                className="flex items-center space-x-2 bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                className="flex items-center space-x-2 rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-800"
               >
-                <span className={data.isRoot ? "text-sky-600 font-bold" : ""}>
+                <span
+                  className={cn("whitespace-nowrap", {
+                    "font-bold text-sky-700": data.isRoot,
+                  })}
+                >
                   {data.pitchName}
                   {data.octaveNum}
                   {data.isRoot && " (R)"}
@@ -312,10 +321,10 @@ export default function HomePage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => removePitch(index)}
-                  className="w-4 h-4 p-0"
+                  className="h-5 w-5 rounded-full p-0 hover:bg-blue-200"
                 >
                   <svg
-                    className="w-3 h-3"
+                    className="h-3.5 w-3.5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -331,125 +340,121 @@ export default function HomePage() {
                 </Button>
               </div>
             ))}
-            <Button variant="outline" onClick={() => setCurrentPitchList([])}>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPitchList([])}
+              className="mt-2 sm:mt-0"
+            >
               全てクリア
             </Button>
           </div>
         )}
       </div>
       {/* 解析開始/停止ボタン */}
-      <div className="w-full max-w-md flex justify-center mt-6">
+      <div className="mt-6 flex w-full max-w-lg justify-center">
         <Button
           onClick={isProcessing ? stopProcessing : startProcessing}
           variant={isProcessing ? "destructive" : "default"}
           size="lg"
-          className="min-w-[200px]"
+          className="w-full sm:w-auto sm:min-w-[240px]"
           disabled={currentPitchList.length === 0 && !isProcessing}
         >
           {isProcessing ? "解析停止" : "解析開始"}
         </Button>
       </div>
       {isProcessing && (
-        <p className="text-blue-600 font-medium mt-4">
+        <p className="mt-4 font-medium text-blue-600">
           マイク入力からの解析中...
         </p>
       )}
       {/* --- メーター群と詳細解析結果リスト --- */}
-      <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
+      <div className="mt-8 grid w-full max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {/* 各音に対するメーターの描画 */}
         {currentPitchList.length > 0
           ? currentPitchList.map((pitchData, index) => (
               <div
                 key={`${pitchData.pitchName}-${pitchData.octaveNum}-${index}`}
-                className="col-span-1 flex justify-center"
+                className="flex justify-center"
               >
                 <TunerMeter
-                  pitchName={pitchData.pitchName}
-                  deviation={analysisResult?.[index] ?? null} // 各音に対応する解析結果を渡す
+                  pitchName={`${pitchData.pitchName}${pitchData.octaveNum}`}
+                  deviation={analysisResult?.[index] ?? null}
                 />
               </div>
             ))
           : !isProcessing && (
-              <p className="text-gray-500 text-center col-span-full">
-                評価する音を追加して、解析を開始してください。
-              </p>
+              <div className="py-8 text-center text-gray-500 md:col-span-2 lg:col-span-3">
+                <p>評価する音を追加して、解析を開始してください。</p>
+              </div>
             )}
 
-        {/* 詳細な解析結果リスト（メーターの下にフル幅で表示） */}
-        <div className="col-span-full">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>詳細な解析結果リスト</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {analysisResult ? (
-                <ul>
-                  {analysisResult.map((val, index) => {
-                    const pitchData = currentPitchList[index];
-                    if (!pitchData) return null; // データがない場合のエラー防止
-
-                    const METER_GOOD_RANGE_PERCENT = 5; // 定数から取得するか、直接定義
+        {/* 詳細な解析結果リスト */}
+        {analysisResult && currentPitchList.length > 0 && (
+          <div className="md:col-span-2 lg:col-span-3">
+            <Card>
+              <CardHeader>
+                <CardTitle>詳細な解析結果</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-1">
+                  {currentPitchList.map((pitchData, index) => {
+                    const val = analysisResult[index];
+                    const METER_GOOD_RANGE_PERCENT = 5;
                     const isGood =
                       val !== null &&
                       Math.abs(val * 100) <= METER_GOOD_RANGE_PERCENT;
+
+                    const deviationColor =
+                      val === null
+                        ? "text-gray-500"
+                        : isGood
+                        ? "text-green-600"
+                        : Math.abs(val * 100) < 30
+                        ? "text-orange-500"
+                        : "text-red-600";
+
                     return (
                       <li
                         key={`${pitchData.pitchName}-${pitchData.octaveNum}-${index}`}
-                        className="mb-1 text-gray-700 flex items-center"
+                        className="flex items-center justify-between rounded-md p-2 transition-colors duration-200 even:bg-gray-50"
                       >
                         <span
-                          className={cn("font-semibold mr-2", {
-                            "text-sky-600": pitchData.isRoot,
+                          className={cn("whitespace-nowrap font-semibold", {
+                            "text-sky-700": pitchData.isRoot,
                           })}
                         >
                           {pitchData.pitchName}
                           {pitchData.octaveNum}
-                          {pitchData.isRoot ? " (R)" : ""}
+                          {pitchData.isRoot && " (R)"}
                         </span>
-                        :{" "}
-                        {val !== null ? (
+                        <div className="flex items-center gap-4">
                           <span
-                            className={cn({
-                              "text-green-600": isGood,
-                              "text-orange-500":
-                                !isGood &&
-                                Math.abs(val * 100) >= 10 &&
-                                Math.abs(val * 100) < 30, // 10%～30%のずれ
-                              "text-red-600":
-                                !isGood && Math.abs(val * 100) >= 30, // 30%以上のずれ
-                            })}
+                            className={cn(
+                              "w-24 text-right font-mono",
+                              deviationColor
+                            )}
                           >
-                            {`${val >= 0 ? "+" : ""}${(val * 100).toFixed(2)}%`}
+                            {val !== null
+                              ? `${val >= 0 ? "+" : ""}${(val * 100).toFixed(
+                                  2
+                                )}%`
+                              : "検出なし"}
                           </span>
-                        ) : (
-                          <span className="text-gray-500">検出なし</span>
-                        )}
-                        {val !== null && (
-                          <span
-                            className={cn("ml-2 text-sm", {
-                              "text-green-600": isGood,
-                              "text-orange-500":
-                                !isGood &&
-                                Math.abs(val * 100) >= 10 &&
-                                Math.abs(val * 100) < 30,
-                              "text-red-600":
-                                !isGood && Math.abs(val * 100) >= 30,
-                            })}
-                          >
-                            {isGood ? "✔" : "✖"}
-                          </span>
-                        )}
+                          {val !== null && (
+                            <span className={cn("text-lg", deviationColor)}>
+                              {isGood ? "✔" : "✖"}
+                            </span>
+                          )}
+                        </div>
                       </li>
                     );
                   })}
                 </ul>
-              ) : (
-                <p className="text-gray-500">解析結果はここに表示されます。</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
-    </div>
+    </main>
   );
 }
