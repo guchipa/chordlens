@@ -1,17 +1,19 @@
 # 和音チューナー Web版
 
 <p>
-  <a href="https://guchipa.github.io/chordlens/" target="_blank">
+  <a href="https://chordlens-5zhdrv9ay-guchipas-projects.vercel.app/" target="_blank">
     <img src="https://img.shields.io/badge/Live_Demo-試してみる-brightgreen?style=for-the-badge&logo=githubpages" alt="Live Demo">
   </a>
 </p>
 
-(スクショを載せる)
+![和音チューナー-1](https://github.com/user-attachments/assets/0cee1272-e894-4c44-939f-73d724940ecb)
+![和音チューナー-2](https://github.com/user-attachments/assets/fe90613a-9d9c-420b-aaa3-67470fc0c82a)
+
 
 ## 概要 (Introduction)
 
 **和音チューナー Web版**は、マイクから入力された音声をリアルタイムで解析し、設定した和音の構成音が**純正律**からどれだけズレているかを視覚的に表示するWebアプリケーションです。
-東京理科大学 創域理工学研究科 情報計算科学専攻 大村研究室での研究 "和音演奏のための多重音チューニングシステム" のロジックを用いてWeb Audio APIで実装しました。
+東京理科大学 創域理工学研究科 情報計算科学専攻 大村研究室での研究 "和音演奏のための多重音チューニングシステム" で提案した手法を用いてWeb Audio APIで実装しました。
 
 ## ✨ 主な特徴 (Features)
 
@@ -33,7 +35,7 @@
 | **UI** | ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white) ![shadcn/ui](https://img.shields.io/badge/shadcn/ui-000000?style=for-the-badge&logo=shadcn-ui&logoColor=white) |
 | **Form** | ![React Hook Form](https://img.shields.io/badge/React_Hook_Form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white) |
 | **Audio API** | ![Web Audio API](https://img.shields.io/badge/Web_Audio_API-E34F26?style=for-the-badge&logo=html5&logoColor=white)                                               |
-| **Deployment** | ![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-222222?style=for-the-badge&logo=github&logoColor=white)                                                 |
+| **Deployment** | ![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-222222?style=for-the-badge&logo=github&logoColor=white) [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)  |
 
 ## 🗺️ 今後の展望 (Future Plans)
 
