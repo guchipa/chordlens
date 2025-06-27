@@ -1,7 +1,7 @@
 # 和音チューナー Web版
 
 <p>
-  <a href="https://chordlens-5zhdrv9ay-guchipas-projects.vercel.app/" target="_blank">
+  <a href="https://chordlens.vercel.app/" target="_blank">
     <img src="https://img.shields.io/badge/Live_Demo-試してみる-brightgreen?style=for-the-badge&logo=githubpages" alt="Live Demo">
   </a>
 </p>
