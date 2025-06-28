@@ -25,13 +25,22 @@ global.AudioContext = jest.fn().mockImplementation(() => {
   };
 });
 
-if (global.navigator.mediaDevices) {
-  Object.defineProperty(global.navigator.mediaDevices, 'getUserMedia', {
-    configurable: true,
-    value: jest.fn().mockResolvedValue({
-      getTracks: jest.fn().mockReturnValue([{
-        stop: jest.fn(),
-      }]),
-    }),
-  });
+if (typeof global.navigator.mediaDevices === 'undefined') {
+  global.navigator.mediaDevices = {};
 }
+
+Object.defineProperty(global.navigator.mediaDevices, 'getUserMedia', {
+  configurable: true,
+  value: jest.fn().mockResolvedValue({
+    getTracks: jest.fn().mockReturnValue([{
+      stop: jest.fn(),
+    }]),
+  }),
+});
+
+// ResizeObserver をモックする
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
