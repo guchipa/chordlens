@@ -24,7 +24,6 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   deviation,
   pitchName,
 }) => {
-  console.log(deviation);
   // 偏差 (deviation) を針の角度に変換
   // deviation は -1.0 から 1.0 の範囲を想定
   // -1.0 で -METER_MAX_DEVIATION_DEGREES 度、1.0 で +METER_MAX_DEVIATION_DEGREES 度

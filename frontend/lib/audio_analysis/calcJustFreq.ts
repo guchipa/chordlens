@@ -4,7 +4,7 @@ import {
   PITCH_NAME_LIST,
   JUST_RATIOS,
 } from "../constants";
-import { formType } from "@/app/page";
+import { formType } from "@/lib/schema";
 
 const calcSemitoneIdx = (pitchName: string, octaveNum: number) => {
   return (
