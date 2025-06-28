@@ -1,6 +1,6 @@
 import { EVAL_THRESHOLD } from "../constants";
 import { getJustFrequencies } from "./calcJustFreq";
-import { formType } from "@/app/page";
+import { formType } from "@/lib/schema";
 
 /**
  * 演奏された音の評価
