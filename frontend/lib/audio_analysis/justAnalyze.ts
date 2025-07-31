@@ -1,4 +1,3 @@
-import { EVAL_THRESHOLD } from "../constants";
 import { getJustFrequencies } from "./calcJustFreq";
 import { formType } from "@/lib/schema";
 
@@ -7,15 +6,19 @@ import { formType } from "@/lib/schema";
  * @param spec 各周波数に対するスペクトル（強さ）- AnalyserNode.getFloatFrequencyData() の結果
  * @param freq 周波数ビン配列 - AnalyserNode から計算
  * @param pitchNameList 評価する音名データ
- * @param EVAL_RANGE 評価範囲（セント）
+ * @param evalRangeCents 評価範囲（セント）
+ * @param a4Freq 基準となるA4の周波数
+ * @param evalThreshold スペクトル評価の閾値
  */
 export function evaluateSpectrum(
   spec: Float32Array, // AnalyserNode から取得する生データ
   freq: number[],
   pitchNameList: formType[],
-  EVAL_RANGE: number = 50, // デフォルト50セント
+  evalRangeCents: number,
+  a4Freq: number, // A4_FREQ を引数に追加
+  evalThreshold: number, // EVAL_THRESHOLD を引数に追加
 ): (number | null)[] {
-  const estFreqs = getJustFrequencies(pitchNameList);
+  const estFreqs = getJustFrequencies(pitchNameList, a4Freq); // a4Freq を渡す
 
   if (estFreqs.length === 0) {
     return [];
@@ -39,9 +42,9 @@ export function evaluateSpectrum(
       }
     }
 
-    // ±EVAL_RANGE cents の周波数範囲を計算
-    const minFreq = est_f * 2 ** (-EVAL_RANGE / 1200);
-    const maxFreq = est_f * 2 ** (EVAL_RANGE / 1200);
+    // ±evalRangeCents の周波数範囲を計算
+    const minFreq = est_f * 2 ** (-evalRangeCents / 1200);
+    const maxFreq = est_f * 2 ** (evalRangeCents / 1200);
 
     // 周波数範囲に対応するスペクトルインデックスの範囲を計算
     // freq[1] - freq[0] は周波数ビンの刻み幅
@@ -76,7 +79,7 @@ export function evaluateSpectrum(
     }
 
     // spec_max が閾値以下の場合は None を返す
-    if (maxVal < EVAL_THRESHOLD) {
+    if (maxVal < evalThreshold) { // evalThreshold を使用
       evalList.push(null);
     } else {
       // spec_max が center と等しい場合は 0 を返す

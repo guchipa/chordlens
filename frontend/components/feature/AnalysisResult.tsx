@@ -9,9 +9,11 @@ interface AnalysisResultProps {
   isProcessing: boolean;
   analysisResult: (number | null)[] | null;
   currentPitchList: formType[];
+  evalRangeCents: number; 
+  goodRangePercent: number; 
 }
 
-export const AnalysisResult: React.FC<AnalysisResultProps> = ({ isProcessing, analysisResult, currentPitchList }) => {
+export const AnalysisResult: React.FC<AnalysisResultProps> = ({ isProcessing, analysisResult, currentPitchList, goodRangePercent }) => {
   return (
     <div className="mt-8 grid w-full max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
       {currentPitchList.length > 0
@@ -41,10 +43,9 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({ isProcessing, an
               <ul className="space-y-1">
                 {currentPitchList.map((pitchData, index) => {
                   const val = analysisResult[index];
-                  const METER_GOOD_RANGE_PERCENT = 5;
                   const isGood =
                     val !== null &&
-                    Math.abs(val * 100) <= METER_GOOD_RANGE_PERCENT;
+                    Math.abs(val * 100) <= goodRangePercent;
 
                   const deviationColor =
                     val === null
