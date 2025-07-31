@@ -9,9 +9,12 @@ import { useForm } from "react-hook-form";
 // 自作の解析ロジックと定数
 import { evaluateSpectrum } from "@/lib/audio_analysis/justAnalyze";
 import {
-  FFT_SIZE,
-  SMOOTHING_TIME_CONSTANT,
+  FFT_SIZE, // FFT_SIZE をインポート
+  SMOOTHING_TIME_CONSTANT, // SMOOTHING_TIME_CONSTANT をインポート
   DEFAULT_INITIAL_PITCH_LIST,
+  EVAL_RANGE_CENTS,
+  A4_FREQ,
+  EVAL_THRESHOLD,
 } from "@/lib/constants";
 
 import { AppFooter } from "@/components/AppFooter";
@@ -19,6 +22,7 @@ import { PitchSettingForm } from "@/components/feature/PitchSettingForm";
 import { PitchList } from "@/components/feature/PitchList";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { AnalysisResult } from "@/components/feature/AnalysisResult";
+import { SettingsForm } from "@/components/feature/SettingsForm";
 import { FormSchema, formType } from "@/lib/schema";
 
 export default function HomePage() {
@@ -32,7 +36,27 @@ export default function HomePage() {
     (number | null)[] | null
   >(null);
   // ユーザーが設定する評価対象音のリストを管理
-  const [currentPitchList, setCurrentPitchList] = useState<formType[]>(DEFAULT_INITIAL_PITCH_LIST);
+  const [currentPitchList, setCurrentPitchList] = useState<formType[]>(
+    DEFAULT_INITIAL_PITCH_LIST
+  );
+
+  // 音程評価範囲のstateを追加
+  const [evalRangeCents, setEvalRangeCents] = useState(EVAL_RANGE_CENTS);
+  // 許容誤差範囲のstateを追加
+  const [goodRangePercent, setGoodRangePercent] = useState(5);
+  // A4周波数のstateを追加
+  const [a4Freq, setA4Freq] = useState(A4_FREQ);
+  // スペクトル評価閾値のstateを追加
+  const [evalThreshold, setEvalThreshold] = useState(EVAL_THRESHOLD);
+  // FFTサイズのstateを追加
+  const [fftSize, setFftSize] = useState(FFT_SIZE); // FFT_SIZEのstate
+  // 平滑化定数のstateを追加
+  const [smoothingTimeConstant, setSmoothingTimeConstant] = useState(
+    SMOOTHING_TIME_CONSTANT
+  ); // SMOOTHING_TIME_CONSTANTのstate
+
+  // 設定パネルの開閉状態
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // フォームの初期化
   const form = useForm<formType>({
@@ -62,8 +86,8 @@ export default function HomePage() {
       const analyser = audioContextRef.current.createAnalyser();
       analyserNodeRef.current = analyser;
 
-      analyser.fftSize = FFT_SIZE;
-      analyser.smoothingTimeConstant = SMOOTHING_TIME_CONSTANT;
+      analyser.fftSize = fftSize; // stateのfftSizeを使用
+      analyser.smoothingTimeConstant = smoothingTimeConstant; // stateのsmoothingTimeConstantを使用
 
       source.connect(analyser);
 
@@ -81,8 +105,15 @@ export default function HomePage() {
 
         analyserNodeRef.current.getFloatFrequencyData(dataArray);
 
-        // evaluateSpectrum の引数は formType[] を直接受け取るように調整済み
-        const result = evaluateSpectrum(dataArray, freqBins, currentPitchList);
+        // evaluateSpectrum に a4Freq と evalThreshold を渡す
+        const result = evaluateSpectrum(
+          dataArray,
+          freqBins,
+          currentPitchList,
+          evalRangeCents,
+          a4Freq,
+          evalThreshold
+        );
         setAnalysisResult(result);
 
         animationFrameIdRef.current = requestAnimationFrame(analyzeLoop);
@@ -95,7 +126,14 @@ export default function HomePage() {
       console.error("Error accessing microphone:", error);
       alert("マイクへのアクセスを許可してください。");
     }
-  }, [currentPitchList]);
+  }, [
+    currentPitchList,
+    evalRangeCents,
+    a4Freq,
+    evalThreshold,
+    fftSize,
+    smoothingTimeConstant,
+  ]); // 依存配列に fftSize と smoothingTimeConstant を追加
 
   // 音程解析の停止ロジック
   const stopProcessing = useCallback(() => {
@@ -162,6 +200,84 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Hamburger Button */}
+      <button
+        onClick={() => setIsSettingsOpen(true)}
+        className="fixed top-4 left-4 z-50 p-2 rounded-md bg-white/50 backdrop-blur-sm hover:bg-gray-200"
+        aria-label="設定を開く"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+
+      {/* Settings Drawer */}
+      <div
+        className={`fixed top-0 left-0 h-full w-full max-w-sm bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
+          isSettingsOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="text-xl font-bold">設定</h3>
+          <button
+            onClick={() => setIsSettingsOpen(false)}
+            className="p-2 rounded-md hover:bg-gray-200"
+            aria-label="設定を閉じる"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-4 overflow-y-auto h-[calc(100vh-65px)] space-y-8">
+          <PitchSettingForm form={form} onSubmit={onSubmit} />
+          <PitchList
+            currentPitchList={currentPitchList}
+            removePitch={removePitch}
+            clearPitchList={clearPitchList}
+          />
+          <SettingsForm
+            onEvalRangeChange={setEvalRangeCents}
+            onGoodRangeChange={setGoodRangePercent}
+            onA4FreqChange={setA4Freq}
+            onEvalThresholdChange={setEvalThreshold}
+            onFftSizeChange={setFftSize}
+            onSmoothingTimeConstantChange={setSmoothingTimeConstant}
+          />
+        </div>
+      </div>
+
+      {/* Overlay */}
+      {isSettingsOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-40"
+          onClick={() => setIsSettingsOpen(false)}
+        ></div>
+      )}
+
       <main className="container mx-auto flex flex-grow flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-gray-800 sm:text-4xl">
@@ -171,23 +287,23 @@ export default function HomePage() {
             マイクから音声を入力し、設定した和音の純正律からの音程のズレをリアルタイムで解析します。
           </h2>
         </div>
-        <PitchSettingForm form={form} onSubmit={onSubmit} />
-        <PitchList currentPitchList={currentPitchList} removePitch={removePitch} clearPitchList={clearPitchList} />
-        <AnalysisControl 
-          isProcessing={isProcessing} 
-          startProcessing={startProcessing} 
-          stopProcessing={stopProcessing} 
-          isPitchListEmpty={currentPitchList.length === 0} 
+        <AnalysisControl
+          isProcessing={isProcessing}
+          startProcessing={startProcessing}
+          stopProcessing={stopProcessing}
+          isPitchListEmpty={currentPitchList.length === 0}
         />
         {isProcessing && (
           <p className="mt-4 font-medium text-blue-600">
             マイク入力からの解析中...
           </p>
         )}
-        <AnalysisResult 
-          isProcessing={isProcessing} 
-          analysisResult={analysisResult} 
-          currentPitchList={currentPitchList} 
+        <AnalysisResult
+          isProcessing={isProcessing}
+          analysisResult={analysisResult}
+          currentPitchList={currentPitchList}
+          evalRangeCents={evalRangeCents}
+          goodRangePercent={goodRangePercent}
         />
       </main>
       <AppFooter />
