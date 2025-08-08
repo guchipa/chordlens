@@ -38,13 +38,13 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({ analysisData, title }) =
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-center text-2xl">{title || "Tuner"}</CardTitle>
+        <CardTitle>{title || "Tuner"}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center p-4">
-        <div className="relative w-64 h-32 overflow-hidden mb-4">
+      <CardContent className="flex flex-col justify-center items-center">
+        <div className="flex w-64 h-32 overflow-hidden mb-4">
           {/* メーターの背景（半円） */}
           <svg
-            className="absolute top-0 left-0 w-full h-full"
+            className="w-full h-full"
             viewBox="0 0 100 50"
           >
             <path d="M 0 50 A 50 50 0 0 1 100 50 L 0 50 Z" fill="#e0e0e0" />

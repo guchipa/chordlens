@@ -1,8 +1,6 @@
 "use client";
 
 import { TunerMeter } from "@/components/TunerMeter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { formType } from "@/lib/schema";
 
 interface AnalysisResultProps {
@@ -22,7 +20,7 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({ isProcessing, an
   return (
     <div className="mt-8 flex flex-col items-center gap-8 w-full max-w-6xl">
       {currentPitchList.length > 0 ? (
-        <TunerMeter analysisData={analysisData} title="Tuning Meter" />
+        <TunerMeter analysisData={analysisData} title="解析結果" />
       ) : (
         !isProcessing && (
           <div className="py-8 text-center text-gray-500">

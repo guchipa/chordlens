@@ -152,7 +152,7 @@ export function SettingsForm({
       <CardHeader>
         <CardTitle>設定</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         <div>
           <Label htmlFor="evalRangeCents">音程評価範囲 (セント)</Label>
           <Input
