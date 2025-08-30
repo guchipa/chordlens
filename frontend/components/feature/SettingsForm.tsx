@@ -8,7 +8,6 @@ import { A4_FREQ, EVAL_RANGE_CENTS, EVAL_THRESHOLD, FFT_SIZE, SMOOTHING_TIME_CON
 
 interface SettingsFormProps {
   onEvalRangeChange: (value: number) => void;
-  onGoodRangeChange: (value: number) => void;
   onA4FreqChange: (value: number) => void;
   onEvalThresholdChange: (value: number) => void;
   onFftSizeChange: (value: number) => void; // 新しいプロップ
@@ -17,14 +16,12 @@ interface SettingsFormProps {
 
 export function SettingsForm({
   onEvalRangeChange,
-  onGoodRangeChange,
   onA4FreqChange,
   onEvalThresholdChange,
   onFftSizeChange, // 新しいプロップ
   onSmoothingTimeConstantChange, // 新しいプロップ
 }: SettingsFormProps) {
   const [evalRange, setEvalRange] = useState(EVAL_RANGE_CENTS);
-  const [goodRangePercent, setGoodRangePercent] = useState(5);
   const [a4Freq, setA4Freq] = useState(A4_FREQ);
   const [evalThreshold, setEvalThreshold] = useState(EVAL_THRESHOLD);
   const [fftSize, setFftSize] = useState(FFT_SIZE); // FFT_SIZEのstate
@@ -39,16 +36,6 @@ export function SettingsForm({
       onEvalRangeChange(parsedValue);
     } else {
       onEvalRangeChange(EVAL_RANGE_CENTS);
-    }
-
-    // localStorageからgoodRangePercentを読み込む
-    const savedGoodRange = localStorage.getItem("goodRangePercent");
-    if (savedGoodRange) {
-      const parsedValue = parseInt(savedGoodRange, 10);
-      setGoodRangePercent(parsedValue);
-      onGoodRangeChange(parsedValue);
-    } else {
-      onGoodRangeChange(5);
     }
 
     // localStorageからa4Freqを読み込む
@@ -90,7 +77,7 @@ export function SettingsForm({
     } else {
       onSmoothingTimeConstantChange(SMOOTHING_TIME_CONSTANT);
     }
-  }, [onEvalRangeChange, onGoodRangeChange, onA4FreqChange, onEvalThresholdChange, onFftSizeChange, onSmoothingTimeConstantChange]);
+  }, [onEvalRangeChange, onA4FreqChange, onEvalThresholdChange, onFftSizeChange, onSmoothingTimeConstantChange]);
 
   const handleEvalRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -98,15 +85,6 @@ export function SettingsForm({
       setEvalRange(value);
       localStorage.setItem("evalRangeCents", value.toString());
       onEvalRangeChange(value);
-    }
-  };
-
-  const handleGoodRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value)) {
-      setGoodRangePercent(value);
-      localStorage.setItem("goodRangePercent", value.toString());
-      onGoodRangeChange(value);
     }
   };
 
@@ -165,20 +143,6 @@ export function SettingsForm({
           />
           <p className="text-sm text-gray-500 mt-1">
             ±この値の範囲で音程のズレを評価します。
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="goodRangePercent">許容誤差範囲 (%)</Label>
-          <Input
-            id="goodRangePercent"
-            type="number"
-            value={goodRangePercent}
-            onChange={handleGoodRangeChange}
-            min="0"
-            max="10" // 仮の最大値
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            この値以下のズレであれば「良い」と判断します。
           </p>
         </div>
         <div>

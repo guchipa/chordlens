@@ -303,7 +303,7 @@ export default function HomePage() {
           analysisResult={analysisResult}
           currentPitchList={currentPitchList}
           evalRangeCents={evalRangeCents}
-          goodRangePercent={goodRangePercent}
+          
           a4Freq={a4Freq}
         />
       </main>

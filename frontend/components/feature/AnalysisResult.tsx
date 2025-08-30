@@ -8,8 +8,8 @@ interface AnalysisResultProps {
   isProcessing: boolean;
   analysisResult: (number | null)[] | null;
   currentPitchList: formType[];
-  evalRangeCents: number; 
-  goodRangePercent: number;
+   
+  
   a4Freq: number;
 }
 
