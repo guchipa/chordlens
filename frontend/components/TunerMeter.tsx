@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { METER_MAX_DEVIATION_DEGREES } from "@/lib/constants";
 import { formType } from "@/lib/schema";
@@ -103,42 +102,6 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({ analysisData, title }) =
             })}
             <circle cx="50" cy="50" r="3" fill="black" />
           </svg>
-        </div>
-
-        {/* 凡例 */}
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4">
-          {analysisData.map(({ pitch, deviation }, index) => (
-            <div
-              key={`${pitch.pitchName}-${pitch.octaveNum}-${index}`}
-              className="flex items-center gap-2 text-sm"
-            >
-              <span
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: PITCH_COLOR_MAP[pitch.pitchName] || "#888" }}
-              />
-              <span className="font-semibold">
-                {pitch.pitchName}
-                {pitch.octaveNum}
-              </span>
-              <span
-                className={cn("font-mono w-20 text-right", {
-                  "text-gray-400": deviation === null,
-                  "text-green-600":
-                    deviation !== null && Math.abs(deviation) < 0.1,
-                  "text-orange-500":
-                    deviation !== null &&
-                    Math.abs(deviation) >= 0.1 &&
-                    Math.abs(deviation) < 0.3,
-                  "text-red-600":
-                    deviation !== null && Math.abs(deviation) >= 0.3,
-                })}
-              >
-                {deviation !== null
-                  ? `${deviation >= 0 ? "+" : ""}${(deviation * 100).toFixed(1)}%`
-                  : "--.--%"}
-              </span>
-            </div>
-          ))}
         </div>
       </CardContent>
     </Card>
