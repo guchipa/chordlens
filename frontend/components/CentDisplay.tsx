@@ -56,7 +56,9 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({ pitchList, a4Freq, tit
                 {octaveNum}
               </span>
               <span>
-                {equalJustDiff[index].toFixed(CENT_DIGIT_NUM)} cents
+                {equalJustDiff[index] !== undefined
+                  ? `${equalJustDiff[index].toFixed(CENT_DIGIT_NUM)} cents`
+                  : "---"}
               </span>
             </div>
           ))}
