@@ -41,11 +41,13 @@ export function getJustFrequencies(pitchNameList: formType[], a4Freq: number): n
     equalFrequencies.push(a4Freq * Math.pow(2, (i - A4_INDEX) / 12));
   }
 
+  // 根音の半音インデックスを取得
   const rootSemitoneIdx = calcSemitoneIdx(
     rootData[0].pitchName,
     rootData[0].octaveNum,
   );
 
+  // 純正律に基づいた基準ピッチ（Hz）の計算
   pitchNameList.forEach((data) => {
     const semitoneIdx = calcSemitoneIdx(data.pitchName, data.octaveNum);
     const semitoneDistance = semitoneIdx - rootSemitoneIdx;
@@ -66,4 +68,59 @@ export function getJustFrequencies(pitchNameList: formType[], a4Freq: number): n
   });
 
   return justFrequencies;
+}
+
+export function getEqualJustDiff(pitchNameList: formType[], a4Freq: number): number[] {
+  const rootData = pitchNameList.filter((data) => {
+    return data.isRoot;
+  });
+
+  if (rootData.length > 1) {
+    console.error("根音が複数設定されています");
+    return [];
+  }
+
+  if (rootData.length === 0) {
+    console.error("根音が設定されていません");
+    return [];
+  }
+
+  // a4Freq を使用して equalFrequencies を動的に計算
+  const equalFrequencies: number[] = [];
+  const A4_INDEX = calcSemitoneIdx("A", 4);
+  for (let i = 0; i < PITCH_NAME_LIST.length * OCTAVE_NUM_LIST.length; i++) {
+    equalFrequencies.push(a4Freq * Math.pow(2, (i - A4_INDEX) / 12));
+  }
+
+  // 根音の半音インデックスを計算
+  const rootSemitoneIdx = calcSemitoneIdx(
+    rootData[0].pitchName,
+    rootData[0].octaveNum,
+  );
+  
+  const equalJustDiff: number[] = [];
+
+  // 純正律に基づいた基準ピッチ（Hz）の計算
+  pitchNameList.forEach(({pitchName, octaveNum}) => {
+    const semitoneIdx = calcSemitoneIdx(pitchName, octaveNum);
+    const semitoneDistance = semitoneIdx - rootSemitoneIdx;
+
+    let justFreq = 0;
+
+    if (semitoneDistance > 0) {
+      justFreq =
+        equalFrequencies[rootSemitoneIdx] *
+          JUST_RATIOS[semitoneDistance % 12] *
+          Math.pow(2, Math.floor(semitoneDistance / 12));
+    } else {
+      justFreq =
+        equalFrequencies[rootSemitoneIdx] *
+          JUST_RATIOS[semitoneDistance % 12] *
+          Math.pow(2, Math.ceil(Math.floor(semitoneDistance / 12)));
+    }
+
+    equalJustDiff.push(1200 * Math.log2(justFreq / equalFrequencies[semitoneIdx]));
+  });
+
+  return equalJustDiff;
 }
