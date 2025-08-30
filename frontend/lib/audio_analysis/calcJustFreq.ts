@@ -52,19 +52,11 @@ export function getJustFrequencies(pitchNameList: formType[], a4Freq: number): n
     const semitoneIdx = calcSemitoneIdx(data.pitchName, data.octaveNum);
     const semitoneDistance = semitoneIdx - rootSemitoneIdx;
 
-    if (semitoneDistance > 0) {
-      justFrequencies.push(
+    justFrequencies.push(
         equalFrequencies[rootSemitoneIdx] *
           JUST_RATIOS[semitoneDistance % 12] *
           Math.pow(2, Math.floor(semitoneDistance / 12)),
       );
-    } else {
-      justFrequencies.push(
-        equalFrequencies[rootSemitoneIdx] *
-          JUST_RATIOS[semitoneDistance % 12] *
-          Math.pow(2, Math.ceil(Math.floor(semitoneDistance / 12))),
-      );
-    }
   });
 
   return justFrequencies;
@@ -107,17 +99,10 @@ export function getEqualJustDiff(pitchNameList: formType[], a4Freq: number): num
 
     let justFreq = 0;
 
-    if (semitoneDistance > 0) {
-      justFreq =
-        equalFrequencies[rootSemitoneIdx] *
-          JUST_RATIOS[semitoneDistance % 12] *
-          Math.pow(2, Math.floor(semitoneDistance / 12));
-    } else {
-      justFreq =
-        equalFrequencies[rootSemitoneIdx] *
-          JUST_RATIOS[semitoneDistance % 12] *
-          Math.pow(2, Math.ceil(Math.floor(semitoneDistance / 12)));
-    }
+    justFreq =
+      equalFrequencies[rootSemitoneIdx] *
+        JUST_RATIOS[semitoneDistance % 12] *
+        Math.pow(2, Math.floor(semitoneDistance / 12));
 
     equalJustDiff.push(1200 * Math.log2(justFreq / equalFrequencies[semitoneIdx]));
   });
