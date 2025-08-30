@@ -304,6 +304,7 @@ export default function HomePage() {
           currentPitchList={currentPitchList}
           evalRangeCents={evalRangeCents}
           goodRangePercent={goodRangePercent}
+          a4Freq={a4Freq}
         />
       </main>
       <AppFooter />
