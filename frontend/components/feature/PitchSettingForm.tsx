@@ -20,13 +20,29 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
 import { PITCH_NAME_LIST, OCTAVE_NUM_LIST } from "@/lib/constants";
 import { formType } from "@/lib/schema";
+import { useMemo } from "react";
 
 interface PitchSettingFormProps {
   form: UseFormReturn<formType>;
   onSubmit: (data: formType) => void;
+  currentPitchList: formType[];
 }
 
-export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({ form, onSubmit }) => {
+export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
+  form,
+  onSubmit,
+  currentPitchList,
+}) => {
+  const isRootChecked = form.watch("isRoot");
+  const hasRoot = useMemo(() => currentPitchList.some((p) => p.isRoot), [
+    currentPitchList,
+  ]);
+
+  const showRootWarning = useMemo(() => {
+    // 根音がなく、かつ isRoot がチェックされていなければ警告
+    return !hasRoot && !isRootChecked;
+  }, [hasRoot, isRootChecked]);
+
   return (
     <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-md">
       <h3 className="mb-4 text-xl font-semibold text-gray-700 sm:text-2xl">
@@ -96,23 +112,38 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({ form, onSubm
             control={form.control}
             name="isRoot"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0 pt-2">
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
+                    disabled={hasRoot} // 根音が既にある場合は無効化
                     id="is-root-checkbox"
                   />
                 </FormControl>
-                <FormLabel
-                  htmlFor="is-root-checkbox"
-                  className="cursor-pointer leading-none"
-                >
-                  根音として設定
-                </FormLabel>
+                <div className="space-y-1 leading-none">
+                  <FormLabel
+                    htmlFor="is-root-checkbox"
+                    className={`cursor-pointer ${
+                      hasRoot ? "cursor-not-allowed text-gray-500" : ""
+                    }`}
+                  >
+                    根音として設定
+                  </FormLabel>
+                  {hasRoot && (
+                    <p className="text-xs text-gray-500">
+                      根音は既に設定されています。2つ目の根音は設定できません。
+                    </p>
+                  )}
+                </div>
               </FormItem>
             )}
           />
+          {showRootWarning && (
+            <p className="text-sm font-medium text-red-600">
+              警告: 根音が設定されていません。解析には根音の指定が必要です。
+            </p>
+          )}
           <Button type="submit" className="w-full">
             設定した音を追加
           </Button>

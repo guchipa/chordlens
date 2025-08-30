@@ -253,7 +253,7 @@ export default function HomePage() {
         </div>
 
         <div className="p-4 overflow-y-auto h-[calc(100vh-65px)] space-y-8">
-          <PitchSettingForm form={form} onSubmit={onSubmit} />
+          <PitchSettingForm form={form} onSubmit={onSubmit} currentPitchList={currentPitchList}/>
           <PitchList
             currentPitchList={currentPitchList}
             removePitch={removePitch}
