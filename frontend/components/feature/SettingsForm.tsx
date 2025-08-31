@@ -178,7 +178,6 @@ export function SettingsForm({
           type="single"
           collapsible
           className="w-full"
-          defaultValue="item-1"
         >
           <AccordionItem value="item-1">
             <AccordionTrigger>高度な設定</AccordionTrigger>

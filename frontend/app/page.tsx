@@ -131,7 +131,7 @@ export default function HomePage() {
     evalThreshold,
     fftSize,
     smoothingTimeConstant,
-  ]); // 依存配列に fftSize と smoothingTimeConstant を追加
+  ]);
 
   // 音程解析の停止ロジック
   const stopProcessing = useCallback(() => {
