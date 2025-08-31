@@ -92,3 +92,8 @@ export const DEFAULT_INITIAL_PITCH_LIST = [
   { pitchName: "E", octaveNum: 4, isRoot: false },
   { pitchName: "G", octaveNum: 4, isRoot: false },
 ];
+
+/**
+ * 
+ */
+export const METER_REMAIN_MS = 1500;

@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { METER_MAX_DEVIATION_DEGREES } from "@/lib/constants";
+import { METER_MAX_DEVIATION_DEGREES, METER_REMAIN_MS } from "@/lib/constants";
 import { formType } from "@/lib/schema";
 
 // 各音名に対応する色のマップ
@@ -33,7 +33,41 @@ interface TunerMeterProps {
   title?: string;
 }
 
-export const TunerMeter: React.FC<TunerMeterProps> = ({ analysisData, title }) => {
+export const TunerMeter: React.FC<TunerMeterProps> = ({
+  analysisData,
+  title,
+}) => {
+  // 表示用のデータを保持する state
+  const [displayData, setDisplayData] = useState(analysisData);
+  // タイマーのIDを保持するための ref
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // 以前のタイマーが残っていればクリア
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    const isSoundDetected = analysisData.some((data) => data.deviation !== null);
+
+    if (isSoundDetected) {
+      // 音が検出されたら、すぐに表示を更新
+      setDisplayData(analysisData);
+    } else {
+      // 音が検出されなかったら、1.5秒後に現在の analysisData（音が無い状態）で表示を更新するタイマーをセット
+      // この間、displayData は古いままなので、針は表示され続ける
+      timeoutRef.current = setTimeout(() => {
+        setDisplayData(analysisData);
+      }, METER_REMAIN_MS);
+    }
+
+    // コンポーネントがアンマウントされるときにタイマーをクリア
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [analysisData]); // analysisData が変更されるたびに effect を実行
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
@@ -74,7 +108,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({ analysisData, title }) =
             })}
 
             {/* 各音に対応する針を描画 */}
-            {analysisData.map(({ pitch, deviation }, index) => {
+            {displayData.map(({ pitch, deviation }, index) => {
               if (deviation === null) return null; // 検出されなかった音は表示しない
 
               const needleRotation =
