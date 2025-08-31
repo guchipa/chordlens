@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { A4_FREQ, EVAL_RANGE_CENTS, EVAL_THRESHOLD, FFT_SIZE, SMOOTHING_TIME_CONSTANT } from "@/lib/constants"; // FFT_SIZE と SMOOTHING_TIME_CONSTANT をインポート
@@ -130,7 +131,7 @@ export function SettingsForm({
       <CardHeader>
         <CardTitle>設定</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div>
           <Label htmlFor="evalRangeCents">音程評価範囲 (セント)</Label>
           <Input
@@ -173,36 +174,50 @@ export function SettingsForm({
             この値以下の音量では解析結果を表示しません。
           </p>
         </div>
-        <div>
-          <Label htmlFor="fftSize">FFTサイズ</Label>
-          <Input
-            id="fftSize"
-            type="number"
-            value={fftSize}
-            onChange={handleFftSizeChange}
-            min="32"
-            max="32768"
-            step="any" // 2のべき乗のみを許可するが、input type="number"ではstep="2"のように設定できないため、anyにしてバリデーションはonChangeで行う
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            周波数分解能に影響します (2のべき乗)。
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="smoothingTimeConstant">平滑化定数</Label>
-          <Input
-            id="smoothingTimeConstant"
-            type="number"
-            value={smoothingTimeConstant}
-            onChange={handleSmoothingTimeConstantChange}
-            min="0.0"
-            max="1.0"
-            step="0.1"
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            スペクトルの変化の滑らかさを調整します (0.0-1.0)。
-          </p>
-        </div>
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full"
+          defaultValue="item-1"
+        >
+          <AccordionItem value="item-1">
+            <AccordionTrigger>高度な設定</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="fftSize">FFTサイズ</Label>
+                  <Input
+                    id="fftSize"
+                    type="number"
+                    value={fftSize}
+                    onChange={handleFftSizeChange}
+                    min="32"
+                    max="32768"
+                    step="any" // 2のべき乗のみを許可するが、input type="number"ではstep="2"のように設定できないため、anyにしてバリデーションはonChangeで行う
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    周波数分解能に影響します (2のべき乗)。
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="smoothingTimeConstant">平滑化定数</Label>
+                  <Input
+                    id="smoothingTimeConstant"
+                    type="number"
+                    value={smoothingTimeConstant}
+                    onChange={handleSmoothingTimeConstantChange}
+                    min="0.0"
+                    max="1.0"
+                    step="0.1"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    スペクトルの変化の滑らかさを調整します (0.0-1.0)。
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );

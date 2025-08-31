@@ -42,8 +42,6 @@ export default function HomePage() {
 
   // 音程評価範囲のstateを追加
   const [evalRangeCents, setEvalRangeCents] = useState(EVAL_RANGE_CENTS);
-  // 許容誤差範囲のstateを追加
-  const [goodRangePercent, setGoodRangePercent] = useState(5);
   // A4周波数のstateを追加
   const [a4Freq, setA4Freq] = useState(A4_FREQ);
   // スペクトル評価閾値のstateを追加
@@ -261,7 +259,6 @@ export default function HomePage() {
           />
           <SettingsForm
             onEvalRangeChange={setEvalRangeCents}
-            onGoodRangeChange={setGoodRangePercent}
             onA4FreqChange={setA4Freq}
             onEvalThresholdChange={setEvalThreshold}
             onFftSizeChange={setFftSize}
@@ -303,7 +300,6 @@ export default function HomePage() {
           analysisResult={analysisResult}
           currentPitchList={currentPitchList}
           evalRangeCents={evalRangeCents}
-          
           a4Freq={a4Freq}
         />
       </main>
