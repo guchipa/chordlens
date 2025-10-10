@@ -37,16 +37,50 @@ export const PITCH_NAME_LIST: string[] = [
   "C",
   "C#",
   "D",
-  "E♭",
+  "Eb",
   "E",
   "F",
   "F#",
   "G",
   "G#",
   "A",
-  "B♭",
+  "Bb",
   "B",
 ];
+
+/**
+ * 音名をピッチクラスに変換するための対応表
+ */
+export const PITCH_CLASSES = {
+  'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 
+  'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 
+  'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+};
+
+// コード定義リスト：[名前, 構成音程(Set), スコア]
+// 🧠 このリストが推定器の「頭脳」です。スコアと定義を調整して挙動をカスタマイズします。
+export const CHORD_DEFINITIONS = [
+  // 三和音 (高スコア)
+  ['Major',               new Set([0, 4, 7]),    100],
+  ['Minor',               new Set([0, 3, 7]),    99],
+  ['Sus4',                new Set([0, 5, 7]),    95],
+  ['Sus2',                new Set([0, 2, 7]),    94],
+  
+  // 四和音 (中スコア)
+  ['Dominant 7th',        new Set([0, 4, 7, 10]), 80],
+  ['Major 7th',           new Set([0, 4, 7, 11]), 79],
+  ['Minor 7th',           new Set([0, 3, 7, 10]), 78],
+  ['Minor Major 7th',     new Set([0, 3, 7, 11]), 75],
+  
+  // やや特殊な和音 (低スコア)
+  ['Major 6th',           new Set([0, 4, 7, 9]),  60],
+  ['Minor 6th',           new Set([0, 3, 7, 9]),  59],
+  ['Half-Diminished 7th', new Set([0, 3, 6, 10]), 55],
+  ['Diminished 7th',      new Set([0, 3, 6, 9]),  54],
+  ['Augmented',           new Set([0, 4, 8]),    50],
+  ['Diminished',          new Set([0, 3, 6]),    49],
+  ['Minor Augmented',     new Set([0, 3, 8]),    40],
+].sort((a, b) => Number(b[2]) - Number(a[2])); // スコアの高い順にソートしておく
 
 /**
  * オクターブ番号のリスト

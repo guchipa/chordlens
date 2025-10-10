@@ -95,7 +95,5 @@ export function evaluateSpectrum(
     }
   }
 
-  console.log(evalList);
-
   return evalList;
 }
