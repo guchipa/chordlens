@@ -43,6 +43,19 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
     return !hasRoot && !isRootChecked;
   }, [hasRoot, isRootChecked]);
 
+  const pitchName = form.watch("pitchName");
+  const octaveNum = form.watch("octaveNum");
+
+  const isFormValid = useMemo(() => {
+    return (
+      pitchName !== undefined &&
+      pitchName !== "" &&
+      PITCH_NAME_LIST.includes(pitchName) &&
+      octaveNum !== undefined &&
+      !isNaN(octaveNum)
+    );
+  }, [pitchName, octaveNum]);
+
   return (
     <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-md">
       <h3 className="mb-4 text-xl font-semibold text-gray-700 sm:text-2xl">
@@ -58,7 +71,11 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
                 <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
                   音名
                 </FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  key={`pitchName-${field.value || "empty"}`}
+                  onValueChange={field.onChange}
+                  value={field.value || undefined}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="音名を選んでください" />
@@ -86,7 +103,7 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
                 </FormLabel>
                 <Select
                   onValueChange={(val) => field.onChange(Number(val))}
-                  value={field.value?.toString()}
+                  value={field.value ? field.value.toString() : undefined}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -95,10 +112,7 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
                   </FormControl>
                   <SelectContent>
                     {OCTAVE_NUM_LIST.map((octaveNum) => (
-                      <SelectItem
-                        key={octaveNum}
-                        value={octaveNum.toString()}
-                      >
+                      <SelectItem key={octaveNum} value={octaveNum.toString()}>
                         {octaveNum}
                       </SelectItem>
                     ))}
@@ -144,7 +158,7 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
               警告: 根音が設定されていません。解析には根音の指定が必要です。
             </p>
           )}
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" disabled={!isFormValid}>
             設定した音を追加
           </Button>
         </form>

@@ -121,7 +121,11 @@ export const MESSAGE_MIC_ACCESS_DENIED =
   "マイクへのアクセスが拒否されました。ブラウザの設定を確認してください。";
 export const MESSAGE_ANALYSIS_ERROR = "音声解析中にエラーが発生しました。";
 
-export const DEFAULT_INITIAL_PITCH_LIST = [
+export const DEFAULT_INITIAL_PITCH_LIST: {
+  pitchName: "C" | "C#" | "D" | "Eb" | "E" | "F" | "F#" | "G" | "G#" | "A" | "Bb" | "B";
+  octaveNum: number;
+  isRoot?: boolean;
+}[] = [
   { pitchName: "C", octaveNum: 4, isRoot: true },
   { pitchName: "E", octaveNum: 4, isRoot: false },
   { pitchName: "G", octaveNum: 4, isRoot: false },

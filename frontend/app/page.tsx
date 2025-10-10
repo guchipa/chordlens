@@ -60,7 +60,7 @@ export default function HomePage() {
   const form = useForm<formType>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      pitchName: "",
+      pitchName: undefined,
       octaveNum: 4,
       isRoot: false,
     },
@@ -179,9 +179,9 @@ export default function HomePage() {
       return [...prevList, data]; // 新規追加
     });
     form.reset({
+      pitchName: undefined,
+      octaveNum: 4,
       isRoot: false,
-      pitchName: form.getValues("pitchName"),
-      octaveNum: form.getValues("octaveNum"),
     }); // フォームをリセット (選択された音名は残す)
   }
 

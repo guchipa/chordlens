@@ -1,8 +1,4 @@
-import {
-  OCTAVE_NUM_LIST,
-  PITCH_NAME_LIST,
-  JUST_RATIOS,
-} from "../constants";
+import { OCTAVE_NUM_LIST, PITCH_NAME_LIST, JUST_RATIOS } from "../constants";
 import { formType } from "@/lib/schema";
 
 /**
@@ -39,12 +35,12 @@ const preparePitchCalculation = (pitchNameList: formType[], a4Freq: number) => {
   // 平均律の周波数テーブルを生成
   const equalFrequencies = Array.from(
     { length: totalPitches },
-    (_, i) => a4Freq * Math.pow(2, (i - A4_INDEX) / 12),
+    (_, i) => a4Freq * Math.pow(2, (i - A4_INDEX) / 12)
   );
 
   const rootSemitoneIdx = calcSemitoneIdx(
     rootData[0].pitchName,
-    rootData[0].octaveNum,
+    rootData[0].octaveNum
   );
 
   return {
@@ -64,13 +60,13 @@ const preparePitchCalculation = (pitchNameList: formType[], a4Freq: number) => {
 const calculateJustFrequency = (
   data: formType,
   rootSemitoneIdx: number,
-  rootFrequency: number,
+  rootFrequency: number
 ): number => {
   const semitoneIdx = calcSemitoneIdx(data.pitchName, data.octaveNum);
   const semitoneDistance = semitoneIdx - rootSemitoneIdx;
 
   // 距離が負の場合でもインデックスが 0-11 の範囲になるように剰余を計算
-  const ratioIndex = (semitoneDistance % 12 + 12) % 12;
+  const ratioIndex = ((semitoneDistance % 12) + 12) % 12;
 
   return (
     rootFrequency *
@@ -87,16 +83,16 @@ const calculateJustFrequency = (
  */
 export function getJustFrequencies(
   pitchNameList: formType[],
-  a4Freq: number,
+  a4Freq: number
 ): number[] {
   try {
     const { rootSemitoneIdx, rootFrequency } = preparePitchCalculation(
       pitchNameList,
-      a4Freq,
+      a4Freq
     );
 
     return pitchNameList.map((data) =>
-      calculateJustFrequency(data, rootSemitoneIdx, rootFrequency),
+      calculateJustFrequency(data, rootSemitoneIdx, rootFrequency)
     );
   } catch (e) {
     console.error((e as Error).message);
@@ -112,7 +108,7 @@ export function getJustFrequencies(
  */
 export function getEqualJustDiff(
   pitchNameList: formType[],
-  a4Freq: number,
+  a4Freq: number
 ): number[] {
   try {
     const { equalFrequencies, rootSemitoneIdx, rootFrequency } =
@@ -122,7 +118,7 @@ export function getEqualJustDiff(
       const justFreq = calculateJustFrequency(
         data,
         rootSemitoneIdx,
-        rootFrequency,
+        rootFrequency
       );
       const semitoneIdx = calcSemitoneIdx(data.pitchName, data.octaveNum);
       const equalFreq = equalFrequencies[semitoneIdx];
