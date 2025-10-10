@@ -77,8 +77,6 @@ function estimateRoot(
     }));
     setCurrentPitchList(updatedList);
   }
-
-  console.log(currentPitchList);
 }
 
 export const PitchList: React.FC<PitchListProps> = ({
