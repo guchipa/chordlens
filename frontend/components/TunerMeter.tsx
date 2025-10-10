@@ -2,24 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { METER_MAX_DEVIATION_DEGREES, METER_REMAIN_MS } from "@/lib/constants";
+import { METER_MAX_DEVIATION_DEGREES, METER_REMAIN_MS, PITCH_COLOR_MAP } from "@/lib/constants";
 import { formType } from "@/lib/schema";
-
-// 各音名に対応する色のマップ
-const PITCH_COLOR_MAP: { [key: string]: string } = {
-  "C": "#ff6b6b",
-  "C#": "#ff8e53",
-  "D": "#ffc107",
-  "E♭": "#fde047",
-  "E": "#a8e063",
-  "F": "#56ab2f",
-  "F#": "#26de81",
-  "G": "#2bcbba",
-  "G#": "#45aaf2",
-  "A": "#0fb9b1",
-  "B♭": "#4a90e2",
-  "B": "#8e44ad",
-};
 
 interface TunerMeterProps {
   /**
@@ -108,7 +92,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
             })}
 
             {/* 各音に対応する針を描画 */}
-            {displayData.map(({ pitch, deviation }, index) => {
+            {displayData?.map(({ pitch, deviation }, index) => {
               if (deviation === null) return null; // 検出されなかった音は表示しない
 
               const needleRotation =
