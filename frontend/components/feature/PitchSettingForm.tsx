@@ -34,7 +34,7 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
   currentPitchList,
 }) => {
   const isRootChecked = form.watch("isRoot");
-  const hasRoot = useMemo(() => currentPitchList.some((p) => p.isRoot), [
+  const hasRoot = useMemo(() => currentPitchList?.some((p) => p.isRoot) ?? false, [
     currentPitchList,
   ]);
 
