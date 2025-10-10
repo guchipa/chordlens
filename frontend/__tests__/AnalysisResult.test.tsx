@@ -15,6 +15,8 @@ describe("AnalysisResult", () => {
         isProcessing={false}
         analysisResult={null}
         currentPitchList={[]}
+        evalRangeCents={50}
+        a4Freq={440}
       />
     );
     expect(
@@ -28,6 +30,8 @@ describe("AnalysisResult", () => {
         isProcessing={true}
         analysisResult={[0.1, -0.2, 0.05]}
         currentPitchList={pitchList}
+        evalRangeCents={50}
+        a4Freq={440}
       />
     );
     // TunerMeterのタイトルはtext-3xlクラスを持つ
@@ -46,18 +50,20 @@ describe("AnalysisResult", () => {
         isProcessing={false}
         analysisResult={[0.01, -0.5, 0.2]}
         currentPitchList={pitchList}
+        evalRangeCents={50}
+        a4Freq={440}
       />
     );
     const detailedResultsCard = screen
-      .getByText("詳細な解析結果")
+      .getByText("平均律からの差")
       .closest('div[data-slot="card"]');
     expect(detailedResultsCard).toBeInTheDocument();
     if (!detailedResultsCard) throw new Error("Card not found");
 
-    const withinCard = within(detailedResultsCard);
-    // 詳細結果カード内でのみパーセンテージを検証
-    expect(withinCard.getByText("+1.00%")).toBeInTheDocument();
-    expect(withinCard.getByText("-50.00%")).toBeInTheDocument();
-    expect(withinCard.getByText("+20.00%")).toBeInTheDocument();
+    const withinCard = within(detailedResultsCard as HTMLElement);
+    // "平均律からの差" カードの中に各ピッチの差分が表示されていることを確認
+    expect(withinCard.getByText("0.00")).toBeInTheDocument();
+    expect(withinCard.getByText("-13.69")).toBeInTheDocument();
+    expect(withinCard.getByText("1.96")).toBeInTheDocument();
   });
 });

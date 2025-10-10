@@ -5,21 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formType } from "@/lib/schema";
 import { getEqualJustDiff } from "@/lib/audio_analysis/calcJustFreq";
 
-// 各音名に対応する色のマップ
-const PITCH_COLOR_MAP: { [key: string]: string } = {
-  "C": "#ff6b6b",
-  "C#": "#ff8e53",
-  "D": "#ffc107",
-  "E♭": "#fde047",
-  "E": "#a8e063",
-  "F": "#56ab2f",
-  "F#": "#26de81",
-  "G": "#2bcbba",
-  "G#": "#45aaf2",
-  "A": "#0fb9b1",
-  "B♭": "#4a90e2",
-  "B": "#8e44ad",
-};
+import { PITCH_COLOR_MAP } from "@/lib/constants";
 
 // 表示するcentの小数点以下桁数
 const CENT_DIGIT_NUM = 2;

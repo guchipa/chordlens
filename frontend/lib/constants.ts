@@ -121,7 +121,11 @@ export const MESSAGE_MIC_ACCESS_DENIED =
   "マイクへのアクセスが拒否されました。ブラウザの設定を確認してください。";
 export const MESSAGE_ANALYSIS_ERROR = "音声解析中にエラーが発生しました。";
 
-export const DEFAULT_INITIAL_PITCH_LIST = [
+export const DEFAULT_INITIAL_PITCH_LIST: {
+  pitchName: "C" | "C#" | "D" | "Eb" | "E" | "F" | "F#" | "G" | "G#" | "A" | "Bb" | "B";
+  octaveNum: number;
+  isRoot?: boolean;
+}[] = [
   { pitchName: "C", octaveNum: 4, isRoot: true },
   { pitchName: "E", octaveNum: 4, isRoot: false },
   { pitchName: "G", octaveNum: 4, isRoot: false },
@@ -131,3 +135,19 @@ export const DEFAULT_INITIAL_PITCH_LIST = [
  * 
  */
 export const METER_REMAIN_MS = 1500;
+
+// 各音名に対応する色のマップ
+export const PITCH_COLOR_MAP: { [key: string]: string } = {
+  "C": "#ff6b6b",
+  "C#": "#ff8e53",
+  "D": "#ffc107",
+  "Eb": "#fde047",
+  "E": "#a8e063",
+  "F": "#56ab2f",
+  "F#": "#26de81",
+  "G": "#2bcbba",
+  "G#": "#45aaf2",
+  "A": "#0fb9b1",
+  "Bb": "#4a90e2",
+  "B": "#8e44ad",
+};
