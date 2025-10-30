@@ -23,6 +23,7 @@ import { PitchList } from "@/components/feature/PitchList";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { AnalysisResult } from "@/components/feature/AnalysisResult";
 import { SettingsForm } from "@/components/feature/SettingsForm";
+import { PresetManager } from "@/components/feature/PresetManager";
 import { FormSchema, formType } from "@/lib/schema";
 
 export default function HomePage() {
@@ -196,6 +197,11 @@ export default function HomePage() {
     setCurrentPitchList([]);
   }, []);
 
+  // プリセット読み込み時のハンドラ
+  const handleLoadPreset = useCallback((pitchList: formType[]) => {
+    setCurrentPitchList(pitchList);
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Hamburger Button */}
@@ -262,6 +268,10 @@ export default function HomePage() {
             clearPitchList={clearPitchList}
             setCurrentPitchList={setCurrentPitchList}
           />
+          <PresetManager
+            pitchList={currentPitchList}
+            onLoadPreset={handleLoadPreset}
+          />
           <SettingsForm
             onEvalRangeChange={setEvalRangeCents}
             onA4FreqChange={setA4Freq}
@@ -280,7 +290,7 @@ export default function HomePage() {
         ></div>
       )}
 
-      <main className="container mx-auto flex flex-grow flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
+      <main className="container mx-auto flex grow flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-gray-800 sm:text-4xl">
             和音チューナー
