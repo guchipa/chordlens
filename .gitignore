@@ -1,58 +1,31 @@
-# GitIgnore for a Monorepo Project
+# Dependencies
+node_modules/
 
-# --- Node.js / Next.js (frontend) ---
-# dependencies
-/frontend/node_modules
-/.pnp
-.pnp.js
+# Next.js
+.next/
+out/
 
-# testing
-/frontend/coverage
+# Production
+build/
 
-# production
-/frontend/.next/
-/frontend/out/
-
-# misc
+# Misc
 .DS_Store
 *.pem
 
-# debug
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
-.npmrc
-.yarn/
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+
+# Local env files
 .env*.local
 
-# local next.js folder
-.next
+# Vercel
+.vercel
 
-# --- Python (backend) ---
-# virtual environment
-/backend/.venv/
-/backend/venv/
-__pycache__/
-*.pyc
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
 
-# misc
-.DS_Store
-.env # .envファイルも環境変数を含むため通常はコミットしない
-
-# Jupyter Notebook (if used)
-.ipynb_checkpoints/
-
-# --- IDEs and Editor specific ---
-.idea/ # IntelliJ IDEA / PyCharm / WebStorm
-.vscode/ # Visual Studio Code (settings, extensions recommendations)
-*.swp
-*.bak
-*~
+# Testing
+coverage/
