@@ -13,7 +13,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "和音チューナー",
+  title: "ChordLens - 純正律チューナー",
+  description:
+    "リアルタイム純正律和音チューナー。Web Audio APIを使用して和音の音程を分析します。",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ChordLens",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#3b82f6",
 };
 
 export default function RootLayout({
@@ -22,7 +38,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
+      <head>
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

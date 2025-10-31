@@ -1,0 +1,24 @@
+{
+  "name": "ChordLens - 純正律チューナー",
+  "short_name": "ChordLens",
+  "description": "リアルタイム純正律和音チューナー。Web Audio APIを使用して和音の音程を分析します。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
