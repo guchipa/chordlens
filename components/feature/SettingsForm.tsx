@@ -1,11 +1,24 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { A4_FREQ, EVAL_RANGE_CENTS, EVAL_THRESHOLD, FFT_SIZE, SMOOTHING_TIME_CONSTANT } from "@/lib/constants"; // FFT_SIZE と SMOOTHING_TIME_CONSTANT をインポート
+import {
+  A4_FREQ,
+  EVAL_RANGE_CENTS,
+  FFT_SIZE,
+  SMOOTHING_TIME_CONSTANT,
+  SENSITIVITY_DEFAULT,
+  SENSITIVITY_MIN,
+  SENSITIVITY_MAX,
+  sensitivityToDb,
+  dbToSensitivity,
+} from "@/lib/constants";
 
 interface SettingsFormProps {
   onEvalRangeChange: (value: number) => void;
@@ -24,9 +37,11 @@ export function SettingsForm({
 }: SettingsFormProps) {
   const [evalRange, setEvalRange] = useState(EVAL_RANGE_CENTS);
   const [a4Freq, setA4Freq] = useState(A4_FREQ);
-  const [evalThreshold, setEvalThreshold] = useState(EVAL_THRESHOLD);
+  const [sensitivity, setSensitivity] = useState(SENSITIVITY_DEFAULT); // 感度として管理
   const [fftSize, setFftSize] = useState(FFT_SIZE); // FFT_SIZEのstate
-  const [smoothingTimeConstant, setSmoothingTimeConstant] = useState(SMOOTHING_TIME_CONSTANT); // SMOOTHING_TIME_CONSTANTのstate
+  const [smoothingTimeConstant, setSmoothingTimeConstant] = useState(
+    SMOOTHING_TIME_CONSTANT
+  ); // SMOOTHING_TIME_CONSTANTのstate
 
   useEffect(() => {
     // localStorageからevalRangeCentsを読み込む
@@ -49,14 +64,28 @@ export function SettingsForm({
       onA4FreqChange(A4_FREQ);
     }
 
-    // localStorageからevalThresholdを読み込む
+    // localStorageからevalThresholdを読み込む（後方互換性のため）
+    // または感度として読み込む
+    const savedSensitivity = localStorage.getItem("sensitivity");
     const savedEvalThreshold = localStorage.getItem("evalThreshold");
-    if (savedEvalThreshold) {
+
+    if (savedSensitivity) {
+      // 感度が保存されている場合
+      const parsedValue = parseInt(savedSensitivity, 10);
+      setSensitivity(parsedValue);
+      onEvalThresholdChange(sensitivityToDb(parsedValue));
+    } else if (savedEvalThreshold) {
+      // 旧形式のdB値が保存されている場合は感度に変換
       const parsedValue = parseInt(savedEvalThreshold, 10);
-      setEvalThreshold(parsedValue);
+      const convertedSensitivity = dbToSensitivity(parsedValue);
+      setSensitivity(convertedSensitivity);
       onEvalThresholdChange(parsedValue);
+      // 新形式で保存し直す
+      localStorage.setItem("sensitivity", convertedSensitivity.toString());
     } else {
-      onEvalThresholdChange(EVAL_THRESHOLD);
+      // 何も保存されていない場合はデフォルト値
+      setSensitivity(SENSITIVITY_DEFAULT);
+      onEvalThresholdChange(sensitivityToDb(SENSITIVITY_DEFAULT));
     }
 
     // localStorageからfftSizeを読み込む
@@ -70,7 +99,9 @@ export function SettingsForm({
     }
 
     // localStorageからsmoothingTimeConstantを読み込む
-    const savedSmoothingTimeConstant = localStorage.getItem("smoothingTimeConstant");
+    const savedSmoothingTimeConstant = localStorage.getItem(
+      "smoothingTimeConstant"
+    );
     if (savedSmoothingTimeConstant) {
       const parsedValue = parseFloat(savedSmoothingTimeConstant);
       setSmoothingTimeConstant(parsedValue);
@@ -78,7 +109,13 @@ export function SettingsForm({
     } else {
       onSmoothingTimeConstantChange(SMOOTHING_TIME_CONSTANT);
     }
-  }, [onEvalRangeChange, onA4FreqChange, onEvalThresholdChange, onFftSizeChange, onSmoothingTimeConstantChange]);
+  }, [
+    onEvalRangeChange,
+    onA4FreqChange,
+    onEvalThresholdChange,
+    onFftSizeChange,
+    onSmoothingTimeConstantChange,
+  ]);
 
   const handleEvalRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -98,26 +135,38 @@ export function SettingsForm({
     }
   };
 
-  const handleEvalThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSensitivityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
-      setEvalThreshold(value);
-      localStorage.setItem("evalThreshold", value.toString());
-      onEvalThresholdChange(value);
+      setSensitivity(value);
+      const dbValue = sensitivityToDb(value);
+      console.log(
+        `[SENSITIVITY] Slider value: ${value} → dB: ${dbValue.toFixed(1)}`
+      );
+      localStorage.setItem("sensitivity", value.toString());
+      onEvalThresholdChange(dbValue);
     }
   };
 
   const handleFftSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     // FFT_SIZEは2のべき乗である必要があるため、適切なバリデーションを追加
-    if (!isNaN(value) && (value & (value - 1)) === 0 && value >= 32 && value <= 32768) { // 最小値と最大値を設定
+    if (
+      !isNaN(value) &&
+      (value & (value - 1)) === 0 &&
+      value >= 32 &&
+      value <= 32768
+    ) {
+      // 最小値と最大値を設定
       setFftSize(value);
       localStorage.setItem("fftSize", value.toString());
       onFftSizeChange(value);
     }
   };
 
-  const handleSmoothingTimeConstantChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSmoothingTimeConstantChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const value = parseFloat(e.target.value);
     if (!isNaN(value) && value >= 0.0 && value <= 1.0) {
       setSmoothingTimeConstant(value);
@@ -161,24 +210,27 @@ export function SettingsForm({
           </p>
         </div>
         <div>
-          <Label htmlFor="evalThreshold">スペクトル評価閾値 (dB)</Label>
+          <Label htmlFor="sensitivity">音量感度</Label>
           <Input
-            id="evalThreshold"
-            type="number"
-            value={evalThreshold}
-            onChange={handleEvalThresholdChange}
-            min="-120"
-            max="-30" // 仮の範囲
+            id="sensitivity"
+            type="range"
+            value={sensitivity}
+            onChange={handleSensitivityChange}
+            min={SENSITIVITY_MIN}
+            max={SENSITIVITY_MAX}
+            step="1"
+            className="cursor-pointer"
           />
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <span>低（大きい音のみ）</span>
+            <span className="font-medium text-foreground">{sensitivity}</span>
+            <span>高（小さい音も検出）</span>
+          </div>
           <p className="text-sm text-gray-500 mt-1">
-            この値以下の音量では解析結果を表示しません。
+            小さい音も検出したい場合は感度を上げてください。
           </p>
         </div>
-        <Accordion
-          type="single"
-          collapsible
-          className="w-full"
-        >
+        <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="item-1">
             <AccordionTrigger>高度な設定</AccordionTrigger>
             <AccordionContent>

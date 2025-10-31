@@ -16,7 +16,7 @@ export function evaluateSpectrum(
   pitchNameList: formType[],
   evalRangeCents: number,
   a4Freq: number, // A4_FREQ を引数に追加
-  evalThreshold: number, // EVAL_THRESHOLD を引数に追加
+  evalThreshold: number // EVAL_THRESHOLD を引数に追加
 ): (number | null)[] {
   const estFreqs = getJustFrequencies(pitchNameList, a4Freq); // a4Freq を渡す
 
@@ -68,6 +68,18 @@ export function evaluateSpectrum(
       continue;
     }
 
+    // デバッグ: 実際のスペクトル値を確認
+    const maxInRange = Math.max(...evalSpec);
+    console.log(
+      `[DEBUG] Pitch ${estFreqs.indexOf(
+        est_f
+      )}: maxInRange=${maxInRange.toFixed(
+        1
+      )}dB, threshold=${evalThreshold.toFixed(1)}dB, passed=${
+        maxInRange >= evalThreshold
+      }`
+    );
+
     // 最も強いスペクトルをもつもののindex を取得
     let specMax = 0;
     let maxVal = evalSpec[0];
@@ -79,7 +91,8 @@ export function evaluateSpectrum(
     }
 
     // spec_max が閾値以下の場合は None を返す
-    if (maxVal < evalThreshold) { // evalThreshold を使用
+    if (maxVal < evalThreshold) {
+      // evalThreshold を使用
       evalList.push(null);
     } else {
       // spec_max が center と等しい場合は 0 を返す

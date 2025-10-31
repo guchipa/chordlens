@@ -25,10 +25,42 @@ export const SMOOTHING_TIME_CONSTANT = 0.8; // 0.8 が一般的な値
 export const EVAL_RANGE_CENTS = 50;
 
 /**
- * スペクトル評価の閾値
+ * スペクトル評価の閾値（dB）
  * この値以下のスペクトルであった場合メータを描画しない
  */
 export const EVAL_THRESHOLD = -100;
+
+/**
+ * 感度の範囲（ユーザーフレンドリーな0-100スケール）
+ */
+export const SENSITIVITY_MIN = 0;
+export const SENSITIVITY_MAX = 100;
+export const SENSITIVITY_DEFAULT = 50; // デフォルト感度（-100dBに相当）
+
+/**
+ * 感度（0-100）をdB値に変換
+ * 感度が高いほど小さい音も検出（閾値が低くなる）
+ * 実測値に基づき調整：
+ * 感度 0 → -60dB (大きい音のみ検出)
+ * 感度 50 → -100dB (デフォルト)
+ * 感度 100 → -140dB (小さい音も積極的に検出)
+ */
+export function sensitivityToDb(sensitivity: number): number {
+  // 0-100の感度を-60～-140dBの範囲に線形マッピング（逆方向）
+  const db = -60 - (sensitivity / 100) * 80;
+  console.log(`[CONVERSION] Sensitivity ${sensitivity} → ${db.toFixed(1)} dB`);
+  return db;
+}
+
+/**
+ * dB値を感度（0-100）に変換
+ */
+export function dbToSensitivity(db: number): number {
+  // -60～-140dBの範囲を0-100の感度に線形マッピング（逆方向）
+  const sensitivity = Math.round(((-60 - db) / 80) * 100);
+  console.log(`[CONVERSION] ${db.toFixed(1)} dB → Sensitivity ${sensitivity}`);
+  return sensitivity;
+}
 
 /**
  * 解析対象とする音名のリスト
@@ -52,34 +84,48 @@ export const PITCH_NAME_LIST: string[] = [
  * 音名をピッチクラスに変換するための対応表
  */
 export const PITCH_CLASSES = {
-  'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 
-  'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 
-  'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+  C: 0,
+  "C#": 1,
+  Db: 1,
+  D: 2,
+  "D#": 3,
+  Eb: 3,
+  E: 4,
+  F: 5,
+  "F#": 6,
+  Gb: 6,
+  G: 7,
+  "G#": 8,
+  Ab: 8,
+  A: 9,
+  "A#": 10,
+  Bb: 10,
+  B: 11,
 };
 
 // コード定義リスト：[名前, 構成音程(Set), スコア]
 // 🧠 このリストが推定器の「頭脳」です。スコアと定義を調整して挙動をカスタマイズします。
 export const CHORD_DEFINITIONS = [
   // 三和音 (高スコア)
-  ['Major',               new Set([0, 4, 7]),    100],
-  ['Minor',               new Set([0, 3, 7]),    99],
-  ['Sus4',                new Set([0, 5, 7]),    95],
-  ['Sus2',                new Set([0, 2, 7]),    94],
-  
+  ["Major", new Set([0, 4, 7]), 100],
+  ["Minor", new Set([0, 3, 7]), 99],
+  ["Sus4", new Set([0, 5, 7]), 95],
+  ["Sus2", new Set([0, 2, 7]), 94],
+
   // 四和音 (中スコア)
-  ['Dominant 7th',        new Set([0, 4, 7, 10]), 80],
-  ['Major 7th',           new Set([0, 4, 7, 11]), 79],
-  ['Minor 7th',           new Set([0, 3, 7, 10]), 78],
-  ['Minor Major 7th',     new Set([0, 3, 7, 11]), 75],
-  
+  ["Dominant 7th", new Set([0, 4, 7, 10]), 80],
+  ["Major 7th", new Set([0, 4, 7, 11]), 79],
+  ["Minor 7th", new Set([0, 3, 7, 10]), 78],
+  ["Minor Major 7th", new Set([0, 3, 7, 11]), 75],
+
   // やや特殊な和音 (低スコア)
-  ['Major 6th',           new Set([0, 4, 7, 9]),  60],
-  ['Minor 6th',           new Set([0, 3, 7, 9]),  59],
-  ['Half-Diminished 7th', new Set([0, 3, 6, 10]), 55],
-  ['Diminished 7th',      new Set([0, 3, 6, 9]),  54],
-  ['Augmented',           new Set([0, 4, 8]),    50],
-  ['Diminished',          new Set([0, 3, 6]),    49],
-  ['Minor Augmented',     new Set([0, 3, 8]),    40],
+  ["Major 6th", new Set([0, 4, 7, 9]), 60],
+  ["Minor 6th", new Set([0, 3, 7, 9]), 59],
+  ["Half-Diminished 7th", new Set([0, 3, 6, 10]), 55],
+  ["Diminished 7th", new Set([0, 3, 6, 9]), 54],
+  ["Augmented", new Set([0, 4, 8]), 50],
+  ["Diminished", new Set([0, 3, 6]), 49],
+  ["Minor Augmented", new Set([0, 3, 8]), 40],
 ].sort((a, b) => Number(b[2]) - Number(a[2])); // スコアの高い順にソートしておく
 
 /**
@@ -122,7 +168,19 @@ export const MESSAGE_MIC_ACCESS_DENIED =
 export const MESSAGE_ANALYSIS_ERROR = "音声解析中にエラーが発生しました。";
 
 export const DEFAULT_INITIAL_PITCH_LIST: {
-  pitchName: "C" | "C#" | "D" | "Eb" | "E" | "F" | "F#" | "G" | "G#" | "A" | "Bb" | "B";
+  pitchName:
+    | "C"
+    | "C#"
+    | "D"
+    | "Eb"
+    | "E"
+    | "F"
+    | "F#"
+    | "G"
+    | "G#"
+    | "A"
+    | "Bb"
+    | "B";
   octaveNum: number;
   isRoot?: boolean;
 }[] = [
@@ -132,22 +190,51 @@ export const DEFAULT_INITIAL_PITCH_LIST: {
 ];
 
 /**
- * 
+ *
  */
 export const METER_REMAIN_MS = 1500;
 
 // 各音名に対応する色のマップ
 export const PITCH_COLOR_MAP: { [key: string]: string } = {
-  "C": "#ff6b6b",
+  C: "#ff6b6b",
   "C#": "#ff8e53",
-  "D": "#ffc107",
-  "Eb": "#fde047",
-  "E": "#a8e063",
-  "F": "#56ab2f",
+  D: "#ffc107",
+  Eb: "#fde047",
+  E: "#a8e063",
+  F: "#56ab2f",
   "F#": "#26de81",
-  "G": "#2bcbba",
+  G: "#2bcbba",
   "G#": "#45aaf2",
-  "A": "#0fb9b1",
-  "Bb": "#4a90e2",
-  "B": "#8e44ad",
+  A: "#0fb9b1",
+  Bb: "#4a90e2",
+  B: "#8e44ad",
+};
+
+/**
+ * フィードバック形式の定義
+ */
+export const FEEDBACK_TYPES = [
+  "meter",
+  "strobe",
+  "bar",
+  "numeric",
+  "waveform",
+] as const;
+
+export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
+
+export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
+  meter: "メーター",
+  strobe: "ストロボ",
+  bar: "バー",
+  numeric: "数値",
+  waveform: "波形",
+};
+
+export const FEEDBACK_TYPE_DESCRIPTIONS: Record<FeedbackType, string> = {
+  meter: "針が動くアナログメーター表示",
+  strobe: "プロ用チューナーのようなストロボ表示",
+  bar: "シンプルな横棒グラフ表示",
+  numeric: "セント値を大きく表示",
+  waveform: "周波数のズレを波形で表現",
 };

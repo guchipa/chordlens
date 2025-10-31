@@ -15,15 +15,18 @@ import {
   EVAL_RANGE_CENTS,
   A4_FREQ,
   EVAL_THRESHOLD,
+  FEEDBACK_TYPES,
+  type FeedbackType,
 } from "@/lib/constants";
 
 import { AppFooter } from "@/components/AppFooter";
 import { PitchSettingForm } from "@/components/feature/PitchSettingForm";
 import { PitchList } from "@/components/feature/PitchList";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
-import { AnalysisResult } from "@/components/feature/AnalysisResult";
 import { SettingsForm } from "@/components/feature/SettingsForm";
 import { PresetManager } from "@/components/feature/PresetManager";
+import { FeedbackTypeSelector } from "@/components/feature/FeedbackTypeSelector";
+import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
 import { FormSchema, formType } from "@/lib/schema";
 
 export default function HomePage() {
@@ -56,6 +59,9 @@ export default function HomePage() {
 
   // 設定パネルの開閉状態
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // フィードバック形式の状態
+  const [feedbackType, setFeedbackType] = useState<FeedbackType>("meter");
 
   // フォームの初期化
   const form = useForm<formType>({
@@ -103,6 +109,20 @@ export default function HomePage() {
         if (!analyserNodeRef.current) return;
 
         analyserNodeRef.current.getFloatFrequencyData(dataArray);
+
+        // デバッグ: スペクトル全体の範囲を確認
+        const nonZeroValues = Array.from(dataArray).filter(
+          (v) => v > -Infinity
+        );
+        if (nonZeroValues.length > 0) {
+          const min = Math.min(...nonZeroValues);
+          const max = Math.max(...nonZeroValues);
+          console.log(
+            `[SPECTRUM] Range: ${min.toFixed(1)} ~ ${max.toFixed(
+              1
+            )} dB | Threshold: ${evalThreshold.toFixed(1)} dB`
+          );
+        }
 
         // evaluateSpectrum に a4Freq と evalThreshold を渡す
         const result = evaluateSpectrum(
@@ -202,6 +222,23 @@ export default function HomePage() {
     setCurrentPitchList(pitchList);
   }, []);
 
+  // フィードバック形式変更のハンドラ
+  const handleFeedbackTypeChange = (type: FeedbackType) => {
+    setFeedbackType(type);
+    localStorage.setItem("feedbackType", type);
+  };
+
+  // localStorageからフィードバック形式を読み込み
+  useEffect(() => {
+    const savedFeedbackType = localStorage.getItem("feedbackType");
+    if (
+      savedFeedbackType &&
+      FEEDBACK_TYPES.includes(savedFeedbackType as FeedbackType)
+    ) {
+      setFeedbackType(savedFeedbackType as FeedbackType);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Hamburger Button */}
@@ -272,6 +309,10 @@ export default function HomePage() {
             pitchList={currentPitchList}
             onLoadPreset={handleLoadPreset}
           />
+          <FeedbackTypeSelector
+            value={feedbackType}
+            onChange={handleFeedbackTypeChange}
+          />
           <SettingsForm
             onEvalRangeChange={setEvalRangeCents}
             onA4FreqChange={setA4Freq}
@@ -310,12 +351,13 @@ export default function HomePage() {
             マイク入力からの解析中...
           </p>
         )}
-        <AnalysisResult
-          isProcessing={isProcessing}
-          analysisResult={analysisResult}
-          currentPitchList={currentPitchList}
+        <UnifiedFeedback
+          feedbackType={feedbackType}
+          analysisData={currentPitchList.map((pitch, index) => ({
+            pitch,
+            deviation: analysisResult?.[index] ?? null,
+          }))}
           evalRangeCents={evalRangeCents}
-          a4Freq={a4Freq}
         />
       </main>
       <AppFooter />
