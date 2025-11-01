@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import type { SettingsFormProps } from "@/lib/types";
 import {
   A4_FREQ,
   EVAL_RANGE_CENTS,
@@ -20,20 +21,12 @@ import {
   dbToSensitivity,
 } from "@/lib/constants";
 
-interface SettingsFormProps {
-  onEvalRangeChange: (value: number) => void;
-  onA4FreqChange: (value: number) => void;
-  onEvalThresholdChange: (value: number) => void;
-  onFftSizeChange: (value: number) => void; // 新しいプロップ
-  onSmoothingTimeConstantChange: (value: number) => void; // 新しいプロップ
-}
-
 export function SettingsForm({
   onEvalRangeChange,
   onA4FreqChange,
   onEvalThresholdChange,
-  onFftSizeChange, // 新しいプロップ
-  onSmoothingTimeConstantChange, // 新しいプロップ
+  onFftSizeChange,
+  onSmoothingTimeConstantChange,
 }: SettingsFormProps) {
   const [evalRange, setEvalRange] = useState(EVAL_RANGE_CENTS);
   const [a4Freq, setA4Freq] = useState(A4_FREQ);
@@ -140,9 +133,6 @@ export function SettingsForm({
     if (!isNaN(value)) {
       setSensitivity(value);
       const dbValue = sensitivityToDb(value);
-      console.log(
-        `[SENSITIVITY] Slider value: ${value} → dB: ${dbValue.toFixed(1)}`
-      );
       localStorage.setItem("sensitivity", value.toString());
       onEvalThresholdChange(dbValue);
     }

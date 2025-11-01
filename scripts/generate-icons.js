@@ -11,8 +11,6 @@ async function generateIcons() {
       .resize(size, size)
       .png()
       .toFile(`./public/icon-${size}.png`);
-    
-    console.log(`Generated icon-${size}.png`);
   }
 }
 

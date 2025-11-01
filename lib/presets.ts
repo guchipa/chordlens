@@ -1,4 +1,4 @@
-import { PitchPreset, PresetsData, formType } from "@/lib/schema";
+import type { PitchPreset, PresetsData, Pitch } from "@/lib/types";
 
 const STORAGE_KEY = "chordlens-presets";
 const MAX_PRESETS = 20;
@@ -72,7 +72,7 @@ export function getPresets(): PitchPreset[] {
  */
 export function savePreset(
   name: string,
-  pitchList: formType[]
+  pitchList: Pitch[]
 ): { success: true } | { success: false; error: string } {
   if (!isLocalStorageAvailable()) {
     return { success: false, error: "localStorageが利用できません" };
