@@ -1,5 +1,5 @@
 import { OCTAVE_NUM_LIST, PITCH_NAME_LIST, JUST_RATIOS } from "../constants";
-import { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 
 /**
  * 音名とオクターブ番号から半音インデックスを計算する
@@ -18,7 +18,7 @@ const calcSemitoneIdx = (pitchName: string, octaveNum: number): number => {
  * @returns 計算に必要なデータ（平均律周波数、根音のインデックス、根音の周波数）
  * @throws 根音が設定されていない、または複数設定されている場合にエラーをスローする
  */
-const preparePitchCalculation = (pitchNameList: formType[], a4Freq: number) => {
+const preparePitchCalculation = (pitchNameList: Pitch[], a4Freq: number) => {
   const rootData = pitchNameList.filter((data) => data.isRoot);
 
   if (rootData.length !== 1) {
@@ -58,7 +58,7 @@ const preparePitchCalculation = (pitchNameList: formType[], a4Freq: number) => {
  * @returns 純正律での周波数 (Hz)
  */
 const calculateJustFrequency = (
-  data: formType,
+  data: Pitch,
   rootSemitoneIdx: number,
   rootFrequency: number
 ): number => {
@@ -82,7 +82,7 @@ const calculateJustFrequency = (
  * @returns 各音の純正律での周波数（Hz）のリスト
  */
 export function getJustFrequencies(
-  pitchNameList: formType[],
+  pitchNameList: Pitch[],
   a4Freq: number
 ): number[] {
   try {
@@ -107,7 +107,7 @@ export function getJustFrequencies(
  * @returns 各音の周波数差（セント）のリスト
  */
 export function getEqualJustDiff(
-  pitchNameList: formType[],
+  pitchNameList: Pitch[],
   a4Freq: number
 ): number[] {
   try {

@@ -48,7 +48,6 @@ export const SENSITIVITY_DEFAULT = 50; // デフォルト感度（-100dBに相�
 export function sensitivityToDb(sensitivity: number): number {
   // 0-100の感度を-60～-140dBの範囲に線形マッピング（逆方向）
   const db = -60 - (sensitivity / 100) * 80;
-  console.log(`[CONVERSION] Sensitivity ${sensitivity} → ${db.toFixed(1)} dB`);
   return db;
 }
 
@@ -58,7 +57,6 @@ export function sensitivityToDb(sensitivity: number): number {
 export function dbToSensitivity(db: number): number {
   // -60～-140dBの範囲を0-100の感度に線形マッピング（逆方向）
   const sensitivity = Math.round(((-60 - db) / 80) * 100);
-  console.log(`[CONVERSION] ${db.toFixed(1)} dB → Sensitivity ${sensitivity}`);
   return sensitivity;
 }
 

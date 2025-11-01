@@ -1,5 +1,5 @@
 import { getJustFrequencies } from "./calcJustFreq";
-import { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 
 /**
  * 演奏された音の評価
@@ -13,7 +13,7 @@ import { formType } from "@/lib/schema";
 export function evaluateSpectrum(
   spec: Float32Array, // AnalyserNode から取得する生データ
   freq: number[],
-  pitchNameList: formType[],
+  pitchNameList: Pitch[],
   evalRangeCents: number,
   a4Freq: number, // A4_FREQ を引数に追加
   evalThreshold: number // EVAL_THRESHOLD を引数に追加
@@ -67,18 +67,6 @@ export function evaluateSpectrum(
       evalList.push(null);
       continue;
     }
-
-    // デバッグ: 実際のスペクトル値を確認
-    const maxInRange = Math.max(...evalSpec);
-    console.log(
-      `[DEBUG] Pitch ${estFreqs.indexOf(
-        est_f
-      )}: maxInRange=${maxInRange.toFixed(
-        1
-      )}dB, threshold=${evalThreshold.toFixed(1)}dB, passed=${
-        maxInRange >= evalThreshold
-      }`
-    );
 
     // 最も強いスペクトルをもつもののindex を取得
     let specMax = 0;
