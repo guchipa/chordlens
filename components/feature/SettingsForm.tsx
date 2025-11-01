@@ -26,7 +26,7 @@ export function SettingsForm({
   onA4FreqChange,
   onEvalThresholdChange,
   onFftSizeChange,
-  onSmoothingTimeConstantChange, // 新しいプロップ
+  onSmoothingTimeConstantChange,
 }: SettingsFormProps) {
   const [evalRange, setEvalRange] = useState(EVAL_RANGE_CENTS);
   const [a4Freq, setA4Freq] = useState(A4_FREQ);
