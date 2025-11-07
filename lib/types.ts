@@ -116,3 +116,58 @@ export interface SettingsFormProps {
   onFftSizeChange: (value: number) => void;
   onSmoothingTimeConstantChange: (value: number) => void;
 }
+
+// ========================================
+// ログ記録関連の型定義（評価実験用）
+// ========================================
+
+/**
+ * ログエントリの型定義
+ * 1回の解析結果を記録
+ */
+export interface LogEntry {
+  /** ISO 8601形式の日時文字列（ミリ秒・タイムゾーン付き） */
+  timestamp: string;
+  /** セッション開始からの経過ミリ秒 */
+  elapsedMs: number;
+  /** セッションID（UUID） */
+  sessionId: string;
+  /** 構成音リスト */
+  pitchList: Pitch[];
+  /** 解析結果（deviation値 -1.0 ~ 1.0） */
+  analysisResult: (number | null)[];
+  /** セント単位のズレ */
+  centDeviations: (number | null)[];
+  /** 解析設定 */
+  settings: {
+    a4Freq: number;
+    evalRangeCents: number;
+    evalThreshold: number;
+    fftSize: number;
+    smoothingTimeConstant: number;
+  };
+}
+
+/**
+ * ログセッションの型定義
+ * 1回の実験セッション全体のログを管理
+ */
+export interface LogSession {
+  /** セッションID（UUID） */
+  sessionId: string;
+  /** ISO 8601形式の開始日時 */
+  startTime: string;
+  /** ISO 8601形式の終了日時 */
+  endTime: string | null;
+  /** ログエントリの配列 */
+  entries: LogEntry[];
+  /** メタデータ */
+  metadata: {
+    /** ブラウザのUser-Agent文字列 */
+    userAgent: string;
+    /** 実験条件（任意） */
+    experimentCondition?: string;
+    /** 被験者ID（任意） */
+    participantId?: string;
+  };
+}

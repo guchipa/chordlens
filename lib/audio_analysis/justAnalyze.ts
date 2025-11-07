@@ -2,6 +2,16 @@ import { getJustFrequencies } from "./calcJustFreq";
 import type { Pitch } from "@/lib/types";
 
 /**
+ * 演奏された音の評価結果
+ */
+export interface EvaluationResult {
+  /** deviation値（-1.0〜1.0、正規化された値） */
+  deviation: number | null;
+  /** セント単位の誤差（生の値） */
+  centDeviation: number | null;
+}
+
+/**
  * 演奏された音の評価
  * @param spec 各周波数に対するスペクトル（強さ）- AnalyserNode.getFloatFrequencyData() の結果
  * @param freq 周波数ビン配列 - AnalyserNode から計算
@@ -9,6 +19,7 @@ import type { Pitch } from "@/lib/types";
  * @param evalRangeCents 評価範囲（セント）
  * @param a4Freq 基準となるA4の周波数
  * @param evalThreshold スペクトル評価の閾値
+ * @returns 各音のdeviation値とセント誤差を含む評価結果
  */
 export function evaluateSpectrum(
   spec: Float32Array, // AnalyserNode から取得する生データ
@@ -17,14 +28,14 @@ export function evaluateSpectrum(
   evalRangeCents: number,
   a4Freq: number, // A4_FREQ を引数に追加
   evalThreshold: number // EVAL_THRESHOLD を引数に追加
-): (number | null)[] {
+): EvaluationResult[] {
   const estFreqs = getJustFrequencies(pitchNameList, a4Freq); // a4Freq を渡す
 
   if (estFreqs.length === 0) {
     return [];
   }
 
-  const evalList: (number | null)[] = [];
+  const evalList: EvaluationResult[] = [];
 
   for (const est_f of estFreqs) {
     let targetFreq = 1e10;
@@ -64,7 +75,7 @@ export function evaluateSpectrum(
     const evalSpec = spec.slice(evalRangeMin, evalRangeMax);
 
     if (evalSpec.length === 0) {
-      evalList.push(null);
+      evalList.push({ deviation: null, centDeviation: null });
       continue;
     }
 
@@ -78,21 +89,27 @@ export function evaluateSpectrum(
       }
     }
 
-    // spec_max が閾値以下の場合は None を返す
+    // spec_max が閾値以下の場合は null を返す
     if (maxVal < evalThreshold) {
-      // evalThreshold を使用
-      evalList.push(null);
+      evalList.push({ deviation: null, centDeviation: null });
     } else {
-      // spec_max が center と等しい場合は 0 を返す
       // center は eval_spec 配列の中央のインデックス
       const center = Math.floor(evalSpec.length / 2);
 
-      if (specMax === center) {
-        evalList.push(0);
-      } else {
-        // (-1, 1) に丸めてリストに追加
-        evalList.push(Math.round(((specMax - center) / center) * 100) / 100);
-      }
+      // 実際の周波数を計算
+      const actualFreqIdx = evalRangeMin + specMax;
+      const actualFreq = freq[actualFreqIdx];
+
+      // セント単位の誤差を計算: cent = 1200 * log2(actual / expected)
+      const centDeviation = 1200 * Math.log2(actualFreq / est_f);
+
+      // deviation値も計算（正規化された値）
+      const deviation =
+        specMax === center
+          ? 0
+          : Math.round(((specMax - center) / center) * 100) / 100;
+
+      evalList.push({ deviation, centDeviation });
     }
   }
 
