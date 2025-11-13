@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formType } from "@/lib/schema";
 import { getEqualJustDiff } from "@/lib/audio_analysis/calcJustFreq";
 
-import { PITCH_COLOR_MAP } from "@/lib/constants";
-
 // 表示するcentの小数点以下桁数
 const CENT_DIGIT_NUM = 2;
 
