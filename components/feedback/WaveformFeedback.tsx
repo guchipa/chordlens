@@ -5,7 +5,7 @@ import { PITCH_COLOR_MAP } from "@/lib/constants";
 
 interface WaveformFeedbackProps {
   pitchName: string;
-  deviation: number; // -1.0 to 1.0
+  deviation: number | null; // -1.0 to 1.0, or null when not detected
 }
 
 export const WaveformFeedback: React.FC<WaveformFeedbackProps> = ({
@@ -48,27 +48,36 @@ export const WaveformFeedback: React.FC<WaveformFeedbackProps> = ({
     ctx.lineTo(width, height / 2);
     ctx.stroke();
 
-    // 波形描画
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
+    if (deviation !== null) {
+      // 波形描画
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
 
-    const amplitude = deviation * (height / 4);
-    const frequency = 0.05;
+      const amplitude = deviation * (height / 4);
+      const frequency = 0.05;
 
-    for (let x = 0; x < width; x++) {
-      const y = height / 2 + amplitude * Math.sin(x * frequency);
-      if (x === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
+      for (let x = 0; x < width; x++) {
+        const y = height / 2 + amplitude * Math.sin(x * frequency);
+        if (x === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
       }
-    }
 
-    ctx.stroke();
+      ctx.stroke();
+    } else {
+      // 音を検出していない場合のメッセージ
+      ctx.fillStyle = "#9ca3af";
+      ctx.font = "14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("音を検出していません", width / 2, height / 2);
+    }
   }, [deviation, color]);
 
-  const isInTune = Math.abs(deviation) < 0.05;
+  const isInTune = deviation !== null && Math.abs(deviation) < 0.05;
 
   return (
     <div className="flex flex-col gap-2 p-4 w-full border rounded-lg bg-card">
@@ -84,7 +93,9 @@ export const WaveformFeedback: React.FC<WaveformFeedbackProps> = ({
       />
 
       <div className="text-xs text-center">
-        {isInTune ? (
+        {deviation === null ? (
+          <span className="text-muted-foreground">--</span>
+        ) : isInTune ? (
           <span className="text-green-600 dark:text-green-400 font-semibold">
             ✓ チューニング完了
           </span>

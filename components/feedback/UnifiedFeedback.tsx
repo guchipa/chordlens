@@ -27,10 +27,7 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
     return <TunerMeter analysisData={analysisData} />;
   }
 
-  // 偏差がnullでないデータのみをフィルター
-  const validData = analysisData.filter((data) => data.deviation !== null);
-
-  if (validData.length === 0) {
+  if (analysisData.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         解析データがありません
@@ -42,16 +39,35 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
   if (feedbackType === "strobe") {
     return (
       <div className="flex flex-col gap-3 w-full max-w-4xl mx-auto">
-        {validData.map((data) => {
+        {analysisData.map((data) => {
           const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
           const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
-          const deviation = data.deviation as number;
 
           return (
             <StroboFeedback
               key={key}
               pitchName={pitchName}
-              deviation={deviation}
+              deviation={data.deviation}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  // バー表示も横長なので縦に並べる
+  if (feedbackType === "bar") {
+    return (
+      <div className="flex flex-col gap-3 w-full max-w-4xl mx-auto">
+        {analysisData.map((data) => {
+          const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
+          const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
+
+          return (
+            <BarFeedback
+              key={key}
+              pitchName={pitchName}
+              deviation={data.deviation}
             />
           );
         })}
@@ -61,29 +77,17 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {validData.map((data) => {
+      {analysisData.map((data) => {
         const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
         const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
 
-        // TypeScript は deviation が null でないことを確認済み
-        const deviation = data.deviation as number;
-
         switch (feedbackType) {
-          case "bar":
-            return (
-              <BarFeedback
-                key={key}
-                pitchName={pitchName}
-                deviation={deviation}
-              />
-            );
-
           case "numeric":
             return (
               <NumericFeedback
                 key={key}
                 pitchName={pitchName}
-                deviation={deviation}
+                deviation={data.deviation}
                 evalRangeCents={evalRangeCents}
               />
             );
@@ -93,7 +97,7 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
               <WaveformFeedback
                 key={key}
                 pitchName={pitchName}
-                deviation={deviation}
+                deviation={data.deviation}
               />
             );
 
