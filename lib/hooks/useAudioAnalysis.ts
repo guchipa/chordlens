@@ -14,6 +14,9 @@ export function useAudioAnalysis({
   const [analysisResult, setAnalysisResult] = useState<
     (number | null)[] | null
   >(null);
+  const [centDeviations, setCentDeviations] = useState<
+    (number | null)[] | null
+  >(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserNodeRef = useRef<AnalyserNode | null>(null);
@@ -22,7 +25,7 @@ export function useAudioAnalysis({
 
   const startProcessing = useCallback(async () => {
     if (isProcessing) return;
-    
+
     try {
       // AudioContextを初期化
       if (!audioContextRef.current) {
@@ -55,7 +58,7 @@ export function useAudioAnalysis({
 
         analyserNodeRef.current.getFloatFrequencyData(dataArray);
 
-        const result = evaluateSpectrum(
+        const results = evaluateSpectrum(
           dataArray,
           freqBins,
           currentPitchList,
@@ -63,7 +66,10 @@ export function useAudioAnalysis({
           a4Freq,
           evalThreshold
         );
-        setAnalysisResult(result);
+
+        // deviation値とcentDeviationを分離
+        setAnalysisResult(results.map((r) => r.deviation));
+        setCentDeviations(results.map((r) => r.centDeviation));
 
         animationFrameIdRef.current = requestAnimationFrame(analyzeLoop);
       };
@@ -106,11 +112,13 @@ export function useAudioAnalysis({
     }
     setIsProcessing(false);
     setAnalysisResult(null);
+    setCentDeviations(null);
   }, []);
 
   return {
     isProcessing,
     analysisResult,
+    centDeviations,
     startProcessing,
     stopProcessing,
   };
