@@ -50,9 +50,14 @@ describe("AnalysisResult", () => {
     // "平均律からの差" カードが表示されていることを確認
     expect(screen.getByText("平均律からの差")).toBeInTheDocument();
 
-    // CentDisplayコンポーネント内にピッチ名が表示されていることを確認
-    expect(screen.getByText(/C4/)).toBeInTheDocument();
-    expect(screen.getByText(/E4/)).toBeInTheDocument();
-    expect(screen.getByText(/G4/)).toBeInTheDocument();
+    // CentDisplayコンポーネント内にピッチ名が表示されていることを確認（複数あるのでAllByを使用）
+    const c4Elements = screen.getAllByText(/C4/);
+    expect(c4Elements.length).toBeGreaterThan(0);
+
+    const e4Elements = screen.getAllByText(/E4/);
+    expect(e4Elements.length).toBeGreaterThan(0);
+
+    const g4Elements = screen.getAllByText(/G4/);
+    expect(g4Elements.length).toBeGreaterThan(0);
   });
 });
