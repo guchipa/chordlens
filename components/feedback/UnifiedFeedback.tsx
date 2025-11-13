@@ -24,7 +24,7 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
   evalRangeCents,
 }) => {
   if (feedbackType === "meter") {
-    return <TunerMeter analysisData={analysisData} />;
+    return <TunerMeter title={"メーター"} analysisData={analysisData} />;
   }
 
   if (analysisData.length === 0) {

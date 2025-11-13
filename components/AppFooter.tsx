@@ -9,7 +9,7 @@ export const AppFooter = () => {
     <footer className="w-full bg-white border-t">
       <div className="container mx-auto py-5 px-4 text-center text-sm text-gray-600">
         <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-2">
-          <p>&copy; {currentYear} ChordLens</p>
+          <p>&copy; {currentYear} Hinata Moriguchi</p>
           <a
             href="https://github.com/guchipa/chordlens"
             target="_blank"
