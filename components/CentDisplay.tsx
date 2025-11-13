@@ -31,12 +31,6 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({ pitchList, a4Freq, tit
               key={`${pitchName}-${octaveNum}-${index}`}
               className="flex items-center gap-2 text-sm"
             >
-              <span
-                className="w-3 h-3 rounded-full"
-                style={{
-                  backgroundColor: PITCH_COLOR_MAP[pitchName] || "#888",
-                }}
-              />
               <span className="font-semibold">
                 {pitchName}
                 {octaveNum}

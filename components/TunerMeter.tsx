@@ -121,6 +121,25 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
             <circle cx="50" cy="50" r="3" fill="black" />
           </svg>
         </div>
+        <div className="flex flex-wrap justify-start gap-x-4 gap-y-2 mt-4">
+          {displayData.map(({ pitch: { pitchName, octaveNum }}, index) => (
+            <div
+              key={`${pitchName}-${octaveNum}-${index}`}
+              className="flex items-center gap-2 text-sm"
+            >
+              <span
+                className="w-3 h-3 rounded-full"
+                style={{
+                  backgroundColor: PITCH_COLOR_MAP[pitchName] || "#888",
+                }}
+              />
+              <span className="font-semibold">
+                {pitchName}
+                {octaveNum}
+              </span>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
