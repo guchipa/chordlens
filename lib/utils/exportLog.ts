@@ -13,7 +13,12 @@ import type { LogSession } from "@/lib/types";
  */
 function escapeCsvValue(value: string | number | boolean | null): string {
   if (value === null || value === undefined) {
-    return "null";
+    return "";
+  }
+
+  // 数値とbooleanはそのまま出力（Excelで数値として認識させる）
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
   }
 
   const str = String(value);
@@ -64,7 +69,10 @@ export function convertLogToCSV(session: LogSession): string {
         escapeCsvValue(`${pitch.pitchName}${pitch.octaveNum}`),
         escapeCsvValue(pitch.isRoot ?? false),
         escapeCsvValue(deviation),
-        escapeCsvValue(centDeviation),
+        // centDeviationが数値であることを保証
+        centDeviation !== null && centDeviation !== undefined
+          ? escapeCsvValue(Number(centDeviation))
+          : "",
         escapeCsvValue(entry.settings.a4Freq),
         escapeCsvValue(entry.settings.evalRangeCents),
         escapeCsvValue(entry.settings.evalThreshold),
