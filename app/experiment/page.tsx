@@ -17,6 +17,7 @@ import { useLogRecorder } from "@/lib/hooks/useLogRecorder";
 import { AppFooter } from "@/components/AppFooter";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
+import { CentDisplay } from "@/components/CentDisplay";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { LogExportButton } from "@/components/feature/LogExportButton";
@@ -157,6 +158,11 @@ export default function ExperimentPage() {
             deviation: analysisResult?.[index] ?? null,
           }))}
           evalRangeCents={evalRangeCents}
+        />
+        <CentDisplay
+          pitchList={currentPitchList}
+          a4Freq={a4Freq}
+          title="和音情報"
         />
       </main>
       <AppFooter />
