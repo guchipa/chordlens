@@ -8,6 +8,7 @@ import { NumericFeedback } from "./NumericFeedback";
 import { WaveformFeedback } from "./WaveformFeedback";
 import type { FeedbackType } from "@/lib/constants";
 import type { formType } from "@/lib/schema";
+import { CircleFeedback } from "./CircleFeedback";
 
 interface UnifiedFeedbackProps {
   feedbackType: FeedbackType;
@@ -71,6 +72,20 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
             />
           );
         })}
+      </div>
+    );
+  }
+
+  if (feedbackType === "circle") {
+    // CircleFeedbackは1つの円で全ての音名を表示
+    const circleData = analysisData.map((data) => ({
+      pitchName: `${data.pitch.pitchName}${data.pitch.octaveNum}`,
+      deviation: data.deviation,
+    }));
+
+    return (
+      <div className="flex justify-center w-full px-4">
+        <CircleFeedback analysisData={circleData} className="w-full max-w-3xl" />
       </div>
     );
   }
