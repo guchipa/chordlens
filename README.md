@@ -11,6 +11,9 @@
   <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" alt="React 19">
 </p>
 
+<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/69517832-dfdf-4ebc-9910-8c501e9c3a3e" />
+
+
 ## 概要 (Introduction)
 
 **ChordLens**は、マイクから入力された音声をリアルタイムで解析し、設定した和音の構成音が**純正律**からどれだけズレているかを視覚的に表示するWebアプリケーションです。
