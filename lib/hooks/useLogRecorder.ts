@@ -86,7 +86,7 @@ export function useLogRecorder({
 
   // ログセッションをuseRefで保持（再レンダリングを避ける）
   const sessionRef = useRef<LogSession | null>(null);
-  const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   // 最新の値をuseRefで保持（useEffectの依存配列問題を回避）
   const latestValuesRef = useRef({
@@ -156,10 +156,10 @@ export function useLogRecorder({
     sessionRef.current.endTime = new Date().toISOString();
     setIsRecording(false);
 
-    // タイマーをクリア
-    if (intervalIdRef.current) {
-      clearInterval(intervalIdRef.current);
-      intervalIdRef.current = null;
+    // リクエストをクリア
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
     }
   }, [isRecording]);
 
@@ -171,14 +171,68 @@ export function useLogRecorder({
     setEntryCount(0);
     setIsRecording(false);
 
-    if (intervalIdRef.current) {
-      clearInterval(intervalIdRef.current);
-      intervalIdRef.current = null;
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
     }
   }, []);
 
+  const recordEntry = useCallback(() => {
+    const {
+      analysisResult: currentAnalysisResult,
+      centDeviations: currentCentDeviations,
+      pitchList: currentPitchList,
+      evalRangeCents: currentEvalRangeCents,
+      a4Freq: currentA4Freq,
+      evalThreshold: currentEvalThreshold,
+      fftSize: currentFftSize,
+      smoothingTimeConstant: currentSmoothingTimeConstant,
+    } = latestValuesRef.current;
+
+    if (!sessionRef.current || !currentAnalysisResult) {
+      console.log(
+        "[useLogRecorder] Frame tick - no session or no analysisResult"
+      );
+      return;
+    }
+
+    const session = sessionRef.current;
+    const now = new Date();
+    const startTimeMs = new Date(session.startTime).getTime();
+    const elapsedMs = now.getTime() - startTimeMs;
+
+    const centDeviations =
+      currentCentDeviations ||
+      currentAnalysisResult.map((deviation) =>
+        deviationToCents(deviation, currentEvalRangeCents)
+      );
+
+    const entry: LogEntry = {
+      timestamp: now.toISOString(),
+      elapsedMs,
+      sessionId: session.sessionId,
+      pitchList: [...currentPitchList],
+      analysisResult: [...currentAnalysisResult],
+      centDeviations,
+      settings: {
+        a4Freq: currentA4Freq,
+        evalRangeCents: currentEvalRangeCents,
+        evalThreshold: currentEvalThreshold,
+        fftSize: currentFftSize,
+        smoothingTimeConstant: currentSmoothingTimeConstant,
+      },
+    };
+
+    session.entries.push(entry);
+    setEntryCount(session.entries.length);
+    console.log("[useLogRecorder] Entry recorded", {
+      entryCount: session.entries.length,
+      elapsedMs,
+    });
+  }, []);
+
   /**
-   * 解析実行中かつログ記録中の場合、100msごとにログを記録
+   * 解析実行中かつログ記録中の場合、1フレームごとにログを記録
    */
   useEffect(() => {
     console.log("[useLogRecorder] useEffect triggered", {
@@ -187,83 +241,32 @@ export function useLogRecorder({
     });
 
     if (isRecording && isProcessing) {
-      // タイマーを設定（100ms間隔）
-      console.log("[useLogRecorder] Setting up interval");
-      intervalIdRef.current = setInterval(() => {
-        // 最新の値をrefから取得
-        const {
-          analysisResult: currentAnalysisResult,
-          centDeviations: currentCentDeviations,
-          pitchList: currentPitchList,
-          evalRangeCents: currentEvalRangeCents,
-          a4Freq: currentA4Freq,
-          evalThreshold: currentEvalThreshold,
-          fftSize: currentFftSize,
-          smoothingTimeConstant: currentSmoothingTimeConstant,
-        } = latestValuesRef.current;
+      console.log("[useLogRecorder] Setting up requestAnimationFrame logging");
 
-        // 直接ログを記録
-        if (!sessionRef.current || !currentAnalysisResult) {
-          console.log(
-            "[useLogRecorder] Interval tick - no session or no analysisResult"
-          );
-          return;
-        }
+      const tick = () => {
+        recordEntry();
+        rafIdRef.current = window.requestAnimationFrame(tick);
+      };
 
-        const session = sessionRef.current;
-        const now = new Date();
-        const startTimeMs = new Date(session.startTime).getTime();
-        const elapsedMs = now.getTime() - startTimeMs;
-
-        // 解析機構から直接取得したセント誤差を使用（情報落ちなし）
-        const centDeviations =
-          currentCentDeviations ||
-          currentAnalysisResult.map((deviation) =>
-            deviationToCents(deviation, currentEvalRangeCents)
-          );
-
-        const entry: LogEntry = {
-          timestamp: now.toISOString(),
-          elapsedMs,
-          sessionId: session.sessionId,
-          pitchList: [...currentPitchList],
-          analysisResult: [...currentAnalysisResult],
-          centDeviations,
-          settings: {
-            a4Freq: currentA4Freq,
-            evalRangeCents: currentEvalRangeCents,
-            evalThreshold: currentEvalThreshold,
-            fftSize: currentFftSize,
-            smoothingTimeConstant: currentSmoothingTimeConstant,
-          },
-        };
-
-        session.entries.push(entry);
-        setEntryCount(session.entries.length);
-        console.log("[useLogRecorder] Entry recorded", {
-          entryCount: session.entries.length,
-          elapsedMs,
-        });
-      }, 100);
+      rafIdRef.current = window.requestAnimationFrame(tick);
 
       return () => {
-        console.log("[useLogRecorder] Cleaning up interval");
-        if (intervalIdRef.current) {
-          clearInterval(intervalIdRef.current);
-          intervalIdRef.current = null;
+        console.log("[useLogRecorder] Cleaning up requestAnimationFrame");
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
         }
       };
-    } else {
-      // 記録停止時にタイマーをクリア
-      if (intervalIdRef.current) {
-        console.log(
-          "[useLogRecorder] Clearing interval (not recording or not processing)"
-        );
-        clearInterval(intervalIdRef.current);
-        intervalIdRef.current = null;
-      }
     }
-  }, [isRecording, isProcessing]); // 依存配列はbooleanのみ
+
+    if (rafIdRef.current !== null) {
+      console.log(
+        "[useLogRecorder] Clearing requestAnimationFrame (not recording or not processing)"
+      );
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+  }, [isRecording, isProcessing, recordEntry]); // 依存配列はbooleanのみ
 
   return {
     isRecording,
