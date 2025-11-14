@@ -14,7 +14,7 @@ exports[`AppFooter renders correctly 1`] = `
         <p>
           © 
           2025
-           ChordLens
+           Hinata Moriguchi
         </p>
         <a
           class="inline-flex items-center gap-1.5 hover:text-gray-900 transition-colors"

@@ -11,7 +11,7 @@ describe("AppFooter", () => {
   it("displays the current year", () => {
     render(<AppFooter />);
     const currentYear = new Date().getFullYear();
-    expect(screen.getByText(`© ${currentYear} ChordLens`)).toBeInTheDocument();
+    expect(screen.getByText(`© ${currentYear} Hinata Moriguchi`)).toBeInTheDocument();
   });
 
   it("has a link to the GitHub repository", () => {

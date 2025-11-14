@@ -175,8 +175,8 @@ describe("exportLog", () => {
 
       const csv = convertLogToCSV(session);
 
-      // null値は"null"として出力される
-      expect(csv).toContain("null,null");
+      // null値は空文字列として出力される
+      expect(csv).toContain(",,");
     });
 
     it("空のエントリ配列でもヘッダーを出力する", () => {
