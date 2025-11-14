@@ -1,8 +1,8 @@
-# ChordLens Web
+# ChordLens
 
 <p align="center">
   <a href="https://chordlens.vercel.app/" target="_blank">
-    <img src="https://img.shields.io/badge/🎵_Live_Demo-試してみる-brightgreen?style=for-the-badge" alt="Live Demo">
+    <img src="https://img.shields.io/badge/Live_Demo-試してみる-brightgreen?style=for-the-badge" alt="Live Demo">
   </a>
   <a href="https://github.com/guchipa/chordlens/actions">
     <img src="https://img.shields.io/github/actions/workflow/status/guchipa/chordlens/test.yml?style=for-the-badge&label=Tests" alt="Tests">
@@ -11,28 +11,28 @@
   <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" alt="React 19">
 </p>
 
-![和音チューナー-1](https://github.com/user-attachments/assets/0cee1272-e894-4c44-939f-73d724940ecb)
-![和音チューナー-2](https://github.com/user-attachments/assets/fe90613a-9d9c-420b-aaa3-67470fc0c82a)
+## 概要 (Introduction)
 
-## 📖 概要 (Introduction)
-
-**ChordLens Web**は、マイクから入力された音声をリアルタイムで解析し、設定した和音の構成音が**純正律**からどれだけズレているかを視覚的に表示するWebアプリケーションです。
+**ChordLens**は、マイクから入力された音声をリアルタイムで解析し、設定した和音の構成音が**純正律**からどれだけズレているかを視覚的に表示するWebアプリケーションです。
 
 東京理科大学 創域理工学研究科 情報計算科学専攻 大村研究室での研究「和音演奏のための多重音チューニングシステム」で提案した手法を、Web Audio APIを用いて完全にブラウザ上で実装しました。サーバー不要のフロントエンドのみの構成により、高速で安全なリアルタイム音声処理を実現しています。
 
-## ✨ 主な特徴 (Features)
+## 主な特徴 (Features)
 
-* 🎤 **リアルタイム音声解析:** Web Audio APIによる低レイテンシーなフィードバック（100ms以下）
-* 🎵 **複数音の同時評価:** 和音（コード）に含まれる複数の音を同時に評価可能
-* ⚙️ **柔軟な設定:** 音名・オクターブの自由な追加/削除、FFTサイズ・平滑化定数などの詳細設定
-* 🎯 **純正律ベース:** 平均律ではなく、美しく響き合う純正律を基準に評価
-* 🤖 **根音自動推定:** 入力された構成音から和音の根音を自動推定する機能
-* 📊 **視覚的フィードバック:** 直感的なメーターUIとセント表示による正確なチューニング支援
-* 🚀 **完全フロントエンド:** サーバー不要、ブラウザ内で完結する音声処理
-* 💾 **設定の永続化:** localStorageによる設定値の自動保存
-* 📱 **レスポンシブ対応:** スマートフォン・タブレット・デスクトップに最適化
+* **リアルタイム音声解析**: Web Audio APIによる低レイテンシーなフィードバック（100ms以下）
+* **複数音の同時評価**: 和音（コード）に含まれる複数の音を同時に評価可能
+* **プリセット機能**: 構成音リストの保存・読込に対応（最大20個まで保存可能）
+* **柔軟な設定**: 音名・オクターブの自由な追加/削除、FFTサイズ・平滑化定数などの詳細設定
+* **純正律ベース**: 平均律ではなく、美しく響き合う純正律を基準に評価
+* **根音自動推定**: 入力された構成音から和音の根音を自動推定する機能
+* **多様な視覚フィードバック**: バー、円形、ストロボ、波形など複数の表示モードに対応
+* **実験用ログ記録**: チューニング履歴のエクスポート機能（CSV形式）
+* **PWA対応**: オフライン動作・ホーム画面へのインストールが可能
+* **完全フロントエンド**: サーバー不要、ブラウザ内で完結する音声処理
+* **設定の永続化**: localStorageによる設定値の自動保存
+* **レスポンシブ対応**: スマートフォン・タブレット・デスクトップに最適化
 
-## �️ 技術スタック (Tech Stack)
+## 技術スタック (Tech Stack)
 
 | カテゴリ             | 技術                                                                                                                                                                                                                             |
 | :------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -47,22 +47,35 @@
 | **Deployment**       | [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)                                                                                                     |
 | **Package Manager**  | ![npm](https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)                                                                                                                                     |
 
-## 📂 プロジェクト構造 (Project Structure)
+## プロジェクト構造 (Project Structure)
 
 ```
 ChordLens-web/
 ├── app/                      # Next.js App Router
 │   ├── page.tsx             # メインページ（音声解析統合）
 │   ├── layout.tsx           # 全体レイアウト
-│   └── globals.css          # グローバルスタイル
+│   ├── globals.css          # グローバルスタイル
+│   ├── manifest.json        # PWAマニフェスト
+│   └── experiment/          # 実験用ページ
 ├── components/              # Reactコンポーネント
 │   ├── feature/             # 機能コンポーネント
 │   │   ├── PitchSettingForm.tsx    # 構成音入力フォーム
 │   │   ├── PitchList.tsx           # 構成音リスト表示
 │   │   ├── AnalysisControl.tsx     # 解析開始/停止制御
 │   │   ├── AnalysisResult.tsx      # 解析結果表示
-│   │   └── SettingsForm.tsx        # 設定パネル
-│   ├── TunerMeter.tsx       # メーター表示（視覚フィードバック）
+│   │   ├── SettingsForm.tsx        # 設定パネル
+│   │   ├── PresetManager.tsx       # プリセット管理
+│   │   ├── FeedbackTypeSelector.tsx # フィードバック表示切替
+│   │   └── LogExportButton.tsx     # ログエクスポート
+│   ├── feedback/            # 視覚フィードバック
+│   │   ├── UnifiedFeedback.tsx     # 統合フィードバック
+│   │   ├── BarFeedback.tsx         # バー表示
+│   │   ├── CircleFeedback.tsx      # 円形表示
+│   │   ├── StroboFeedback.tsx      # ストロボ表示
+│   │   ├── WaveformFeedback.tsx    # 波形表示
+│   │   └── NumericFeedback.tsx     # 数値表示
+│   ├── layout/              # レイアウトコンポーネント
+│   ├── TunerMeter.tsx       # メーター表示（旧）
 │   ├── CentDisplay.tsx      # セント表示
 │   ├── AppFooter.tsx        # フッター
 │   └── ui/                  # shadcn/ui プリミティブ
@@ -71,20 +84,33 @@ ChordLens-web/
 │   │   ├── calcJustFreq.ts         # 純正律周波数計算
 │   │   ├── justAnalyze.ts          # スペクトル解析・評価
 │   │   └── rootEstimation.ts       # 根音推定アルゴリズム
+│   ├── hooks/               # カスタムフック
+│   │   ├── useAudioAnalysis.ts     # 音声解析管理
+│   │   ├── useAudioSettings.ts     # 設定管理
+│   │   ├── usePitchList.ts         # 構成音リスト管理
+│   │   ├── useFeedbackType.ts      # フィードバック表示管理
+│   │   └── useLogRecorder.ts       # ログ記録
+│   ├── utils/               # ユーティリティ
+│   │   └── exportLog.ts            # ログエクスポート
 │   ├── constants.ts         # 定数定義
 │   ├── schema.ts            # Zodスキーマ定義
-│   └── utils.ts             # ユーティリティ関数
+│   ├── types.ts             # 型定義
+│   ├── presets.ts           # プリセット管理
+│   └── utils.ts             # 共通ユーティリティ
 ├── __tests__/               # Jestテスト
 ├── public/                  # 静的ファイル
+│   ├── sw.js               # Service Worker
+│   └── workbox-*.js        # Workbox
+├── docs/                    # ドキュメント
 └── .github/                 # GitHub設定・CI/CD
 ```
 
-## 🚀 セットアップ (Getting Started)
+## セットアップ (Getting Started)
 
 ### 必要な環境
 
 - **Node.js**: v18以上
-- **npm**: v9以上
+- **npm**: v9以上（または pnpm）
 
 ### インストールと起動
 
@@ -112,7 +138,9 @@ npm test            # Jestテスト実行
 npm run test:watch  # Jestウォッチモード
 ```
 
-## 🎵 使い方 (Usage)
+## 使い方 (Usage)
+
+### 基本的な使用方法
 
 1. **構成音の追加**
    - 音名とオクターブ番号を選択
@@ -126,17 +154,40 @@ npm run test:watch  # Jestウォッチモード
 3. **解析開始**
    - 「解析開始」ボタンをクリック
    - マイクアクセスを許可
-   - 楽器を演奏すると、リアルタイムでメーターが反応
+   - 楽器を演奏すると、リアルタイムでフィードバックが表示
 
 4. **チューニング**
-   - メーターの針が中央に来るように楽器を調整
-   - 「平均律からの差」でセント単位の正確な値を確認
+   - 表示が中央に来るように楽器を調整
+   - セント単位の正確な値を確認しながら微調整
 
-5. **設定の調整**（オプション）
-   - 「設定」パネルから詳細パラメータを調整可能
-   - FFTサイズ、平滑化定数、評価範囲などをカスタマイズ
+### プリセット機能
 
-## 🧪 テスト (Testing)
+- **保存**: 構成音リストを最大20個まで保存可能
+- **読込**: 保存したプリセットをワンクリックで復元
+- **削除**: 不要なプリセットを個別に削除
+
+### 表示モード
+
+以下のフィードバック表示モードから選択可能:
+- **バー表示**: シンプルなバーによる視覚化
+- **円形表示**: 円形メーターによる視覚化
+- **ストロボ表示**: 高精度な視覚的フィードバック
+- **波形表示**: 周期的な波形による視覚化
+- **数値表示**: セント値の数値表示
+
+### 設定の調整
+
+「設定」パネルから以下のパラメータを調整可能:
+- FFTサイズ（2048〜32768）
+- 平滑化定数（0.0〜1.0）
+- 評価範囲（セント単位）
+- その他音声処理パラメータ
+
+### ログ記録
+
+実験用途向けに、チューニング履歴をCSV形式でエクスポート可能。タイムスタンプ、構成音、評価結果などが記録されます。
+
+## テスト (Testing)
 
 このプロジェクトはJestとReact Testing Libraryを使用してテストされています。
 
@@ -151,45 +202,35 @@ npm run test:watch
 npm test -- --coverage
 ```
 
-**テストカバレッジ:**
-- ✅ UIコンポーネント（スナップショットテスト）
-- ✅ フォームバリデーション
-- ✅ ユーザーインタラクション
-- ✅ 音声解析ロジック（モック使用）
+**テスト対象:**
+- UIコンポーネント（スナップショットテスト）
+- フォームバリデーション
+- ユーザーインタラクション
+- 音声解析ロジック
+- プリセット管理機能
+- ログエクスポート機能
 
-## 📚 ドキュメント (Documentation)
+## ドキュメント (Documentation)
 
-- **[仕様書](./仕様書.md)**: システム全体の詳細仕様
+- **[仕様書](./docs/仕様書.md)**: システム全体の詳細仕様
 - **[Copilot Instructions](./.github/copilot-instructions.md)**: AI開発支援用プロジェクトガイド
-- **[技術ブログ記事](#)**: 開発の裏側と技術的詳細（準備中）
 
-## 🌐 対応ブラウザ (Browser Support)
+## 対応ブラウザ (Browser Support)
 
 | ブラウザ      | バージョン | 対応状況 |
 | :------------ | :--------- | :------- |
-| Chrome        | 最新版     | ✅        |
-| Edge          | 最新版     | ✅        |
-| Safari        | 最新版     | ✅        |
-| Firefox       | 最新版     | ✅        |
-| iOS Safari    | 最新版     | ✅        |
-| Chrome Mobile | 最新版     | ✅        |
+| Chrome        | 最新版     | 対応     |
+| Edge          | 最新版     | 対応     |
+| Safari        | 最新版     | 対応     |
+| Firefox       | 最新版     | 対応     |
+| iOS Safari    | 最新版     | 対応     |
+| Chrome Mobile | 最新版     | 対応     |
 
 **注意事項:**
 - HTTPS接続またはlocalhostでの使用が必須（getUserMedia APIの制約）
 - Web Audio APIをサポートするブラウザが必要
+- PWA機能により、オフラインでも動作可能
 
-## 📄 ライセンス (License)
+## ライセンス (License)
 
 このプロジェクトは[MITライセンス](LICENSE)の下で公開されています。
-
-## 🗺️ 今後の展望 (Roadmap)
-
-- [ ] 構成音リストのメモリー機能（プリセット保存）
-- [ ] PWA化（オフライン動作対応）
-- [ ] 多言語対応（英語UI）
-- [ ] 音声録音・再生機能
-- [ ] スペクトラムビジュアライザー
-- [ ] ダークモード対応
-- [ ] コードプリセット機能（Major 7th, Minor 7thなど）
-- [ ] チューニング履歴の記録と分析
-
