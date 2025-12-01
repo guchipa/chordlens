@@ -61,6 +61,8 @@ export function evaluateSpectrum(
     // freq[1] - freq[0] は周波数ビンの刻み幅
     const freqStep = freq.length > 1 ? freq[1] - freq[0] : 1; // 0除算対策
 
+    console.log("周波数分解能: " + freqStep);
+
     // 中央のビンを基準に範囲を調整
     // targetIdx を中心とした近似的な範囲
     const rangeMinIdxApprox =
