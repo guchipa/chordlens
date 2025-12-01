@@ -8,6 +8,13 @@ import {
 } from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { SettingsFormProps } from "@/lib/types";
 import {
   A4_FREQ,
@@ -138,20 +145,11 @@ export function SettingsForm({
     }
   };
 
-  const handleFftSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    // FFT_SIZEは2のべき乗である必要があるため、適切なバリデーションを追加
-    if (
-      !isNaN(value) &&
-      (value & (value - 1)) === 0 &&
-      value >= 32 &&
-      value <= 32768
-    ) {
-      // 最小値と最大値を設定
-      setFftSize(value);
-      localStorage.setItem("fftSize", value.toString());
-      onFftSizeChange(value);
-    }
+  const handleFftSizeChange = (value: string) => {
+    const intValue = parseInt(value, 10);
+    setFftSize(intValue);
+    localStorage.setItem("fftSize", intValue.toString());
+    onFftSizeChange(intValue);
   };
 
   const handleSmoothingTimeConstantChange = (
@@ -164,6 +162,8 @@ export function SettingsForm({
       onSmoothingTimeConstantChange(value);
     }
   };
+
+  const fftSizeOptions = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
 
   return (
     <Card className="w-full max-w-md">
@@ -227,15 +227,21 @@ export function SettingsForm({
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="fftSize">FFTサイズ</Label>
-                  <Input
-                    id="fftSize"
-                    type="number"
-                    value={fftSize}
-                    onChange={handleFftSizeChange}
-                    min="32"
-                    max="32768"
-                    step="any" // 2のべき乗のみを許可するが、input type="number"ではstep="2"のように設定できないため、anyにしてバリデーションはonChangeで行う
-                  />
+                  <Select
+                    value={fftSize.toString()}
+                    onValueChange={handleFftSizeChange}
+                  >
+                    <SelectTrigger id="fftSize">
+                      <SelectValue placeholder="FFTサイズを選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fftSizeOptions.map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-sm text-gray-500 mt-1">
                     周波数分解能に影響します (2のべき乗)。
                   </p>
