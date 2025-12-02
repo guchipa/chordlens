@@ -20,5 +20,20 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "実験モード",
+      "short_name": "実験",
+      "description": "評価ログ付きの実験ページを開く",
+      "url": "/experiment",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
