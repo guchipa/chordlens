@@ -1,18 +1,35 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
+import { getSingleEqualJustDiff } from "@/lib/audio_analysis/calcJustFreq";
 
 interface BarFeedbackProps {
   pitchName: string;
   deviation: number | null; // -1.0 to 1.0, or null when not detected
+  rootPitchName?: string; // 根音の音名（例: "C4"）
+  a4Freq?: number; // A4の基準周波数（デフォルト: 442Hz）
 }
 
 export const BarFeedback: React.FC<BarFeedbackProps> = ({
   pitchName,
   deviation,
+  rootPitchName,
+  a4Freq = 442,
 }) => {
+  // 平均律と純正律の差を計算（セント単位）
+  const equalJustDiffCents = useMemo(() => {
+    if (!rootPitchName) return null;
+    return getSingleEqualJustDiff(pitchName, rootPitchName, a4Freq);
+  }, [pitchName, rootPitchName, a4Freq]);
+
   // 偏差をパーセンテージに変換（中央が0%）
   const percentage = deviation !== null ? deviation * 50 : 0; // -50% to 50%
+
+  // 平均律の位置（セントを-1.0〜1.0の範囲に正規化してパーセンテージに変換）
+  // ±50セント（EVAL_RANGE_CENTS）が±1.0に対応
+  const etPercentage = equalJustDiffCents !== null
+    ? (equalJustDiffCents / 50) * 50 // セント → -1.0〜1.0 → パーセンテージ
+    : null;
 
   // チューニング判定
   const isInTune = deviation !== null && Math.abs(deviation) < 0.05;
@@ -36,6 +53,17 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
             width: "10%",
           }}
         />
+
+        {/* 平均律の位置を示す目印 */}
+        {etPercentage !== null && (
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-blue-500 dark:bg-blue-400 z-10"
+            style={{
+              left: `${50 + etPercentage}%`,
+            }}
+            title="平均律"
+          />
+        )}
 
         {deviation !== null && (
           <>

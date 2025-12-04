@@ -158,6 +158,7 @@ export default function ExperimentPage() {
             deviation: analysisResult?.[index] ?? null,
           }))}
           evalRangeCents={evalRangeCents}
+          a4Freq={a4Freq}
         />
         <CentDisplay
           pitchList={currentPitchList}

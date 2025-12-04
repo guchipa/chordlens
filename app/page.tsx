@@ -112,8 +112,9 @@ export default function HomePage() {
             deviation: analysisResult?.[index] ?? null,
           }))}
           evalRangeCents={evalRangeCents}
+          a4Freq={a4Freq}
         />
-        <CentDisplay 
+        <CentDisplay
           pitchList={currentPitchList}
           a4Freq={a4Freq}
           title="和音情報"

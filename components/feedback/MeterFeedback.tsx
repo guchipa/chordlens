@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { METER_MAX_DEVIATION_DEGREES, METER_REMAIN_MS, PITCH_COLOR_MAP } from "@/lib/constants";
 import { formType } from "@/lib/schema";
+import { getSingleEqualJustDiff } from "@/lib/audio_analysis/calcJustFreq";
 
 interface TunerMeterProps {
   /**
@@ -15,11 +16,17 @@ interface TunerMeterProps {
   }>;
   /** メーターのタイトル */
   title?: string;
+  /** 根音の音名（例: "C4"） */
+  rootPitchName?: string;
+  /** A4の基準周波数（デフォルト: 442Hz） */
+  a4Freq?: number;
 }
 
 export const TunerMeter: React.FC<TunerMeterProps> = ({
   analysisData,
   title,
+  rootPitchName,
+  a4Freq = 442,
 }) => {
   // 表示用のデータを保持する state
   const [displayData, setDisplayData] = useState(analysisData);
@@ -91,6 +98,40 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
               );
             })}
 
+            {/* 平均律マーカー */}
+            {rootPitchName && displayData?.map(({ pitch }, index) => {
+              const pitchName = `${pitch.pitchName}${pitch.octaveNum}`;
+              const equalJustDiffCents = getSingleEqualJustDiff(pitchName, rootPitchName, a4Freq);
+
+              if (equalJustDiffCents === null) return null;
+
+              // セントを-1.0〜1.0の範囲に正規化（±50セントが±1.0に対応）
+              const normalizedDiff = equalJustDiffCents / 50;
+              const markerRotation = normalizedDiff * METER_MAX_DEVIATION_DEGREES;
+              const markerColor = PITCH_COLOR_MAP[pitch.pitchName] || "#888";
+
+              // マーカー用の座標計算
+              const markerRotationRad = (-markerRotation + 90) * (Math.PI / 180);
+              const x1 = 50 + 35 * Math.cos(markerRotationRad);
+              const y1 = 50 - 35 * Math.sin(markerRotationRad);
+              const x2 = 50 + 45 * Math.cos(markerRotationRad);
+              const y2 = 50 - 45 * Math.sin(markerRotationRad);
+
+              return (
+                <line
+                  key={`marker-${pitch.pitchName}-${pitch.octaveNum}-${index}`}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={markerColor}
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  opacity="0.6"
+                />
+              );
+            })}
+
             {/* 各音に対応する針を描画 */}
             {displayData?.map(({ pitch, deviation }, index) => {
               if (deviation === null) return null; // 検出されなかった音は表示しない
@@ -122,7 +163,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
           </svg>
         </div>
         <div className="flex flex-wrap justify-start gap-x-4 gap-y-2 mt-4">
-          {displayData.map(({ pitch: { pitchName, octaveNum }}, index) => (
+          {displayData.map(({ pitch: { pitchName, octaveNum } }, index) => (
             <div
               key={`${pitchName}-${octaveNum}-${index}`}
               className="flex items-center gap-2 text-sm"

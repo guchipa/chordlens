@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { TunerMeter } from "@/components/TunerMeter";
+import { TunerMeter } from "@/components/feedback/MeterFeedback";
 
 describe("TunerMeter", () => {
   it("renders correctly with no deviation", () => {

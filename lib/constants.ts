@@ -213,29 +213,20 @@ export const PITCH_COLOR_MAP: { [key: string]: string } = {
  */
 export const FEEDBACK_TYPES = [
   "meter",
-  "strobe",
   "bar",
   "circle",
-  "numeric",
-  "waveform",
 ] as const;
 
 export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
 
 export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
   meter: "メーター",
-  strobe: "ストロボ",
   bar: "バー",
   circle: "サークル",
-  numeric: "数値",
-  waveform: "波形",
 };
 
 export const FEEDBACK_TYPE_DESCRIPTIONS: Record<FeedbackType, string> = {
   meter: "針が動くアナログメーター表示",
-  strobe: "プロ用チューナーのようなストロボ表示",
   bar: "シンプルな横棒グラフ表示",
   circle: "円になった音名で和音の形をわかりやすく",
-  numeric: "セント値を大きく表示",
-  waveform: "周波数のズレを波形で表現",
 };

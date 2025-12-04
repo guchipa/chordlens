@@ -1,6 +1,6 @@
 "use client";
 
-import { TunerMeter } from "@/components/TunerMeter";
+import { TunerMeter } from "@/components/feedback/MeterFeedback";
 import { formType } from "@/lib/schema";
 import { CentDisplay } from "../CentDisplay";
 
@@ -12,7 +12,7 @@ interface AnalysisResultProps {
   a4Freq: number;
 }
 
-export const AnalysisResult: React.FC<AnalysisResultProps> = ({ isProcessing, analysisResult, currentPitchList, a4Freq}) => {
+export const AnalysisResult: React.FC<AnalysisResultProps> = ({ isProcessing, analysisResult, currentPitchList, a4Freq }) => {
   const analysisData = currentPitchList.map((pitch, index) => ({
     pitch,
     deviation: analysisResult?.[index] ?? null,
@@ -23,7 +23,7 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({ isProcessing, an
       {currentPitchList.length > 0 ? (
         <div className="flex flex-col items-center gap-8 w-full max-w-6xl">
           <TunerMeter analysisData={analysisData} title="解析結果" />
-          <CentDisplay pitchList={currentPitchList} a4Freq={a4Freq} title="平均律からの差"/>
+          <CentDisplay pitchList={currentPitchList} a4Freq={a4Freq} title="平均律からの差" />
         </div>
       ) : (
         !isProcessing && (

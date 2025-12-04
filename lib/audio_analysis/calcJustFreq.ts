@@ -156,3 +156,50 @@ export function getEqualJustDiff(
     return [];
   }
 }
+
+/**
+ * 単一の音名から平均律と純正律の周波数差をセント値で取得
+ * @param pitchName 対象の音名（例: "C4"）
+ * @param rootPitchName 根音の音名（例: "C4"）
+ * @param a4Freq A4の基準周波数
+ * @returns 周波数差（セント）、計算できない場合はnull
+ */
+export function getSingleEqualJustDiff(
+  pitchName: string,
+  rootPitchName: string,
+  a4Freq: number
+): number | null {
+  // 音名とオクターブを分離
+  const parseNote = (note: string): { pitchName: string; octaveNum: number } | null => {
+    const match = note.match(/^([A-G][#b]?)(\d)$/);
+    if (!match) return null;
+    return { pitchName: match[1], octaveNum: parseInt(match[2], 10) };
+  };
+
+  const currentNote = parseNote(pitchName);
+  const rootNote = parseNote(rootPitchName);
+  if (!currentNote || !rootNote) return null;
+
+  // 半音インデックスを計算（オクターブ1からの通し番号）
+  const calcSemitoneIdxSimple = (name: string, octave: number): number => {
+    const pitchIndex = PITCH_NAME_LIST.indexOf(name);
+    if (pitchIndex === -1) return -1;
+    return pitchIndex + 12 * (octave - 1);
+  };
+
+  const currentIdx = calcSemitoneIdxSimple(currentNote.pitchName, currentNote.octaveNum);
+  const rootIdx = calcSemitoneIdxSimple(rootNote.pitchName, rootNote.octaveNum);
+  if (currentIdx === -1 || rootIdx === -1) return null;
+
+  const semitoneDistance = currentIdx - rootIdx;
+  const ratioIndex = ((semitoneDistance % 12) + 12) % 12;
+
+  // 純正律と平均律の周波数を計算
+  const A4_INDEX = calcSemitoneIdxSimple("A", 4);
+  const rootEqualFreq = a4Freq * Math.pow(2, (rootIdx - A4_INDEX) / 12);
+  const justFreq = rootEqualFreq * JUST_RATIOS[ratioIndex] * Math.pow(2, Math.floor(semitoneDistance / 12));
+  const equalFreq = a4Freq * Math.pow(2, (currentIdx - A4_INDEX) / 12);
+
+  // セント単位で差を計算
+  return 1200 * Math.log2(equalFreq / justFreq);
+}

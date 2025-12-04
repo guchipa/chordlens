@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { TunerMeter } from "@/components/TunerMeter";
-import { StroboFeedback } from "./StroboFeedback";
+import { TunerMeter } from "./MeterFeedback";
 import { BarFeedback } from "./BarFeedback";
-import { NumericFeedback } from "./NumericFeedback";
-import { WaveformFeedback } from "./WaveformFeedback";
+// import { StroboFeedback } from "./StroboFeedback";
+// import { NumericFeedback } from "./NumericFeedback";
+// import { WaveformFeedback } from "./WaveformFeedback";
 import type { FeedbackType } from "@/lib/constants";
 import type { formType } from "@/lib/schema";
 import { CircleFeedback } from "./CircleFeedback";
@@ -17,15 +17,30 @@ interface UnifiedFeedbackProps {
     deviation: number | null;
   }>;
   evalRangeCents: number;
+  a4Freq?: number;
 }
 
 export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
   feedbackType,
   analysisData,
-  evalRangeCents,
+  // evalRangeCents,
+  a4Freq = 442,
 }) => {
+  // 根音を見つける
+  const rootPitch = analysisData.find((data) => data.pitch.isRoot);
+  const rootPitchName = rootPitch
+    ? `${rootPitch.pitch.pitchName}${rootPitch.pitch.octaveNum}`
+    : undefined;
+
   if (feedbackType === "meter") {
-    return <TunerMeter title={"メーター"} analysisData={analysisData} />;
+    return (
+      <TunerMeter
+        title={"メーター"}
+        analysisData={analysisData}
+        rootPitchName={rootPitchName}
+        a4Freq={a4Freq}
+      />
+    );
   }
 
   if (analysisData.length === 0) {
@@ -37,24 +52,24 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
   }
 
   // ストロボ表示は横長なので縦に並べる
-  if (feedbackType === "strobe") {
-    return (
-      <div className="flex flex-col gap-3 w-full max-w-4xl mx-auto">
-        {analysisData.map((data) => {
-          const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
-          const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
+  // if (feedbackType === "strobe") {
+  //   return (
+  //     <div className="flex flex-col gap-3 w-full max-w-4xl mx-auto">
+  //       {analysisData.map((data) => {
+  //         const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
+  //         const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
 
-          return (
-            <StroboFeedback
-              key={key}
-              pitchName={pitchName}
-              deviation={data.deviation}
-            />
-          );
-        })}
-      </div>
-    );
-  }
+  //         return (
+  //           <StroboFeedback
+  //             key={key}
+  //             pitchName={pitchName}
+  //             deviation={data.deviation}
+  //           />
+  //         );
+  //       })}
+  //     </div>
+  //   );
+  // }
 
   // バー表示も横長なので縦に並べる
   if (feedbackType === "bar") {
@@ -69,6 +84,8 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
               key={key}
               pitchName={pitchName}
               deviation={data.deviation}
+              rootPitchName={rootPitchName}
+              a4Freq={a4Freq}
             />
           );
         })}
@@ -90,36 +107,36 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
     );
   }
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {analysisData.map((data) => {
-        const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
-        const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
+  // return (
+  //   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  //     {analysisData.map((data) => {
+  //       const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
+  //       const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
 
-        switch (feedbackType) {
-          case "numeric":
-            return (
-              <NumericFeedback
-                key={key}
-                pitchName={pitchName}
-                deviation={data.deviation}
-                evalRangeCents={evalRangeCents}
-              />
-            );
+  //       switch (feedbackType) {
+  //         case "numeric":
+  //           return (
+  //             <NumericFeedback
+  //               key={key}
+  //               pitchName={pitchName}
+  //               deviation={data.deviation}
+  //               evalRangeCents={evalRangeCents}
+  //             />
+  //           );
 
-          case "waveform":
-            return (
-              <WaveformFeedback
-                key={key}
-                pitchName={pitchName}
-                deviation={data.deviation}
-              />
-            );
+  //         case "waveform":
+  //           return (
+  //             <WaveformFeedback
+  //               key={key}
+  //               pitchName={pitchName}
+  //               deviation={data.deviation}
+  //             />
+  //           );
 
-          default:
-            return null;
-        }
-      })}
-    </div>
-  );
+  //         default:
+  //           return null;
+  //       }
+  //     })}
+  //   </div>
+  // );
 };
