@@ -76,6 +76,32 @@ const calculateJustFrequency = (
 };
 
 /**
+ * 各音の平均律での周波数（Hz）のリストを取得
+ * @param pitchNameList 取得対象の音のリスト
+ * @param a4Freq A4の基準周波数
+ * @returns 各音の平均律での周波数（Hz）のリスト
+ */
+export function getEqualFrequencies(
+  pitchNameList: Pitch[],
+  a4Freq: number
+): number[] {
+  try {
+    const { equalFrequencies } = preparePitchCalculation(
+      pitchNameList,
+      a4Freq
+    );
+
+    return pitchNameList.map((data) => {
+      const semitoneIdx = calcSemitoneIdx(data.pitchName, data.octaveNum);
+      return equalFrequencies[semitoneIdx];
+    });
+  } catch (e) {
+    console.error((e as Error).message);
+    return [];
+  }
+}
+
+/**
  * 各音の純正律での周波数（Hz）のリストを取得
  * @param pitchNameList 取得対象の音のリスト
  * @param a4Freq A4の基準周波数

@@ -113,8 +113,8 @@ export function useAudioAnalysis({
           const currentBufferLength = props.fftSize / 2;
           // dataArrayの長さと一致するか確認
           if (dataArray.length !== currentBufferLength) {
-             // サイズ不一致の場合はスキップ（次のフレームで合うはず）
-             return;
+            // サイズ不一致の場合はスキップ（次のフレームで合うはず）
+            return;
           }
 
           const freqBins = Array.from(
