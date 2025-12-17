@@ -4,7 +4,7 @@ import { useState } from "react";
 
 // フォームバリデーション関連
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 
 // カスタムフック
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
@@ -28,11 +28,12 @@ export default function ExperimentPage() {
 
   // フォーム管理
   const form = useForm<Pitch>({
-    resolver: zodResolver(FormSchema),
+    resolver: zodResolver(FormSchema) as Resolver<Pitch>,
     defaultValues: {
       pitchName: undefined,
       octaveNum: 4,
       isRoot: false,
+      enabled: true,
     },
   });
 

@@ -103,6 +103,7 @@ describe("presets utility functions", () => {
     });
 
     it("should return presets sorted by creation date (newest first)", () => {
+      jest.useFakeTimers();
       const pitchList: formType[] = [
         { pitchName: "C", octaveNum: 4, isRoot: true },
       ];
@@ -118,6 +119,7 @@ describe("presets utility functions", () => {
       expect(presets[0].name).toBe("Third");
       expect(presets[1].name).toBe("Second");
       expect(presets[2].name).toBe("First");
+      jest.useRealTimers();
     });
   });
 

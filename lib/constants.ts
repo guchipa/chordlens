@@ -167,25 +167,26 @@ export const MESSAGE_ANALYSIS_ERROR = "音声解析中にエラーが発生し�
 
 export const DEFAULT_INITIAL_PITCH_LIST: {
   pitchName:
-    | "C"
-    | "C#"
-    | "D"
-    | "Eb"
-    | "E"
-    | "F"
-    | "F#"
-    | "G"
-    | "G#"
-    | "A"
-    | "Bb"
-    | "B";
+  | "C"
+  | "C#"
+  | "D"
+  | "Eb"
+  | "E"
+  | "F"
+  | "F#"
+  | "G"
+  | "G#"
+  | "A"
+  | "Bb"
+  | "B";
   octaveNum: number;
   isRoot?: boolean;
+  enabled: boolean;
 }[] = [
-  { pitchName: "C", octaveNum: 4, isRoot: true },
-  { pitchName: "E", octaveNum: 4, isRoot: false },
-  { pitchName: "G", octaveNum: 4, isRoot: false },
-];
+    { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+    { pitchName: "E", octaveNum: 4, isRoot: false, enabled: true },
+    { pitchName: "G", octaveNum: 4, isRoot: false, enabled: true },
+  ];
 
 /**
  *

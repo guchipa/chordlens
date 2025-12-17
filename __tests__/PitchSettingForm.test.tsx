@@ -53,6 +53,7 @@ describe("PitchSettingForm", () => {
           pitchName: "C",
           octaveNum: 4,
           isRoot: false,
+          enabled: true,
         },
         expect.anything()
       );
