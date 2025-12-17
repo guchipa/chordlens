@@ -32,6 +32,9 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
     ? `${rootPitch.pitch.pitchName}${rootPitch.pitch.octaveNum}`
     : undefined;
 
+  // 有効な音のみフィルタリング
+  analysisData = analysisData.filter((data) => data.pitch.enabled === true);
+
   if (feedbackType === "meter") {
     return (
       <TunerMeter

@@ -37,7 +37,16 @@ export function evaluateSpectrum(
 
   const evalList: EvaluationResult[] = [];
 
-  for (const est_f of estFreqs) {
+  for (let i = 0; i < estFreqs.length; i++) {
+    const est_f = estFreqs[i];
+    const pitch = pitchNameList[i];
+
+    // 計測対象外の場合はスキップ
+    if (pitch.enabled === false) {
+      evalList.push({ deviation: null, centDeviation: null });
+      continue;
+    }
+
     let targetFreq = 1e10;
     let targetIdx = -1;
 

@@ -34,22 +34,34 @@ export const PitchList: React.FC<PitchListProps> = ({
           {currentPitchList.map((data, index) => (
             <div
               key={`${data.pitchName}-${data.octaveNum}-${index}`}
-              className="flex items-center space-x-2 rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-800"
+              className={cn(
+                "flex items-center space-x-2 rounded-full px-3 py-1.5 text-sm font-medium",
+                data.enabled !== false
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-gray-100 text-gray-500"
+              )}
             >
               <span
                 className={cn("whitespace-nowrap", {
-                  "font-bold text-sky-700": data.isRoot,
+                  "font-bold text-sky-700": data.isRoot && data.enabled !== false,
+                  "font-bold text-gray-600": data.isRoot && data.enabled === false,
                 })}
               >
                 {data.pitchName}
                 {data.octaveNum}
                 {data.isRoot && " (R)"}
+                {data.enabled === false && " (OFF)"}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => removePitch(index)}
-                className="h-5 w-5 rounded-full p-0 hover:bg-blue-200"
+                className={cn(
+                  "h-5 w-5 rounded-full p-0",
+                  data.enabled !== false
+                    ? "hover:bg-blue-200"
+                    : "hover:bg-gray-200"
+                )}
               >
                 <svg
                   className="h-3.5 w-3.5"

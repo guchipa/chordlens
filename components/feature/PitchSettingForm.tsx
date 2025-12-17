@@ -138,9 +138,8 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
                 <div className="space-y-1 leading-none">
                   <FormLabel
                     htmlFor="is-root-checkbox"
-                    className={`cursor-pointer ${
-                      hasRoot ? "cursor-not-allowed text-gray-500" : ""
-                    }`}
+                    className={`cursor-pointer ${hasRoot ? "cursor-not-allowed text-gray-500" : ""
+                      }`}
                   >
                     根音として設定
                   </FormLabel>
@@ -149,6 +148,32 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
                       根音は既に設定されています。2つ目の根音は設定できません。
                     </p>
                   )}
+                </div>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="enabled"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value !== false} // undefined (default) or true -> checked
+                    onCheckedChange={field.onChange}
+                    id="enabled-checkbox"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel
+                    htmlFor="enabled-checkbox"
+                    className="cursor-pointer"
+                  >
+                    計測に含める
+                  </FormLabel>
+                  <p className="text-xs text-gray-500">
+                    チェックを外すと、この音は解析の対象外となります（根音としての計算には使用されます）。
+                  </p>
                 </div>
               </FormItem>
             )}

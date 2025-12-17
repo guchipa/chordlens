@@ -21,6 +21,7 @@ export const FormSchema = z.object({
     required_error: "オクターブ番号を選択してください",
   }),
   isRoot: z.boolean().optional(),
+  enabled: z.boolean().optional().default(true),
 });
 
 /**
