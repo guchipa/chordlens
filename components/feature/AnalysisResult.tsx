@@ -2,7 +2,7 @@
 
 import { TunerMeter } from "@/components/feedback/MeterFeedback";
 import { formType } from "@/lib/schema";
-import { CentDisplay } from "../CentDisplay";
+import { CentDisplay } from "./CentDisplay";
 
 interface AnalysisResultProps {
   isProcessing: boolean;

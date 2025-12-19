@@ -14,10 +14,10 @@ import { useFeedbackType } from "@/lib/hooks/useFeedbackType";
 import { useLogRecorder } from "@/lib/hooks/useLogRecorder";
 
 // コンポーネント
-import { AppFooter } from "@/components/AppFooter";
+import { AppFooter } from "@/components/layout/AppFooter";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
-import { CentDisplay } from "@/components/CentDisplay";
+import { CentDisplay } from "@/components/feature/CentDisplay";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { LogExportButton } from "@/components/feature/LogExportButton";

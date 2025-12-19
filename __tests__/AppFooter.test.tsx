@@ -1,6 +1,6 @@
 
 import { render, screen } from "@testing-library/react";
-import { AppFooter } from "@/components/AppFooter";
+import { AppFooter } from "@/components/layout/AppFooter";
 
 describe("AppFooter", () => {
   it("renders correctly", () => {

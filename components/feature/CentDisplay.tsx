@@ -153,27 +153,6 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
     }
   }, [pitchList, a4Freq, playToneContinuous]);
 
-  // 平均律と純正律を同時再生/停止
-  const toggleCompare = useCallback((index: number) => {
-    const equalKey = `compare-equal-${index}`;
-    const justKey = `compare-just-${index}`;
-
-    // どちらか一方でも再生中なら両方停止
-    if (oscillatorsRef.current.has(equalKey) || oscillatorsRef.current.has(justKey)) {
-      stopTone(equalKey);
-      stopTone(justKey);
-      return;
-    }
-
-    const equalFreqs = getEqualFrequencies(pitchList, a4Freq);
-    const justFreqs = getJustFrequencies(pitchList, a4Freq);
-
-    if (equalFreqs[index] && justFreqs[index]) {
-      playToneContinuous(equalFreqs[index], equalKey);
-      playToneContinuous(justFreqs[index], justKey);
-    }
-  }, [pitchList, a4Freq, playToneContinuous, stopTone]);
-
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
@@ -224,14 +203,6 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
                         title="純正律を再生/停止"
                       >
                         純
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={playingState.get(`compare-equal-${index}`) || playingState.get(`compare-just-${index}`) ? "default" : "outline"}
-                        onClick={() => toggleCompare(index)}
-                        title="平均律と純正律を同時再生/停止"
-                      >
-                        比較
                       </Button>
                     </div>
                   </TableCell>
