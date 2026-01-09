@@ -2,9 +2,16 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { METER_MAX_DEVIATION_DEGREES, METER_REMAIN_MS, PITCH_COLOR_MAP } from "@/lib/constants";
+import {
+  METER_MAX_DEVIATION_DEGREES,
+  METER_NEEDLE_HOLD_MS,
+  METER_NEEDLE_SMOOTHING_ALPHA,
+  METER_REMAIN_MS,
+  PITCH_COLOR_MAP,
+} from "@/lib/constants";
 import { formType } from "@/lib/schema";
 import { getSingleEqualJustDiff } from "@/lib/audio_analysis/calcJustFreq";
+import { updateEmaHoldList, type EmaHoldState } from "@/lib/utils/emaHold";
 
 interface TunerMeterProps {
   /**
@@ -33,22 +40,48 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   // タイマーのIDを保持するための ref
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 針ごとの状態（保持・スムージング）
+  const needleStateRef = useRef<Map<string, EmaHoldState>>(new Map());
+
+  const getKey = (pitch: formType) => `${pitch.pitchName}${pitch.octaveNum}`;
+
   useEffect(() => {
     // 以前のタイマーが残っていればクリア
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    const isSoundDetected = analysisData.some((data) => data.deviation !== null);
+    const now = performance.now();
 
-    if (isSoundDetected) {
-      // 音が検出されたら、すぐに表示を更新
-      setDisplayData(analysisData);
+    const keys = analysisData.map(({ pitch }) => getKey(pitch));
+    const rawDeviations = analysisData.map(({ deviation }) => deviation);
+    const { values: smoothedDeviations } = updateEmaHoldList(
+      needleStateRef.current,
+      keys,
+      rawDeviations,
+      now,
+      {
+        alpha: METER_NEEDLE_SMOOTHING_ALPHA,
+        holdMs: METER_NEEDLE_HOLD_MS,
+      }
+    );
+
+    // 入力（analysisData）から、保持・スムージングを適用した表示データを作る
+    const nextDisplayData = analysisData.map(({ pitch }, index) => ({
+      pitch,
+      deviation: smoothedDeviations[index] ?? null,
+    }));
+
+    const isAnySoundDetected = analysisData.some((data) => data.deviation !== null);
+
+    if (isAnySoundDetected) {
+      // 何かしら検出されている間は、毎フレーム追従しつつ、針ごとの保持/平滑化で安定化
+      setDisplayData(nextDisplayData);
     } else {
       // 音が検出されなかったら、1.5秒後に現在の analysisData（音が無い状態）で表示を更新するタイマーをセット
       // この間、displayData は古いままなので、針は表示され続ける
       timeoutRef.current = setTimeout(() => {
-        setDisplayData(analysisData);
+        setDisplayData(nextDisplayData);
       }, METER_REMAIN_MS);
     }
 

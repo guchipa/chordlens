@@ -136,5 +136,59 @@ describe("rootEstimation", () => {
       // Aが根音としてマークされる
       expect(result[0].isRoot).toBe(true);
     });
+
+    it("G7コードの3度欠け(G-D-F)でも根音Gを推定する", () => {
+      const pitchList: formType[] = [
+        { pitchName: "G", octaveNum: 3, isRoot: false },
+        { pitchName: "D", octaveNum: 4, isRoot: false },
+        { pitchName: "F", octaveNum: 4, isRoot: false },
+      ];
+
+      const mockSetPitchList = jest.fn();
+      estimateRoot(pitchList, mockSetPitchList);
+
+      expect(mockSetPitchList).toHaveBeenCalledTimes(1);
+      const result = mockSetPitchList.mock.calls[0][0];
+
+      expect(result[0].isRoot).toBe(true);
+      expect(result[1].isRoot).toBe(false);
+      expect(result[2].isRoot).toBe(false);
+    });
+
+    it("G7コードの5度欠け(G-B-F)でも根音Gを推定する", () => {
+      const pitchList: formType[] = [
+        { pitchName: "G", octaveNum: 3, isRoot: false },
+        { pitchName: "B", octaveNum: 3, isRoot: false },
+        { pitchName: "F", octaveNum: 4, isRoot: false },
+      ];
+
+      const mockSetPitchList = jest.fn();
+      estimateRoot(pitchList, mockSetPitchList);
+
+      expect(mockSetPitchList).toHaveBeenCalledTimes(1);
+      const result = mockSetPitchList.mock.calls[0][0];
+
+      expect(result[0].isRoot).toBe(true);
+      expect(result[1].isRoot).toBe(false);
+      expect(result[2].isRoot).toBe(false);
+    });
+
+    it("Am7コードの5度欠け(A-C-G)でも根音Aを推定する", () => {
+      const pitchList: formType[] = [
+        { pitchName: "A", octaveNum: 3, isRoot: false },
+        { pitchName: "C", octaveNum: 4, isRoot: false },
+        { pitchName: "G", octaveNum: 4, isRoot: false },
+      ];
+
+      const mockSetPitchList = jest.fn();
+      estimateRoot(pitchList, mockSetPitchList);
+
+      expect(mockSetPitchList).toHaveBeenCalledTimes(1);
+      const result = mockSetPitchList.mock.calls[0][0];
+
+      expect(result[0].isRoot).toBe(true);
+      expect(result[1].isRoot).toBe(false);
+      expect(result[2].isRoot).toBe(false);
+    });
   });
 });

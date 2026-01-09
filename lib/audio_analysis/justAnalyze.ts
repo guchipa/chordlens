@@ -71,8 +71,6 @@ export function evaluateSpectrum(
     // freq[1] - freq[0] は周波数ビンの刻み幅
     const freqStep = freq.length > 1 ? freq[1] - freq[0] : 1; // 0除算対策
 
-    console.log("周波数分解能: " + freqStep);
-
     // 中央のビンを基準に範囲を調整
     // targetIdx を中心とした近似的な範囲
     const rangeMinIdxApprox =
@@ -105,9 +103,6 @@ export function evaluateSpectrum(
     if (maxVal < evalThreshold) {
       evalList.push({ deviation: null, centDeviation: null });
     } else {
-      // center は eval_spec 配列の中央のインデックス
-      const center = Math.floor(evalSpec.length / 2);
-
       // 実際の周波数を計算（パラボラ補間を使用）
       const actualFreqIdx = evalRangeMin + specMax;
 
@@ -117,11 +112,11 @@ export function evaluateSpectrum(
       // セント単位の誤差を計算: cent = 1200 * log2(actual / expected)
       const centDeviation = 1200 * Math.log2(actualFreq / est_f);
 
-      // deviation値も計算（正規化された値）
-      const deviation =
-        specMax === center
-          ? 0
-          : Math.round(((specMax - center) / center) * 100) / 100;
+      // deviation値（-1.0〜1.0）
+      // これまではピークbin位置から算出していたが、bin飛びや評価範囲の変動で針が大きく跳ねやすい。
+      // ここでは周波数から算出した centDeviation を evalRangeCents で正規化して安定させる。
+      const rawDeviation = evalRangeCents === 0 ? 0 : centDeviation / evalRangeCents;
+      const deviation = Math.max(-1, Math.min(1, Math.round(rawDeviation * 1000) / 1000));
 
       evalList.push({ deviation, centDeviation });
     }

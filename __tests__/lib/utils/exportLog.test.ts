@@ -41,7 +41,7 @@ describe("exportLog", () => {
 
       // ヘッダー確認
       expect(lines[0]).toBe(
-        "timestamp,elapsedMs,sessionId,pitchName,pitchIsRoot,deviation,centDeviation,a4Freq,evalRangeCents,evalThreshold,fftSize,smoothingTimeConstant"
+        "timestamp,elapsedMs,sessionId,pitchName,pitchIsRoot,deviation,centDeviation,centDeviationRaw,centDeviationDisplay,isDetected,isHeld,a4Freq,evalRangeCents,evalThreshold,fftSize,smoothingTimeConstant"
       );
 
       // 1行目のデータ（C4）
@@ -194,6 +194,79 @@ describe("exportLog", () => {
       // ヘッダーのみ
       expect(lines).toHaveLength(1);
       expect(lines[0]).toContain("timestamp");
+      expect(lines[0]).toContain("centDeviationRaw");
+    });
+
+    it("追加列が未指定の場合は空欄で出力する", () => {
+      const session: LogSession = {
+        sessionId: "session-optional",
+        startTime: "2025-11-14T10:00:00.000Z",
+        endTime: null,
+        metadata: { userAgent: "test-agent" },
+        entries: [
+          {
+            timestamp: "2025-11-14T10:00:00.000Z",
+            elapsedMs: 0,
+            sessionId: "session-optional",
+            pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true }],
+            analysisResult: [0.0],
+            centDeviations: [0.0],
+            settings: {
+              a4Freq: 440,
+              evalRangeCents: 50,
+              evalThreshold: 0.3,
+              fftSize: 4096,
+              smoothingTimeConstant: 0.8,
+            },
+          },
+        ],
+      };
+
+      const csv = convertLogToCSV(session);
+      const lines = csv.split("\n");
+
+      // ヘッダー + 1行
+      expect(lines).toHaveLength(2);
+
+      // 追加列は空欄（",,,," のような連続カンマが含まれる）
+      expect(lines[1]).toContain(",0,0,,,,");
+    });
+
+    it("追加列が指定されている場合は出力する", () => {
+      const entry: LogEntry = {
+        timestamp: "2025-11-14T10:00:00.000Z",
+        elapsedMs: 0,
+        sessionId: "session-with-extra",
+        pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true }],
+        analysisResult: [0.0],
+        centDeviations: [0.0],
+        centDeviationsRaw: [0.0],
+        centDeviationsDisplay: [0.5],
+        isDetectedList: [true],
+        isHeldList: [false],
+        settings: {
+          a4Freq: 440,
+          evalRangeCents: 50,
+          evalThreshold: 0.3,
+          fftSize: 4096,
+          smoothingTimeConstant: 0.8,
+        },
+      };
+
+      const session: LogSession = {
+        sessionId: "session-with-extra",
+        startTime: "2025-11-14T10:00:00.000Z",
+        endTime: null,
+        metadata: { userAgent: "test-agent" },
+        entries: [entry],
+      };
+
+      const csv = convertLogToCSV(session);
+      const lines = csv.split("\n");
+      expect(lines).toHaveLength(2);
+
+      // centDeviationRaw, centDeviationDisplay, isDetected, isHeld
+      expect(lines[1]).toContain(",0,0,0,0.5,true,false,");
     });
 
     it("複数構成音を持つエントリを正しく展開する", () => {

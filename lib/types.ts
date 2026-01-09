@@ -137,8 +137,23 @@ export interface LogEntry {
   pitchList: Pitch[];
   /** 解析結果（deviation値 -1.0 ~ 1.0） */
   analysisResult: (number | null)[];
-  /** セント単位のズレ */
+  /**
+   * セント単位のズレ（互換列）
+   * 推奨運用: 解析生値（Raw）を格納し、評価指標の主系列として使用。
+   */
   centDeviations: (number | null)[];
+
+  /** 追加: 解析生値（評価用の主系列）。旧データ互換のためoptional */
+  centDeviationsRaw?: (number | null)[];
+
+  /** 追加: 表示用（EMA/ホールド等の後）。旧データ互換のためoptional */
+  centDeviationsDisplay?: (number | null)[] | null;
+
+  /** 追加: 今フレームで検出できたか（pitchごと）。旧データ互換のためoptional */
+  isDetectedList?: boolean[] | null;
+
+  /** 追加: 検出できないがホールドで表示したか（pitchごと）。旧データ互換のためoptional */
+  isHeldList?: boolean[] | null;
   /** 解析設定 */
   settings: {
     a4Freq: number;
