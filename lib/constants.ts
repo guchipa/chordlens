@@ -112,14 +112,23 @@ export const CHORD_DEFINITIONS = [
 
   // 四和音 (中スコア)
   ["Dominant 7th", new Set([0, 4, 7, 10]), 80],
+  // セブンスの省略形: 5度欠け/3度欠け (3音でも根音推定できるようにする)
+  // 注意: 3度欠けは種類の判別が曖昧になりやすいため、ラベルは汎用表現にする
+  ["Dominant 7th (No 5th)", new Set([0, 4, 10]), 72],
+  ["7th (No 3rd)", new Set([0, 7, 10]), 71],
   ["Major 7th", new Set([0, 4, 7, 11]), 79],
+  ["Major 7th (No 5th)", new Set([0, 4, 11]), 70],
+  ["Maj7 (No 3rd)", new Set([0, 7, 11]), 69],
   ["Minor 7th", new Set([0, 3, 7, 10]), 78],
+  ["Minor 7th (No 5th)", new Set([0, 3, 10]), 68],
   ["Minor Major 7th", new Set([0, 3, 7, 11]), 75],
+  ["Minor Major 7th (No 5th)", new Set([0, 3, 11]), 66],
 
   // やや特殊な和音 (低スコア)
   ["Major 6th", new Set([0, 4, 7, 9]), 60],
   ["Minor 6th", new Set([0, 3, 7, 9]), 59],
   ["Half-Diminished 7th", new Set([0, 3, 6, 10]), 55],
+  ["Half-Diminished 7th (No 5th)", new Set([0, 3, 10]), 53],
   ["Diminished 7th", new Set([0, 3, 6, 9]), 54],
   ["Augmented", new Set([0, 4, 8]), 50],
   ["Diminished", new Set([0, 3, 6]), 49],
@@ -157,6 +166,18 @@ export const JUST_RATIOS: number[] = [
  */
 export const METER_MAX_DEVIATION_DEGREES = 90; // 例: 針が中心から左右に最大90度動く
 export const METER_GOOD_RANGE_DEGREES = 5; // 例: 中央±5度を「良い」範囲とする
+
+/**
+ * 検出が一瞬途切れても針を保持する時間（ミリ秒）
+ * evalThreshold付近でのnull/非nullの揺れによるチカチカを抑制する。
+ */
+export const METER_NEEDLE_HOLD_MS = 250;
+
+/**
+ * 針のスムージング係数（0〜1）
+ * 値が大きいほど追従が速い（=揺れも残る）。
+ */
+export const METER_NEEDLE_SMOOTHING_ALPHA = 0.35;
 
 /**
  * マイクアクセスやエラーメッセージなど、ユーザーに表示するテキスト定数。

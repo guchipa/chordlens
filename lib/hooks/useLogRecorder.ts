@@ -15,8 +15,17 @@ interface UseLogRecorderProps {
   pitchList: Pitch[];
   /** 解析結果（deviation値） */
   analysisResult: (number | null)[] | null;
-  /** セント単位の誤差（解析機構から直接取得） */
+  /** セント単位の誤差（解析機構から直接取得・Raw） */
   centDeviations: (number | null)[] | null;
+
+  /** セント単位の誤差（表示用：EMA/ホールド等の後）。未指定ならログ出力は空欄 */
+  centDeviationsDisplay?: (number | null)[] | null;
+
+  /** 今フレームで検出できたか（pitchごと）。未指定ならログ出力は空欄 */
+  isDetectedList?: boolean[] | null;
+
+  /** 検出できないがホールドで表示したか（pitchごと）。未指定ならログ出力は空欄 */
+  isHeldList?: boolean[] | null;
   /** 評価範囲（セント） */
   evalRangeCents: number;
   /** A4基準周波数 */
@@ -75,6 +84,9 @@ export function useLogRecorder({
   pitchList,
   analysisResult,
   centDeviations: inputCentDeviations,
+  centDeviationsDisplay: inputCentDeviationsDisplay,
+  isDetectedList: inputIsDetectedList,
+  isHeldList: inputIsHeldList,
   evalRangeCents,
   a4Freq,
   evalThreshold,
@@ -92,6 +104,9 @@ export function useLogRecorder({
   const latestValuesRef = useRef({
     analysisResult,
     centDeviations: inputCentDeviations,
+    centDeviationsDisplay: inputCentDeviationsDisplay,
+    isDetectedList: inputIsDetectedList,
+    isHeldList: inputIsHeldList,
     pitchList,
     evalRangeCents,
     a4Freq,
@@ -105,6 +120,9 @@ export function useLogRecorder({
     latestValuesRef.current = {
       analysisResult,
       centDeviations: inputCentDeviations,
+      centDeviationsDisplay: inputCentDeviationsDisplay,
+      isDetectedList: inputIsDetectedList,
+      isHeldList: inputIsHeldList,
       pitchList,
       evalRangeCents,
       a4Freq,
@@ -115,6 +133,9 @@ export function useLogRecorder({
   }, [
     analysisResult,
     inputCentDeviations,
+    inputCentDeviationsDisplay,
+    inputIsDetectedList,
+    inputIsHeldList,
     pitchList,
     evalRangeCents,
     a4Freq,
@@ -181,6 +202,9 @@ export function useLogRecorder({
     const {
       analysisResult: currentAnalysisResult,
       centDeviations: currentCentDeviations,
+      centDeviationsDisplay: currentCentDeviationsDisplay,
+      isDetectedList: currentIsDetectedList,
+      isHeldList: currentIsHeldList,
       pitchList: currentPitchList,
       evalRangeCents: currentEvalRangeCents,
       a4Freq: currentA4Freq,
@@ -189,19 +213,14 @@ export function useLogRecorder({
       smoothingTimeConstant: currentSmoothingTimeConstant,
     } = latestValuesRef.current;
 
-    if (!sessionRef.current || !currentAnalysisResult) {
-      console.log(
-        "[useLogRecorder] Frame tick - no session or no analysisResult"
-      );
-      return;
-    }
+    if (!sessionRef.current || !currentAnalysisResult) return;
 
     const session = sessionRef.current;
     const now = new Date();
     const startTimeMs = new Date(session.startTime).getTime();
     const elapsedMs = now.getTime() - startTimeMs;
 
-    const centDeviations =
+    const centDeviationsRaw =
       currentCentDeviations ||
       currentAnalysisResult.map((deviation) =>
         deviationToCents(deviation, currentEvalRangeCents)
@@ -213,7 +232,13 @@ export function useLogRecorder({
       sessionId: session.sessionId,
       pitchList: [...currentPitchList],
       analysisResult: [...currentAnalysisResult],
-      centDeviations,
+      // 互換列: 解析生値（Raw）を入れる
+      centDeviations: centDeviationsRaw,
+      // 追加列: Raw/Display/Flags
+      centDeviationsRaw,
+      centDeviationsDisplay: currentCentDeviationsDisplay ?? null,
+      isDetectedList: currentIsDetectedList ?? null,
+      isHeldList: currentIsHeldList ?? null,
       settings: {
         a4Freq: currentA4Freq,
         evalRangeCents: currentEvalRangeCents,
@@ -225,24 +250,14 @@ export function useLogRecorder({
 
     session.entries.push(entry);
     setEntryCount(session.entries.length);
-    console.log("[useLogRecorder] Entry recorded", {
-      entryCount: session.entries.length,
-      elapsedMs,
-    });
+    // NOTE: requestAnimationFrameで高頻度に呼ばれるため、毎フレームのconsole.logは避ける
   }, []);
 
   /**
    * 解析実行中かつログ記録中の場合、1フレームごとにログを記録
    */
   useEffect(() => {
-    console.log("[useLogRecorder] useEffect triggered", {
-      isRecording,
-      isProcessing,
-    });
-
     if (isRecording && isProcessing) {
-      console.log("[useLogRecorder] Setting up requestAnimationFrame logging");
-
       const tick = () => {
         recordEntry();
         rafIdRef.current = window.requestAnimationFrame(tick);
@@ -251,7 +266,6 @@ export function useLogRecorder({
       rafIdRef.current = window.requestAnimationFrame(tick);
 
       return () => {
-        console.log("[useLogRecorder] Cleaning up requestAnimationFrame");
         if (rafIdRef.current !== null) {
           cancelAnimationFrame(rafIdRef.current);
           rafIdRef.current = null;
@@ -260,9 +274,6 @@ export function useLogRecorder({
     }
 
     if (rafIdRef.current !== null) {
-      console.log(
-        "[useLogRecorder] Clearing requestAnimationFrame (not recording or not processing)"
-      );
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
     }

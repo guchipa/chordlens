@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 // フォームバリデーション関連
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,9 +22,14 @@ import { MainHeader } from "@/components/layout/MainHeader";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { LogExportButton } from "@/components/feature/LogExportButton";
 import { FormSchema, type Pitch } from "@/lib/types";
+import { METER_NEEDLE_HOLD_MS, METER_NEEDLE_SMOOTHING_ALPHA } from "@/lib/constants";
+import { updateEmaHoldList, type EmaHoldState } from "@/lib/utils/emaHold";
 
 export default function ExperimentPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Display系列（EMA/ホールド）の状態を保持
+  const centDisplayStateRef = useRef<Map<string, EmaHoldState>>(new Map());
 
   // フォーム管理
   const form = useForm<Pitch>({
@@ -78,6 +83,39 @@ export default function ExperimentPage() {
   });
 
   // ログ記録フック
+  const { centDeviationsDisplay, isDetectedList, isHeldList } = useMemo(() => {
+    const keys = currentPitchList.map(
+      (p) => `${p.pitchName}${p.octaveNum}`
+    );
+
+    const rawCentDeviations: Array<number | null> = keys.map((_, i) => {
+      const raw = centDeviations?.[i];
+      if (raw !== undefined) return raw ?? null;
+
+      const fallback = analysisResult?.[i];
+      if (fallback === undefined) return null;
+      return fallback === null ? null : fallback * evalRangeCents;
+    });
+
+    const now = performance.now();
+    const result = updateEmaHoldList(
+      centDisplayStateRef.current,
+      keys,
+      rawCentDeviations,
+      now,
+      {
+        alpha: METER_NEEDLE_SMOOTHING_ALPHA,
+        holdMs: METER_NEEDLE_HOLD_MS,
+      }
+    );
+
+    return {
+      centDeviationsDisplay: result.values,
+      isDetectedList: result.isDetectedList,
+      isHeldList: result.isHeldList,
+    };
+  }, [currentPitchList, centDeviations, analysisResult, evalRangeCents]);
+
   const {
     isRecording,
     entryCount,
@@ -90,6 +128,9 @@ export default function ExperimentPage() {
     pitchList: currentPitchList,
     analysisResult,
     centDeviations,
+    centDeviationsDisplay,
+    isDetectedList,
+    isHeldList,
     evalRangeCents,
     a4Freq,
     evalThreshold,

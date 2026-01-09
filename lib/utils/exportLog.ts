@@ -11,7 +11,9 @@ import type { LogSession } from "@/lib/types";
  * CSV用に文字列をエスケープ
  * カンマや改行、ダブルクォートが含まれる場合に適切にエスケープ
  */
-function escapeCsvValue(value: string | number | boolean | null): string {
+function escapeCsvValue(
+  value: string | number | boolean | null | undefined
+): string {
   if (value === null || value === undefined) {
     return "";
   }
@@ -43,7 +45,14 @@ export function convertLogToCSV(session: LogSession): string {
     "pitchName",
     "pitchIsRoot",
     "deviation",
+    // 互換列（従来と同じ列名。推奨運用: Rawを格納）
     "centDeviation",
+
+    // 追加列（評価の再現性・介入影響の分析用）
+    "centDeviationRaw",
+    "centDeviationDisplay",
+    "isDetected",
+    "isHeld",
     "a4Freq",
     "evalRangeCents",
     "evalThreshold",
@@ -61,6 +70,10 @@ export function convertLogToCSV(session: LogSession): string {
       const pitch = entry.pitchList[i];
       const deviation = entry.analysisResult[i];
       const centDeviation = entry.centDeviations[i];
+      const centDeviationRaw = entry.centDeviationsRaw?.[i] ?? null;
+      const centDeviationDisplay = entry.centDeviationsDisplay?.[i] ?? null;
+      const isDetected = entry.isDetectedList?.[i] ?? null;
+      const isHeld = entry.isHeldList?.[i] ?? null;
 
       const row = [
         escapeCsvValue(entry.timestamp),
@@ -73,6 +86,15 @@ export function convertLogToCSV(session: LogSession): string {
         centDeviation !== null && centDeviation !== undefined
           ? escapeCsvValue(Number(centDeviation))
           : "",
+        // 追加列（未指定なら空欄）
+        centDeviationRaw !== null && centDeviationRaw !== undefined
+          ? escapeCsvValue(Number(centDeviationRaw))
+          : "",
+        centDeviationDisplay !== null && centDeviationDisplay !== undefined
+          ? escapeCsvValue(Number(centDeviationDisplay))
+          : "",
+        isDetected === null ? "" : escapeCsvValue(isDetected),
+        isHeld === null ? "" : escapeCsvValue(isHeld),
         escapeCsvValue(entry.settings.a4Freq),
         escapeCsvValue(entry.settings.evalRangeCents),
         escapeCsvValue(entry.settings.evalThreshold),

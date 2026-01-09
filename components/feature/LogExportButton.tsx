@@ -112,7 +112,7 @@ export function LogExportButton({
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
         <p className="text-xs text-blue-800">
           💡 <strong>使い方:</strong>
-          解析を開始してから「記録開始」を押すと、100msごとに解析結果が記録されます。
+          解析を開始してから「記録開始」を押すと、1フレームごとに解析結果が記録されます。
           記録停止後、「CSVエクスポート」でデータをダウンロードできます。
         </p>
       </div>
