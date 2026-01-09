@@ -1,4 +1,5 @@
 import { getJustFrequencies } from "./calcJustFreq";
+import { quadraticInterpolation } from "./peakInterpolation";
 import type { Pitch } from "@/lib/types";
 
 /**
@@ -107,9 +108,11 @@ export function evaluateSpectrum(
       // center は eval_spec 配列の中央のインデックス
       const center = Math.floor(evalSpec.length / 2);
 
-      // 実際の周波数を計算
+      // 実際の周波数を計算（パラボラ補間を使用）
       const actualFreqIdx = evalRangeMin + specMax;
-      const actualFreq = freq[actualFreqIdx];
+
+      // パラボラ補間でサブビン精度の周波数を推定
+      const actualFreq = quadraticInterpolation(spec, actualFreqIdx, freq);
 
       // セント単位の誤差を計算: cent = 1200 * log2(actual / expected)
       const centDeviation = 1200 * Math.log2(actualFreq / est_f);
