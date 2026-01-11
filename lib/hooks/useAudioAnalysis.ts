@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { evaluateSpectrum } from "@/lib/audio_analysis/justAnalyze";
 import type { PeakSearchDebug, UseAudioAnalysisProps } from "@/lib/types";
+import { getClientLogFps, sendVercelClientLog } from "@/lib/vercelClientLog";
 
 export function useAudioAnalysis({
   currentPitchList,
@@ -33,6 +34,14 @@ export function useAudioAnalysis({
   const freqBinsRef = useRef<number[] | null>(null);
   const lastFreqBinsKeyRef = useRef<string | null>(null);
   const lastPeakDebugUpdateMsRef = useRef<number>(0);
+  const hasPeakSearchDebugRef = useRef<boolean>(false);
+
+  const clientLogSessionIdRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
+  const lastClientLogUpdateMsRef = useRef<number>(0);
 
   // 最新のpropsを保持するref
   const latestPropsRef = useRef({
@@ -111,6 +120,9 @@ export function useAudioAnalysis({
 
         const props = latestPropsRef.current;
 
+        const enableClientLog =
+          process.env.NEXT_PUBLIC_VERCEL_CLIENT_LOG === "1";
+
         // 設定変更を安全に追随
         if (analyserNode.fftSize !== props.fftSize) {
           analyserNode.fftSize = props.fftSize;
@@ -150,11 +162,47 @@ export function useAudioAnalysis({
           props.evalRangeCents,
           props.a4Freq,
           props.evalThreshold,
-          { includeDebug: props.enablePeakSearchDebug }
+          { includeDebug: props.enablePeakSearchDebug || enableClientLog }
         );
 
         setAnalysisResult(results.map((r) => r.deviation));
         setCentDeviations(results.map((r) => r.centDeviation));
+
+        if (enableClientLog && results.length > 0) {
+          const fps = getClientLogFps(1);
+          const minIntervalMs = fps <= 0 ? 0 : 1000 / fps;
+          const nowMs = performance.now();
+
+          if (nowMs - lastClientLogUpdateMsRef.current >= minIntervalMs) {
+            lastClientLogUpdateMsRef.current = nowMs;
+
+            const n = Math.min(props.currentPitchList.length, results.length);
+            sendVercelClientLog({
+              type: "audio-analysis",
+              sessionId: clientLogSessionIdRef.current,
+              t: Date.now(),
+              settings: {
+                a4Freq: props.a4Freq,
+                evalRangeCents: props.evalRangeCents,
+                evalThreshold: props.evalThreshold,
+                fftSize: props.fftSize,
+                smoothingTimeConstant: props.smoothingTimeConstant,
+              },
+              components: Array.from({ length: n }, (_, idx) => {
+                const pitch = props.currentPitchList[idx];
+                const r = results[idx];
+                return {
+                  pitch,
+                  deviation: r?.deviation ?? null,
+                  centDeviation: r?.centDeviation ?? null,
+                  expectedFreqHz: r?.debug?.estFreqHz ?? null,
+                  detectedFreqHz: r?.debug?.peak?.freqHz ?? null,
+                  detectedDb: r?.debug?.peak?.db ?? null,
+                };
+              }),
+            });
+          }
+        }
 
         if (props.enablePeakSearchDebug) {
           const fps = props.peakSearchDebugFps ?? 12;
@@ -197,9 +245,11 @@ export function useAudioAnalysis({
               .filter((v): v is PeakSearchDebug => v !== null);
 
             setPeakSearchDebug(debugList);
+            hasPeakSearchDebugRef.current = true;
           }
-        } else if (peakSearchDebug !== null) {
+        } else if (hasPeakSearchDebugRef.current) {
           setPeakSearchDebug(null);
+          hasPeakSearchDebugRef.current = false;
         }
 
         animationFrameIdRef.current = requestAnimationFrame(analyzeLoop);
@@ -244,6 +294,8 @@ export function useAudioAnalysis({
     setIsProcessing(false);
     setAnalysisResult(null);
     setCentDeviations(null);
+    setPeakSearchDebug(null);
+    hasPeakSearchDebugRef.current = false;
     spectrumDataRef.current = null;
     freqBinsRef.current = null;
     lastFreqBinsKeyRef.current = null;
