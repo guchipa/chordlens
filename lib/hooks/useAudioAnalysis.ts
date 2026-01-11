@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { evaluateSpectrum } from "@/lib/audio_analysis/justAnalyze";
-import type { UseAudioAnalysisProps } from "@/lib/types";
+import type { PeakSearchDebug, UseAudioAnalysisProps } from "@/lib/types";
 
 export function useAudioAnalysis({
   currentPitchList,
@@ -9,6 +9,8 @@ export function useAudioAnalysis({
   evalThreshold,
   fftSize,
   smoothingTimeConstant,
+  enablePeakSearchDebug,
+  peakSearchDebugFps,
 }: UseAudioAnalysisProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<
@@ -18,14 +20,19 @@ export function useAudioAnalysis({
     (number | null)[] | null
   >(null);
 
+  const [peakSearchDebug, setPeakSearchDebug] = useState<
+    PeakSearchDebug[] | null
+  >(null);
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserNodeRef = useRef<AnalyserNode | null>(null);
   const silentGainNodeRef = useRef<GainNode | null>(null);
   const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  const spectrumDataRef = useRef<Float32Array | null>(null);
+  const spectrumDataRef = useRef<Float32Array<ArrayBuffer> | null>(null);
   const freqBinsRef = useRef<number[] | null>(null);
   const lastFreqBinsKeyRef = useRef<string | null>(null);
+  const lastPeakDebugUpdateMsRef = useRef<number>(0);
 
   // 最新のpropsを保持するref
   const latestPropsRef = useRef({
@@ -35,6 +42,8 @@ export function useAudioAnalysis({
     evalThreshold,
     fftSize,
     smoothingTimeConstant,
+    enablePeakSearchDebug,
+    peakSearchDebugFps,
   });
 
   useEffect(() => {
@@ -45,6 +54,8 @@ export function useAudioAnalysis({
       evalThreshold,
       fftSize,
       smoothingTimeConstant,
+      enablePeakSearchDebug,
+      peakSearchDebugFps,
     };
 
     // 設定変更をAnalyserNodeに反映
@@ -57,7 +68,7 @@ export function useAudioAnalysis({
       freqBinsRef.current = null;
       lastFreqBinsKeyRef.current = null;
     }
-  }, [currentPitchList, evalRangeCents, a4Freq, evalThreshold, fftSize, smoothingTimeConstant]);
+  }, [currentPitchList, evalRangeCents, a4Freq, evalThreshold, fftSize, smoothingTimeConstant, enablePeakSearchDebug, peakSearchDebugFps]);
 
   const startProcessing = useCallback(async () => {
     if (isProcessing) return;
@@ -138,11 +149,58 @@ export function useAudioAnalysis({
           props.currentPitchList,
           props.evalRangeCents,
           props.a4Freq,
-          props.evalThreshold
+          props.evalThreshold,
+          { includeDebug: props.enablePeakSearchDebug }
         );
 
         setAnalysisResult(results.map((r) => r.deviation));
         setCentDeviations(results.map((r) => r.centDeviation));
+
+        if (props.enablePeakSearchDebug) {
+          const fps = props.peakSearchDebugFps ?? 12;
+          const minIntervalMs = fps <= 0 ? 0 : 1000 / fps;
+          const nowMs = performance.now();
+
+          if (nowMs - lastPeakDebugUpdateMsRef.current >= minIntervalMs) {
+            lastPeakDebugUpdateMsRef.current = nowMs;
+
+            const spec = spectrumDataRef.current;
+            const freq = freqBinsRef.current;
+
+            const debugList: PeakSearchDebug[] = results
+              .map((r, idx): PeakSearchDebug | null => {
+                const debug = r.debug;
+                const pitch = props.currentPitchList[idx];
+                if (!debug || !pitch) return null;
+
+                const minIdx = Math.max(0, Math.min(spec.length, debug.range.minIdx));
+                const maxIdx = Math.max(minIdx, Math.min(spec.length, debug.range.maxIdx));
+
+                const bins = [] as PeakSearchDebug["bins"];
+                for (let i = minIdx; i < maxIdx; i++) {
+                  bins.push({ idx: i, freqHz: freq[i] ?? 0, db: spec[i] ?? -Infinity });
+                }
+
+                return {
+                  pitch,
+                  estFreqHz: debug.estFreqHz,
+                  range: {
+                    minIdx,
+                    maxIdx,
+                    minFreqHz: freq[minIdx] ?? 0,
+                    maxFreqHz: freq[Math.max(minIdx, maxIdx - 1)] ?? 0,
+                  },
+                  peak: debug.peak,
+                  bins,
+                };
+              })
+              .filter((v): v is PeakSearchDebug => v !== null);
+
+            setPeakSearchDebug(debugList);
+          }
+        } else if (peakSearchDebug !== null) {
+          setPeakSearchDebug(null);
+        }
 
         animationFrameIdRef.current = requestAnimationFrame(analyzeLoop);
       };
@@ -195,6 +253,7 @@ export function useAudioAnalysis({
     isProcessing,
     analysisResult,
     centDeviations,
+    peakSearchDebug,
     startProcessing,
     stopProcessing,
   };

@@ -21,6 +21,7 @@ import { CentDisplay } from "@/components/feature/CentDisplay";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { LogExportButton } from "@/components/feature/LogExportButton";
+import { PeakSearchBinsPanel } from "@/components/feature/PeakSearchBinsPanel";
 import { FormSchema, type Pitch } from "@/lib/types";
 import { METER_NEEDLE_HOLD_MS, METER_NEEDLE_SMOOTHING_ALPHA } from "@/lib/constants";
 import { updateEmaHoldList, type EmaHoldState } from "@/lib/utils/emaHold";
@@ -71,6 +72,7 @@ export default function ExperimentPage() {
     isProcessing,
     analysisResult,
     centDeviations,
+    peakSearchDebug,
     startProcessing,
     stopProcessing,
   } = useAudioAnalysis({
@@ -80,6 +82,8 @@ export default function ExperimentPage() {
     evalThreshold,
     fftSize,
     smoothingTimeConstant,
+    enablePeakSearchDebug: true,
+    peakSearchDebugFps: 12,
   });
 
   // ログ記録フック
@@ -191,6 +195,12 @@ export default function ExperimentPage() {
           onStartRecording={startRecording}
           onStopRecording={stopRecording}
           onClearLog={clearLog}
+        />
+
+        <PeakSearchBinsPanel
+          peakSearchDebug={peakSearchDebug}
+          isProcessing={isProcessing}
+          evalThresholdDb={evalThreshold}
         />
 
         <UnifiedFeedback

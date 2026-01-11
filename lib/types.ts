@@ -101,6 +101,36 @@ export interface UseAudioAnalysisProps {
   evalThreshold: number;
   fftSize: number;
   smoothingTimeConstant: number;
+
+  /** 実験モード向け: ピーク探索範囲（ビン列）を取得する */
+  enablePeakSearchDebug?: boolean;
+  /** 実験モード向け: デバッグ情報の更新FPS（デフォルト: 12） */
+  peakSearchDebugFps?: number;
+}
+
+/** ピーク探索範囲内の1ビン情報（実験モード用） */
+export interface PeakSearchBin {
+  idx: number;
+  freqHz: number;
+  db: number;
+}
+
+/** ピーク探索範囲の可視化用データ（実験モード用） */
+export interface PeakSearchDebug {
+  pitch: Pitch;
+  estFreqHz: number;
+  range: {
+    minIdx: number;
+    maxIdx: number;
+    minFreqHz: number;
+    maxFreqHz: number;
+  };
+  peak: {
+    idx: number;
+    freqHz: number;
+    db: number;
+  };
+  bins: PeakSearchBin[];
 }
 
 // ========================================

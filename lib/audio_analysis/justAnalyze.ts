@@ -10,6 +10,26 @@ export interface EvaluationResult {
   deviation: number | null;
   /** セント単位の誤差（生の値） */
   centDeviation: number | null;
+
+  /** 実験モード向け: ピーク探索範囲デバッグ情報 */
+  debug?: {
+    estFreqHz: number;
+    range: {
+      minIdx: number;
+      maxIdx: number;
+      minFreqHz: number;
+      maxFreqHz: number;
+    };
+    peak: {
+      idx: number;
+      freqHz: number;
+      db: number;
+    };
+  };
+}
+
+export interface EvaluateSpectrumOptions {
+  includeDebug?: boolean;
 }
 
 /**
@@ -28,7 +48,8 @@ export function evaluateSpectrum(
   pitchNameList: Pitch[],
   evalRangeCents: number,
   a4Freq: number, // A4_FREQ を引数に追加
-  evalThreshold: number // EVAL_THRESHOLD を引数に追加
+  evalThreshold: number, // EVAL_THRESHOLD を引数に追加
+  options: EvaluateSpectrumOptions = {}
 ): EvaluationResult[] {
   const estFreqs = getJustFrequencies(pitchNameList, a4Freq); // a4Freq を渡す
 
@@ -85,7 +106,24 @@ export function evaluateSpectrum(
     const evalSpec = spec.slice(evalRangeMin, evalRangeMax);
 
     if (evalSpec.length === 0) {
-      evalList.push({ deviation: null, centDeviation: null });
+      const base: EvaluationResult = { deviation: null, centDeviation: null };
+      if (options.includeDebug) {
+        base.debug = {
+          estFreqHz: est_f,
+          range: {
+            minIdx: evalRangeMin,
+            maxIdx: evalRangeMax,
+            minFreqHz: freq[evalRangeMin] ?? 0,
+            maxFreqHz: freq[Math.max(evalRangeMin, evalRangeMax - 1)] ?? 0,
+          },
+          peak: {
+            idx: Math.max(0, Math.min(spec.length - 1, targetIdx)),
+            freqHz: freq[Math.max(0, Math.min(freq.length - 1, targetIdx))] ?? 0,
+            db: spec[Math.max(0, Math.min(spec.length - 1, targetIdx))] ?? -Infinity,
+          },
+        };
+      }
+      evalList.push(base);
       continue;
     }
 
@@ -101,7 +139,26 @@ export function evaluateSpectrum(
 
     // spec_max が閾値以下の場合は null を返す
     if (maxVal < evalThreshold) {
-      evalList.push({ deviation: null, centDeviation: null });
+      const peakIdx = evalRangeMin + specMax;
+      const peakFreq = quadraticInterpolation(spec, peakIdx, freq);
+      const base: EvaluationResult = { deviation: null, centDeviation: null };
+      if (options.includeDebug) {
+        base.debug = {
+          estFreqHz: est_f,
+          range: {
+            minIdx: evalRangeMin,
+            maxIdx: evalRangeMax,
+            minFreqHz: freq[evalRangeMin] ?? 0,
+            maxFreqHz: freq[Math.max(evalRangeMin, evalRangeMax - 1)] ?? 0,
+          },
+          peak: {
+            idx: peakIdx,
+            freqHz: peakFreq,
+            db: maxVal,
+          },
+        };
+      }
+      evalList.push(base);
     } else {
       // 実際の周波数を計算（パラボラ補間を使用）
       const actualFreqIdx = evalRangeMin + specMax;
@@ -118,7 +175,25 @@ export function evaluateSpectrum(
       const rawDeviation = evalRangeCents === 0 ? 0 : centDeviation / evalRangeCents;
       const deviation = Math.max(-1, Math.min(1, Math.round(rawDeviation * 1000) / 1000));
 
-      evalList.push({ deviation, centDeviation });
+      const result: EvaluationResult = { deviation, centDeviation };
+      if (options.includeDebug) {
+        result.debug = {
+          estFreqHz: est_f,
+          range: {
+            minIdx: evalRangeMin,
+            maxIdx: evalRangeMax,
+            minFreqHz: freq[evalRangeMin] ?? 0,
+            maxFreqHz: freq[Math.max(evalRangeMin, evalRangeMax - 1)] ?? 0,
+          },
+          peak: {
+            idx: actualFreqIdx,
+            freqHz: actualFreq,
+            db: maxVal,
+          },
+        };
+      }
+
+      evalList.push(result);
     }
   }
 
