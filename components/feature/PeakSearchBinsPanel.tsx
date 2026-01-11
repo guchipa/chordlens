@@ -31,36 +31,29 @@ const BinGraph: React.FC<BinGraphProps> = ({ debug, evalThresholdDb, width = 560
     const padding = 10;
 
     const { points, minDb, maxDb, minHz, maxHz } = useMemo(() => {
+        // dB軸は常に固定レンジで表示して比較しやすくする
+        const fixedMinDb = -120;
+        const fixedMaxDb = 0;
+
         const bins = debug.bins;
         if (bins.length === 0) {
             return {
                 points: "",
-                minDb: -120,
-                maxDb: 0,
+                minDb: fixedMinDb,
+                maxDb: fixedMaxDb,
                 minHz: 0,
                 maxHz: 1,
             };
         }
 
-        let minDbLocal = Number.POSITIVE_INFINITY;
-        let maxDbLocal = Number.NEGATIVE_INFINITY;
         let minHzLocal = Number.POSITIVE_INFINITY;
         let maxHzLocal = Number.NEGATIVE_INFINITY;
 
         for (const b of bins) {
-            if (Number.isFinite(b.db)) {
-                minDbLocal = Math.min(minDbLocal, b.db);
-                maxDbLocal = Math.max(maxDbLocal, b.db);
-            }
             if (Number.isFinite(b.freqHz)) {
                 minHzLocal = Math.min(minHzLocal, b.freqHz);
                 maxHzLocal = Math.max(maxHzLocal, b.freqHz);
             }
-        }
-
-        if (!Number.isFinite(minDbLocal) || !Number.isFinite(maxDbLocal) || minDbLocal === maxDbLocal) {
-            minDbLocal = -120;
-            maxDbLocal = 0;
         }
         if (!Number.isFinite(minHzLocal) || !Number.isFinite(maxHzLocal) || minHzLocal === maxHzLocal) {
             minHzLocal = debug.range.minFreqHz;
@@ -77,7 +70,7 @@ const BinGraph: React.FC<BinGraphProps> = ({ debug, evalThresholdDb, width = 560
         const pts = bins
             .map((b) => {
                 const x = padding + ((b.freqHz - minHzLocal) / (maxHzLocal - minHzLocal)) * w;
-                const yNorm = (b.db - minDbLocal) / (maxDbLocal - minDbLocal);
+                const yNorm = (b.db - fixedMinDb) / (fixedMaxDb - fixedMinDb);
                 const y = padding + (1 - clamp01(yNorm)) * h;
                 return `${x.toFixed(2)},${y.toFixed(2)}`;
             })
@@ -85,8 +78,8 @@ const BinGraph: React.FC<BinGraphProps> = ({ debug, evalThresholdDb, width = 560
 
         return {
             points: pts,
-            minDb: minDbLocal,
-            maxDb: maxDbLocal,
+            minDb: fixedMinDb,
+            maxDb: fixedMaxDb,
             minHz: minHzLocal,
             maxHz: maxHzLocal,
         };
