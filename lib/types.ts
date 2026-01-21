@@ -146,6 +146,8 @@ export interface SettingsFormProps {
   onEvalThresholdChange: (value: number) => void;
   onFftSizeChange: (value: number) => void;
   onSmoothingTimeConstantChange: (value: number) => void;
+  /** 実験用機能のON/OFF変更コールバック */
+  onExperimentModeChange?: (enabled: boolean) => void;
 }
 
 // ========================================

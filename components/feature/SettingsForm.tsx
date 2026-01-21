@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { SettingsFormProps } from "@/lib/types";
 import {
   A4_FREQ,
@@ -34,6 +35,7 @@ export function SettingsForm({
   onEvalThresholdChange,
   onFftSizeChange,
   onSmoothingTimeConstantChange,
+  onExperimentModeChange,
 }: SettingsFormProps) {
   const [evalRange, setEvalRange] = useState(EVAL_RANGE_CENTS);
   const [a4Freq, setA4Freq] = useState(A4_FREQ);
@@ -42,6 +44,7 @@ export function SettingsForm({
   const [smoothingTimeConstant, setSmoothingTimeConstant] = useState(
     SMOOTHING_TIME_CONSTANT
   ); // SMOOTHING_TIME_CONSTANTのstate
+  const [experimentMode, setExperimentMode] = useState(false); // 実験用機能のトグル
 
   useEffect(() => {
     // localStorageからevalRangeCentsを読み込む
@@ -109,12 +112,23 @@ export function SettingsForm({
     } else {
       onSmoothingTimeConstantChange(SMOOTHING_TIME_CONSTANT);
     }
+
+    // localStorageからexperimentModeを読み込む
+    const savedExperimentMode = localStorage.getItem("experimentMode");
+    if (savedExperimentMode) {
+      const isEnabled = savedExperimentMode === "true";
+      setExperimentMode(isEnabled);
+      onExperimentModeChange?.(isEnabled);
+    } else {
+      onExperimentModeChange?.(false);
+    }
   }, [
     onEvalRangeChange,
     onA4FreqChange,
     onEvalThresholdChange,
     onFftSizeChange,
     onSmoothingTimeConstantChange,
+    onExperimentModeChange,
   ]);
 
   const handleEvalRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,6 +175,12 @@ export function SettingsForm({
       localStorage.setItem("smoothingTimeConstant", value.toString());
       onSmoothingTimeConstantChange(value);
     }
+  };
+
+  const handleExperimentModeChange = (checked: boolean) => {
+    setExperimentMode(checked);
+    localStorage.setItem("experimentMode", checked.toString());
+    onExperimentModeChange?.(checked);
   };
 
   const fftSizeOptions = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
@@ -260,6 +280,22 @@ export function SettingsForm({
                   <p className="text-sm text-gray-500 mt-1">
                     スペクトルの変化の滑らかさを調整します (0.0-1.0)。
                   </p>
+                </div>
+                {/* 実験用機能トグル */}
+                <div className="flex items-center space-x-3 pt-2 border-t border-gray-200 mt-4">
+                  <Checkbox
+                    id="experimentMode"
+                    checked={experimentMode}
+                    onCheckedChange={handleExperimentModeChange}
+                  />
+                  <div>
+                    <Label htmlFor="experimentMode" className="cursor-pointer">
+                      実験用機能を使う
+                    </Label>
+                    <p className="text-sm text-gray-500 mt-1">
+                      ログ記録・周波数観測パネルを表示します。
+                    </p>
+                  </div>
                 </div>
               </div>
             </AccordionContent>

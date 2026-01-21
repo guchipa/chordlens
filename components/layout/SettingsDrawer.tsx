@@ -24,6 +24,7 @@ interface SettingsDrawerProps {
   setEvalThreshold: (value: number) => void;
   setFftSize: (value: number) => void;
   setSmoothingTimeConstant: (value: number) => void;
+  onExperimentModeChange?: (enabled: boolean) => void;
 }
 
 export function SettingsDrawer({
@@ -44,6 +45,7 @@ export function SettingsDrawer({
   setEvalThreshold,
   setFftSize,
   setSmoothingTimeConstant,
+  onExperimentModeChange,
 }: SettingsDrawerProps) {
   return (
     <>
@@ -71,9 +73,8 @@ export function SettingsDrawer({
 
       {/* Settings Drawer */}
       <div
-        className={`fixed top-0 left-0 h-full w-full max-w-sm bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-full w-full max-w-sm bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-xl font-bold">設定</h3>
@@ -125,6 +126,7 @@ export function SettingsDrawer({
             onEvalThresholdChange={setEvalThreshold}
             onFftSizeChange={setFftSize}
             onSmoothingTimeConstantChange={setSmoothingTimeConstant}
+            onExperimentModeChange={onExperimentModeChange}
           />
         </div>
       </div>

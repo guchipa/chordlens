@@ -88,7 +88,13 @@ export function useAudioAnalysis({
         audioContextRef.current = new AudioContext();
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false, // エコーキャンセルをオフ
+          noiseSuppression: false, // ノイズ抑制をオフ
+          autoGainControl: false,  // 自動音量調整をオフ
+        }
+      });
 
       // MediaStreamSourceを作成
       const source = audioContextRef.current.createMediaStreamSource(stream);
@@ -109,14 +115,30 @@ export function useAudioAnalysis({
       analyser.connect(silentGain);
       silentGain.connect(audioContextRef.current.destination);
 
+      // DEBUG: AudioContext の状態をログ出力
+      console.log("[AudioDebug] AudioContext state:", audioContextRef.current.state);
+      console.log("[AudioDebug] Sample rate:", audioContextRef.current.sampleRate);
+      console.log("[AudioDebug] FFT size:", analyser.fftSize);
+      console.log("[AudioDebug] Frequency bin count:", analyser.frequencyBinCount);
+
       spectrumDataRef.current = new Float32Array(analyser.frequencyBinCount);
       freqBinsRef.current = null;
       lastFreqBinsKeyRef.current = null;
 
+      let debugFrameCount = 0;
       const analyzeLoop = () => {
         const ctx = audioContextRef.current;
         const analyserNode = analyserNodeRef.current;
         if (!ctx || !analyserNode) return;
+
+        // DEBUG: 30フレームごとにスペクトルの最大値をログ出力
+        debugFrameCount++;
+        if (debugFrameCount % 30 === 0) {
+          const tempSpec = new Float32Array(analyserNode.frequencyBinCount);
+          analyserNode.getFloatFrequencyData(tempSpec);
+          const maxDb = Math.max(...tempSpec);
+          console.log("[AudioDebug] Max spectrum dB:", maxDb.toFixed(1), "| AudioContext state:", ctx.state);
+        }
 
         const props = latestPropsRef.current;
 
