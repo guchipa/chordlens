@@ -19,21 +19,56 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
-import { PITCH_NAME_LIST, OCTAVE_NUM_LIST } from "@/lib/constants";
+import { PITCH_NAME_LIST, OCTAVE_NUM_LIST, A4_FREQ } from "@/lib/constants";
 import { formType } from "@/lib/schema";
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { MicInputButton } from "@/components/feature/MicInputButton";
+import { PitchConfirmDialog } from "@/components/feature/PitchConfirmDialog";
+import type { PitchCandidate } from "@/lib/audio_analysis/pitchDetection";
 
 interface PitchSettingFormProps {
   form: UseFormReturn<formType>;
   onSubmit: (data: formType) => void;
   currentPitchList: formType[];
+  /** A4基準周波数 (Hz) - マイク入力による音名推定で使用 */
+  a4Freq?: number;
 }
 
 export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
   form,
   onSubmit,
   currentPitchList,
+  a4Freq = A4_FREQ,
 }) => {
+  // マイク入力による音名推定の状態
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [detectedCandidates, setDetectedCandidates] = useState<PitchCandidate[]>([]);
+
+  // マイク入力による検出完了時のハンドラ
+  const handleDetectionComplete = useCallback((candidates: PitchCandidate[]) => {
+    if (candidates.length > 0) {
+      setDetectedCandidates(candidates);
+      setIsDialogOpen(true);
+    }
+  }, []);
+
+  // 検出した音を追加するハンドラ
+  const handleConfirmPitch = useCallback((selected: PitchCandidate) => {
+    // フォームに値を設定
+    form.setValue("pitchName", selected.pitchName);
+    form.setValue("octaveNum", selected.octaveNum);
+    // フォームを送信
+    form.handleSubmit(onSubmit)();
+    // ダイアログを閉じてリセット
+    setIsDialogOpen(false);
+    setDetectedCandidates([]);
+  }, [form, onSubmit]);
+
+  // キャンセル時のハンドラ
+  const handleCancelPitch = useCallback(() => {
+    setIsDialogOpen(false);
+    setDetectedCandidates([]);
+  }, []);
   const isRootChecked = form.watch("isRoot");
   const hasRoot = useMemo(() => currentPitchList?.some((p) => p.isRoot) ?? false, [
     currentPitchList,
@@ -103,23 +138,29 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
                   <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
                     オクターブ
                   </FormLabel>
-                  <Select
-                    onValueChange={(val) => field.onChange(Number(val))}
-                    value={field.value ? field.value.toString() : undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="オクターブ番号を選んでください" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {OCTAVE_NUM_LIST.map((octaveNum) => (
-                        <SelectItem key={octaveNum} value={octaveNum.toString()}>
-                          {octaveNum}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2 flex-1">
+                    <Select
+                      onValueChange={(val) => field.onChange(Number(val))}
+                      value={field.value ? field.value.toString() : undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="オクターブ番号を選んでください" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {OCTAVE_NUM_LIST.map((octaveNum) => (
+                          <SelectItem key={octaveNum} value={octaveNum.toString()}>
+                            {octaveNum}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <MicInputButton
+                      onDetectionComplete={handleDetectionComplete}
+                      a4Freq={a4Freq}
+                    />
+                  </div>
                   <FormMessage className="sm:ml-28" />
                 </FormItem>
               )}
@@ -191,6 +232,14 @@ export const PitchSettingForm: React.FC<PitchSettingFormProps> = ({
           </form>
         </Form>
       </CardContent>
+      {/* マイク入力による音名検出の確認ダイアログ */}
+      <PitchConfirmDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        candidates={detectedCandidates}
+        onConfirm={handleConfirmPitch}
+        onCancel={handleCancelPitch}
+      />
     </Card>
   );
 };

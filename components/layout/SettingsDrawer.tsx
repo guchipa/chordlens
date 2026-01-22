@@ -20,6 +20,7 @@ interface SettingsDrawerProps {
   feedbackType: FeedbackType;
   handleFeedbackTypeChange: (type: FeedbackType) => void;
   setEvalRangeCents: (value: number) => void;
+  a4Freq: number;
   setA4Freq: (value: number) => void;
   setEvalThreshold: (value: number) => void;
   setFftSize: (value: number) => void;
@@ -41,6 +42,7 @@ export function SettingsDrawer({
   feedbackType,
   handleFeedbackTypeChange,
   setEvalRangeCents,
+  a4Freq,
   setA4Freq,
   setEvalThreshold,
   setFftSize,
@@ -105,6 +107,7 @@ export function SettingsDrawer({
             form={form}
             onSubmit={onSubmit}
             currentPitchList={currentPitchList}
+            a4Freq={a4Freq}
           />
           <PitchList
             currentPitchList={currentPitchList}

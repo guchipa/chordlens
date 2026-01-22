@@ -20,7 +20,7 @@ const TestFormWrapper = ({
     },
   });
 
-  return <PitchSettingForm form={form} onSubmit={onSubmit} />;
+  return <PitchSettingForm form={form} onSubmit={onSubmit} currentPitchList={[]} />;
 };
 
 describe("PitchSettingForm", () => {

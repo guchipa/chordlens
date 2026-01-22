@@ -159,6 +159,7 @@ export default function ExperimentPage() {
         feedbackType={feedbackType}
         handleFeedbackTypeChange={handleFeedbackTypeChange}
         setEvalRangeCents={setEvalRangeCents}
+        a4Freq={a4Freq}
         setA4Freq={setA4Freq}
         setEvalThreshold={setEvalThreshold}
         setFftSize={setFftSize}
