@@ -18,6 +18,8 @@ interface UnifiedFeedbackProps {
   }>;
   evalRangeCents: number;
   a4Freq?: number;
+  /** 表示保持（ホールド）を有効にするか */
+  holdEnabled?: boolean;
 }
 
 export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
@@ -25,6 +27,7 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
   analysisData,
   // evalRangeCents,
   a4Freq = 442,
+  holdEnabled = true,
 }) => {
   // 根音を見つける
   const rootPitch = analysisData.find((data) => data.pitch.isRoot);
@@ -42,6 +45,7 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
         analysisData={analysisData}
         rootPitchName={rootPitchName}
         a4Freq={a4Freq}
+        holdEnabled={holdEnabled}
       />
     );
   }

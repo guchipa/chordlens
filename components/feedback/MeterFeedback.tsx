@@ -27,6 +27,8 @@ interface TunerMeterProps {
   rootPitchName?: string;
   /** A4の基準周波数（デフォルト: 442Hz） */
   a4Freq?: number;
+  /** 表示保持（ホールド）を有効にするか（デフォルト: true） */
+  holdEnabled?: boolean;
 }
 
 export const TunerMeter: React.FC<TunerMeterProps> = ({
@@ -34,6 +36,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   title,
   rootPitchName,
   a4Freq = 442,
+  holdEnabled = true,
 }) => {
   // 表示用のデータを保持する state
   const [displayData, setDisplayData] = useState(analysisData);
@@ -62,7 +65,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
       now,
       {
         alpha: METER_NEEDLE_SMOOTHING_ALPHA,
-        holdMs: METER_NEEDLE_HOLD_MS,
+        holdMs: holdEnabled ? METER_NEEDLE_HOLD_MS : 0,
       }
     );
 

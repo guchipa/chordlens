@@ -25,6 +25,7 @@ import {
   SENSITIVITY_DEFAULT,
   SENSITIVITY_MIN,
   SENSITIVITY_MAX,
+  HOLD_ENABLED_DEFAULT,
   sensitivityToDb,
   dbToSensitivity,
 } from "@/lib/constants";
@@ -35,6 +36,7 @@ export function SettingsForm({
   onEvalThresholdChange,
   onFftSizeChange,
   onSmoothingTimeConstantChange,
+  onHoldEnabledChange,
   onExperimentModeChange,
 }: SettingsFormProps) {
   const [evalRange, setEvalRange] = useState(EVAL_RANGE_CENTS);
@@ -44,6 +46,7 @@ export function SettingsForm({
   const [smoothingTimeConstant, setSmoothingTimeConstant] = useState(
     SMOOTHING_TIME_CONSTANT
   ); // SMOOTHING_TIME_CONSTANTのstate
+  const [holdEnabled, setHoldEnabled] = useState(HOLD_ENABLED_DEFAULT); // 表示保持（ホールド）のトグル
   const [experimentMode, setExperimentMode] = useState(false); // 実験用機能のトグル
 
   useEffect(() => {
@@ -113,6 +116,17 @@ export function SettingsForm({
       onSmoothingTimeConstantChange(SMOOTHING_TIME_CONSTANT);
     }
 
+    // localStorageからholdEnabledを読み込む
+    const savedHoldEnabled = localStorage.getItem("holdEnabled");
+    if (savedHoldEnabled !== null) {
+      const isEnabled = savedHoldEnabled === "true";
+      setHoldEnabled(isEnabled);
+      onHoldEnabledChange?.(isEnabled);
+    } else {
+      setHoldEnabled(HOLD_ENABLED_DEFAULT);
+      onHoldEnabledChange?.(HOLD_ENABLED_DEFAULT);
+    }
+
     // localStorageからexperimentModeを読み込む
     const savedExperimentMode = localStorage.getItem("experimentMode");
     if (savedExperimentMode) {
@@ -128,6 +142,7 @@ export function SettingsForm({
     onEvalThresholdChange,
     onFftSizeChange,
     onSmoothingTimeConstantChange,
+    onHoldEnabledChange,
     onExperimentModeChange,
   ]);
 
@@ -175,6 +190,12 @@ export function SettingsForm({
       localStorage.setItem("smoothingTimeConstant", value.toString());
       onSmoothingTimeConstantChange(value);
     }
+  };
+
+  const handleHoldEnabledChange = (checked: boolean) => {
+    setHoldEnabled(checked);
+    localStorage.setItem("holdEnabled", checked.toString());
+    onHoldEnabledChange?.(checked);
   };
 
   const handleExperimentModeChange = (checked: boolean) => {
@@ -280,6 +301,22 @@ export function SettingsForm({
                   <p className="text-sm text-gray-500 mt-1">
                     スペクトルの変化の滑らかさを調整します (0.0-1.0)。
                   </p>
+                </div>
+                {/* 表示保持（ホールド）機能トグル */}
+                <div className="flex items-center space-x-3 pt-2 border-t border-gray-200 mt-4">
+                  <Checkbox
+                    id="holdEnabled"
+                    checked={holdEnabled}
+                    onCheckedChange={handleHoldEnabledChange}
+                  />
+                  <div>
+                    <Label htmlFor="holdEnabled" className="cursor-pointer">
+                      表示保持（ホールド）
+                    </Label>
+                    <p className="text-sm text-gray-500 mt-1">
+                      音が途切れても約250ms表示を保持します。
+                    </p>
+                  </div>
                 </div>
                 {/* 実験用機能トグル */}
                 <div className="flex items-center space-x-3 pt-2 border-t border-gray-200 mt-4">

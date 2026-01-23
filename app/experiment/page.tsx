@@ -23,11 +23,12 @@ import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { LogExportButton } from "@/components/feature/LogExportButton";
 import { PeakSearchBinsPanel } from "@/components/feature/PeakSearchBinsPanel";
 import { FormSchema, type Pitch } from "@/lib/types";
-import { METER_NEEDLE_HOLD_MS, METER_NEEDLE_SMOOTHING_ALPHA } from "@/lib/constants";
+import { HOLD_ENABLED_DEFAULT, METER_NEEDLE_HOLD_MS, METER_NEEDLE_SMOOTHING_ALPHA } from "@/lib/constants";
 import { updateEmaHoldList, type EmaHoldState } from "@/lib/utils/emaHold";
 
 export default function ExperimentPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [holdEnabled, setHoldEnabled] = useState(HOLD_ENABLED_DEFAULT);
 
   // Display系列（EMA/ホールド）の状態を保持
   const centDisplayStateRef = useRef<Map<string, EmaHoldState>>(new Map());
@@ -109,7 +110,7 @@ export default function ExperimentPage() {
       now,
       {
         alpha: METER_NEEDLE_SMOOTHING_ALPHA,
-        holdMs: METER_NEEDLE_HOLD_MS,
+        holdMs: holdEnabled ? METER_NEEDLE_HOLD_MS : 0,
       }
     );
 
@@ -164,6 +165,7 @@ export default function ExperimentPage() {
         setEvalThreshold={setEvalThreshold}
         setFftSize={setFftSize}
         setSmoothingTimeConstant={setSmoothingTimeConstant}
+        onHoldEnabledChange={setHoldEnabled}
       />
 
       <main className="container mx-auto flex grow flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
@@ -212,6 +214,7 @@ export default function ExperimentPage() {
           }))}
           evalRangeCents={evalRangeCents}
           a4Freq={a4Freq}
+          holdEnabled={holdEnabled}
         />
         <CentDisplay
           pitchList={currentPitchList}

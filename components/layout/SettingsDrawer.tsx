@@ -25,6 +25,7 @@ interface SettingsDrawerProps {
   setEvalThreshold: (value: number) => void;
   setFftSize: (value: number) => void;
   setSmoothingTimeConstant: (value: number) => void;
+  onHoldEnabledChange?: (enabled: boolean) => void;
   onExperimentModeChange?: (enabled: boolean) => void;
 }
 
@@ -47,6 +48,7 @@ export function SettingsDrawer({
   setEvalThreshold,
   setFftSize,
   setSmoothingTimeConstant,
+  onHoldEnabledChange,
   onExperimentModeChange,
 }: SettingsDrawerProps) {
   return (
@@ -129,6 +131,7 @@ export function SettingsDrawer({
             onEvalThresholdChange={setEvalThreshold}
             onFftSizeChange={setFftSize}
             onSmoothingTimeConstantChange={setSmoothingTimeConstant}
+            onHoldEnabledChange={onHoldEnabledChange}
             onExperimentModeChange={onExperimentModeChange}
           />
         </div>

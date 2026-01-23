@@ -180,6 +180,12 @@ export const METER_NEEDLE_HOLD_MS = 250;
 export const METER_NEEDLE_SMOOTHING_ALPHA = 0.35;
 
 /**
+ * 表示保持（ホールド）機能のデフォルト有効状態
+ * falseにすると、ピッチ未検出時に即座に表示が消える
+ */
+export const HOLD_ENABLED_DEFAULT = true;
+
+/**
  * マイクアクセスやエラーメッセージなど、ユーザーに表示するテキスト定数。
  */
 export const MESSAGE_MIC_ACCESS_DENIED =
