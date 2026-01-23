@@ -42,6 +42,8 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   const [displayData, setDisplayData] = useState(analysisData);
   // タイマーのIDを保持するための ref
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // タイムアウト待ち状態かどうかを追跡するref（タイマーの無限リセットを防ぐ）
+  const isWaitingForTimeoutRef = useRef<boolean>(false);
 
   // 針ごとの状態（保持・スムージング）
   const needleStateRef = useRef<Map<string, EmaHoldState>>(new Map());
@@ -49,11 +51,6 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   const getKey = (pitch: formType) => `${pitch.pitchName}${pitch.octaveNum}`;
 
   useEffect(() => {
-    // 以前のタイマーが残っていればクリア
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
     const now = performance.now();
 
     const keys = analysisData.map(({ pitch }) => getKey(pitch));
@@ -79,22 +76,38 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
 
     if (isAnySoundDetected) {
       // 何かしら検出されている間は、毎フレーム追従しつつ、針ごとの保持/平滑化で安定化
+      // 既存のタイマーがあればクリア
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      isWaitingForTimeoutRef.current = false;
       setDisplayData(nextDisplayData);
     } else {
-      // 音が検出されなかったら、1.5秒後に現在の analysisData（音が無い状態）で表示を更新するタイマーをセット
-      // この間、displayData は古いままなので、針は表示され続ける
-      timeoutRef.current = setTimeout(() => {
-        setDisplayData(nextDisplayData);
-      }, METER_REMAIN_MS);
+      // 音が検出されなかった場合
+      // 既にタイムアウト待ち状態なら、タイマーをリセットしない（無限リセット防止）
+      if (!isWaitingForTimeoutRef.current) {
+        isWaitingForTimeoutRef.current = true;
+        // 1.5秒後に現在の analysisData（音が無い状態）で表示を更新するタイマーをセット
+        // この間、displayData は古いままなので、針は表示され続ける
+        timeoutRef.current = setTimeout(() => {
+          setDisplayData(nextDisplayData);
+          isWaitingForTimeoutRef.current = false;
+          timeoutRef.current = null;
+        }, METER_REMAIN_MS);
+      }
+      // 既にタイマー待ち中の場合は何もしない（タイマーは継続）
     }
 
     // コンポーネントがアンマウントされるときにタイマーをクリア
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
+      isWaitingForTimeoutRef.current = false;
     };
-  }, [analysisData]); // analysisData が変更されるたびに effect を実行
+  }, [analysisData, holdEnabled]); // analysisData が変更されるたびに effect を実行
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
@@ -148,8 +161,8 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
 
               // マーカー用の座標計算
               const markerRotationRad = (-markerRotation + 90) * (Math.PI / 180);
-              const x1 = 50 + 35 * Math.cos(markerRotationRad);
-              const y1 = 50 - 35 * Math.sin(markerRotationRad);
+              const x1 = 50 + 42 * Math.cos(markerRotationRad);
+              const y1 = 50 - 42 * Math.sin(markerRotationRad);
               const x2 = 50 + 45 * Math.cos(markerRotationRad);
               const y2 = 50 - 45 * Math.sin(markerRotationRad);
 
