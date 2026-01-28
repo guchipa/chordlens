@@ -1,13 +1,13 @@
 "use client";
 
 import { TunerMeter } from "@/components/feedback/MeterFeedback";
-import { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 import { CentDisplay } from "./CentDisplay";
 
 interface AnalysisResultProps {
   isProcessing: boolean;
   analysisResult: (number | null)[] | null;
-  currentPitchList: formType[];
+  currentPitchList: Pitch[];
   evalRangeCents: number;
   a4Freq: number;
 }

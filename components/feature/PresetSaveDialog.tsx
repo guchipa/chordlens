@@ -13,12 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { savePreset, isDuplicatePresetName } from "@/lib/presets";
-import { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 
 interface PresetSaveDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  pitchList: formType[];
+  pitchList: Pitch[];
   onSaveSuccess: () => void;
 }
 

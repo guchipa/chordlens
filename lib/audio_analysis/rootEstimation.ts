@@ -4,16 +4,16 @@ import {
   PITCH_NAME_LIST,
 } from "@/lib/constants";
 
-import { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 
 /**
- * 音名の配列から最も可能性の高いコード名を推定します。
- * @param {string[]} noteNames - 例: ['C4', 'E4', 'G4']
- * @returns {string} - 推定されたコード名 (例: "C Major")
+ * 現在登録されている音リストを元にルート音を推定する
+ * @param currentPitchList 現在の音リスト
+ * @param setCurrentPitchList 音リストを更新する関数
  */
 export function estimateRoot(
-  currentPitchList: formType[],
-  setCurrentPitchList: (pitchList: formType[]) => void
+  currentPitchList: Pitch[],
+  setCurrentPitchList: (pitchList: Pitch[]) => void
 ): void {
   if (!currentPitchList || currentPitchList.length < 2) {
     return;

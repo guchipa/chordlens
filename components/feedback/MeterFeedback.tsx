@@ -9,7 +9,7 @@ import {
   METER_REMAIN_MS,
   PITCH_COLOR_MAP,
 } from "@/lib/constants";
-import { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 import { getSingleEqualJustDiff } from "@/lib/audio_analysis/calcJustFreq";
 import { updateEmaHoldList, type EmaHoldState } from "@/lib/utils/emaHold";
 
@@ -18,7 +18,7 @@ interface TunerMeterProps {
    * 解析結果の配列。各要素が1つの針に対応します。
    */
   analysisData: Array<{
-    pitch: formType;
+    pitch: Pitch;
     deviation: number | null;
   }>;
   /** メーターのタイトル */
@@ -48,7 +48,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   // 針ごとの状態（保持・スムージング）
   const needleStateRef = useRef<Map<string, EmaHoldState>>(new Map());
 
-  const getKey = (pitch: formType) => `${pitch.pitchName}${pitch.octaveNum}`;
+  const getKey = (pitch: Pitch) => `${pitch.pitchName}${pitch.octaveNum}`;
 
   useEffect(() => {
     const now = performance.now();

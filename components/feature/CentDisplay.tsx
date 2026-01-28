@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 import { getEqualJustDiff, getEqualFrequencies, getJustFrequencies } from "@/lib/audio_analysis/calcJustFreq";
 import { PITCH_NAME_LIST } from "@/lib/constants";
 
@@ -35,7 +35,7 @@ const INTERVAL_NAMES: { [key: number]: string } = {
 };
 
 interface CentDisplayProps {
-  pitchList: formType[];
+  pitchList: Pitch[];
   a4Freq: number;
   title?: string;
 }
@@ -43,7 +43,7 @@ interface CentDisplayProps {
 /**
  * 根音からの半音数を計算
  */
-const calculateInterval = (pitchList: formType[], index: number): number => {
+const calculateInterval = (pitchList: Pitch[], index: number): number => {
   const rootPitch = pitchList.find((p) => p.isRoot);
   if (!rootPitch) return 0;
 

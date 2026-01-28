@@ -5,7 +5,7 @@ describe("TunerMeter", () => {
   it("renders correctly with no deviation", () => {
     const analysisData = [
       {
-        pitch: { pitchName: "A", octaveNum: 4, isRoot: false },
+        pitch: { pitchName: "A", octaveNum: 4, enabled: true, isRoot: false },
         deviation: null,
       },
     ];
@@ -21,7 +21,7 @@ describe("TunerMeter", () => {
   it("renders correctly when in tune", () => {
     const analysisData = [
       {
-        pitch: { pitchName: "C", octaveNum: 4, isRoot: false },
+        pitch: { pitchName: "C", octaveNum: 4, enabled: true, isRoot: false },
         deviation: 0.0,
       },
     ];
@@ -37,7 +37,7 @@ describe("TunerMeter", () => {
   it("renders correctly when out of tune", () => {
     const analysisData = [
       {
-        pitch: { pitchName: "G#", octaveNum: 3, isRoot: false },
+        pitch: { pitchName: "G#", octaveNum: 3, enabled: true, isRoot: false },
         deviation: -0.5,
       },
     ];
@@ -53,15 +53,15 @@ describe("TunerMeter", () => {
   it("renders multiple pitches correctly", () => {
     const analysisData = [
       {
-        pitch: { pitchName: "C", octaveNum: 4, isRoot: true },
+        pitch: { pitchName: "C", octaveNum: 4, enabled: true, isRoot: true },
         deviation: 0.0,
       },
       {
-        pitch: { pitchName: "E", octaveNum: 4, isRoot: false },
+        pitch: { pitchName: "E", octaveNum: 4, enabled: true, isRoot: false },
         deviation: -0.2,
       },
       {
-        pitch: { pitchName: "G", octaveNum: 4, isRoot: false },
+        pitch: { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
         deviation: 0.1,
       },
     ];

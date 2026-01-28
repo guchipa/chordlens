@@ -1,55 +1,21 @@
-import { UseFormReturn } from "react-hook-form";
+"use client";
+
 import { PitchSettingForm } from "@/components/feature/PitchSettingForm";
 import { PitchList } from "@/components/feature/PitchList";
 import { SettingsForm } from "@/components/feature/SettingsForm";
 import { PresetManager } from "@/components/feature/PresetManager";
 import { FeedbackTypeSelector } from "@/components/feature/FeedbackTypeSelector";
-import type { Pitch, FeedbackType } from "@/lib/types";
 
 interface SettingsDrawerProps {
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
-  form: UseFormReturn<Pitch>;
-  onSubmit: (data: Pitch) => void;
-  currentPitchList: Pitch[];
-  setCurrentPitchList: React.Dispatch<React.SetStateAction<Pitch[]>>;
-  removePitch: (index: number) => void;
-  clearPitchList: () => void;
-  handleLoadPreset: (pitchList: Pitch[]) => void;
-  feedbackType: FeedbackType;
-  handleFeedbackTypeChange: (type: FeedbackType) => void;
-  setEvalRangeCents: (value: number) => void;
-  a4Freq: number;
-  setA4Freq: (value: number) => void;
-  setEvalThreshold: (value: number) => void;
-  setFftSize: (value: number) => void;
-  setSmoothingTimeConstant: (value: number) => void;
-  onHoldEnabledChange?: (enabled: boolean) => void;
-  onExperimentModeChange?: (enabled: boolean) => void;
 }
 
 export function SettingsDrawer({
   isOpen,
   onOpen,
   onClose,
-  form,
-  onSubmit,
-  currentPitchList,
-  setCurrentPitchList,
-  removePitch,
-  clearPitchList,
-  handleLoadPreset,
-  feedbackType,
-  handleFeedbackTypeChange,
-  setEvalRangeCents,
-  a4Freq,
-  setA4Freq,
-  setEvalThreshold,
-  setFftSize,
-  setSmoothingTimeConstant,
-  onHoldEnabledChange,
-  onExperimentModeChange,
 }: SettingsDrawerProps) {
   return (
     <>
@@ -105,35 +71,11 @@ export function SettingsDrawer({
         </div>
 
         <div className="p-4 overflow-y-auto h-[calc(100vh-65px)] space-y-8">
-          <PitchSettingForm
-            form={form}
-            onSubmit={onSubmit}
-            currentPitchList={currentPitchList}
-            a4Freq={a4Freq}
-          />
-          <PitchList
-            currentPitchList={currentPitchList}
-            removePitch={removePitch}
-            clearPitchList={clearPitchList}
-            setCurrentPitchList={setCurrentPitchList}
-          />
-          <PresetManager
-            pitchList={currentPitchList}
-            onLoadPreset={handleLoadPreset}
-          />
-          <FeedbackTypeSelector
-            value={feedbackType}
-            onChange={handleFeedbackTypeChange}
-          />
-          <SettingsForm
-            onEvalRangeChange={setEvalRangeCents}
-            onA4FreqChange={setA4Freq}
-            onEvalThresholdChange={setEvalThreshold}
-            onFftSizeChange={setFftSize}
-            onSmoothingTimeConstantChange={setSmoothingTimeConstant}
-            onHoldEnabledChange={onHoldEnabledChange}
-            onExperimentModeChange={onExperimentModeChange}
-          />
+          <PitchSettingForm />
+          <PitchList />
+          <PresetManager />
+          <FeedbackTypeSelector />
+          <SettingsForm />
         </div>
       </div>
 

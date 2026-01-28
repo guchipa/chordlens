@@ -6,7 +6,7 @@ import {
   getRelativeTimeString,
   isLocalStorageAvailable,
 } from "@/lib/presets";
-import { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 
 // localStorageのモック
 const localStorageMock = (() => {
@@ -42,10 +42,10 @@ describe("presets utility functions", () => {
   });
 
   describe("savePreset", () => {
-    const testPitchList: formType[] = [
-      { pitchName: "C", octaveNum: 4, isRoot: true },
-      { pitchName: "E", octaveNum: 4, isRoot: false },
-      { pitchName: "G", octaveNum: 4, isRoot: false },
+    const testPitchList: Pitch[] = [
+      { pitchName: "C", octaveNum: 4, enabled: true, isRoot: true },
+      { pitchName: "E", octaveNum: 4, enabled: true, isRoot: false },
+      { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
     ];
 
     it("should save a new preset successfully", () => {
@@ -85,8 +85,8 @@ describe("presets utility functions", () => {
 
     it("should overwrite existing preset with same name", () => {
       savePreset("Test", testPitchList);
-      const newPitchList: formType[] = [
-        { pitchName: "D", octaveNum: 4, isRoot: true },
+      const newPitchList: Pitch[] = [
+        { pitchName: "D", octaveNum: 4, enabled: true, isRoot: true },
       ];
       savePreset("Test", newPitchList);
 
@@ -104,8 +104,8 @@ describe("presets utility functions", () => {
 
     it("should return presets sorted by creation date (newest first)", () => {
       jest.useFakeTimers();
-      const pitchList: formType[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+      const pitchList: Pitch[] = [
+        { pitchName: "C", octaveNum: 4, enabled: true, isRoot: true },
       ];
 
       savePreset("First", pitchList);
@@ -125,8 +125,8 @@ describe("presets utility functions", () => {
 
   describe("deletePreset", () => {
     it("should delete preset successfully", () => {
-      const pitchList: formType[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+      const pitchList: Pitch[] = [
+        { pitchName: "C", octaveNum: 4, enabled: true, isRoot: true },
       ];
       savePreset("To Delete", pitchList);
 
@@ -146,8 +146,8 @@ describe("presets utility functions", () => {
 
   describe("isDuplicatePresetName", () => {
     it("should return true when name exists", () => {
-      const pitchList: formType[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+      const pitchList: Pitch[] = [
+        { pitchName: "C", octaveNum: 4, enabled: true, isRoot: true },
       ];
       savePreset("Duplicate", pitchList);
 
@@ -159,8 +159,8 @@ describe("presets utility functions", () => {
     });
 
     it("should trim whitespace when checking", () => {
-      const pitchList: formType[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+      const pitchList: Pitch[] = [
+        { pitchName: "C", octaveNum: 4, enabled: true, isRoot: true },
       ];
       savePreset("Test", pitchList);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useAtom } from "jotai";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -22,27 +22,27 @@ import {
   FEEDBACK_TYPE_DESCRIPTIONS,
 } from "@/lib/constants";
 import type { FeedbackType } from "@/lib/constants";
+import { feedbackTypeAtom } from "@/lib/store";
 
-interface FeedbackTypeSelectorProps {
-  value: FeedbackType;
-  onChange: (value: FeedbackType) => void;
-}
+export function FeedbackTypeSelector() {
+  const [feedbackType, setFeedbackType] = useAtom(feedbackTypeAtom);
 
-export const FeedbackTypeSelector: React.FC<FeedbackTypeSelectorProps> = ({
-  value,
-  onChange,
-}) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle>フィードバック形式</CardTitle>
-        <CardDescription>{FEEDBACK_TYPE_DESCRIPTIONS[value]}</CardDescription>
+        <CardDescription>
+          {FEEDBACK_TYPE_DESCRIPTIONS[feedbackType]}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         <Label htmlFor="feedback-type" className="sr-only">
           フィードバック形式
         </Label>
-        <Select value={value} onValueChange={onChange}>
+        <Select
+          value={feedbackType}
+          onValueChange={(value) => setFeedbackType(value as FeedbackType)}
+        >
           <SelectTrigger id="feedback-type">
             <SelectValue />
           </SelectTrigger>
@@ -57,4 +57,4 @@ export const FeedbackTypeSelector: React.FC<FeedbackTypeSelectorProps> = ({
       </CardContent>
     </Card>
   );
-};
+}

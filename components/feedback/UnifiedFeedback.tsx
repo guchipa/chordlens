@@ -7,13 +7,13 @@ import { BarFeedback } from "./BarFeedback";
 // import { NumericFeedback } from "./NumericFeedback";
 // import { WaveformFeedback } from "./WaveformFeedback";
 import type { FeedbackType } from "@/lib/constants";
-import type { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/types";
 import { CircleFeedback } from "./CircleFeedback";
 
 interface UnifiedFeedbackProps {
   feedbackType: FeedbackType;
   analysisData: Array<{
-    pitch: formType;
+    pitch: Pitch;
     deviation: number | null;
   }>;
   evalRangeCents: number;

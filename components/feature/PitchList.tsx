@@ -1,26 +1,25 @@
 "use client";
 
+import { useAtom, useSetAtom } from "jotai";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { formType } from "@/lib/schema";
 
 // 根音を推定する関数
 import { estimateRoot } from "@/lib/audio_analysis/rootEstimation";
 
-interface PitchListProps {
-  currentPitchList: formType[];
-  removePitch: (index: number) => void;
-  clearPitchList: () => void;
-  setCurrentPitchList: (pitchList: formType[]) => void;
-}
+// Jotai atoms
+import {
+  pitchListAtom,
+  removePitchAtom,
+  clearPitchListAtom,
+} from "@/lib/store";
 
-export const PitchList: React.FC<PitchListProps> = ({
-  currentPitchList,
-  removePitch,
-  clearPitchList,
-  setCurrentPitchList,
-}) => {
+export function PitchList() {
+  const [currentPitchList, setCurrentPitchList] = useAtom(pitchListAtom);
+  const removePitch = useSetAtom(removePitchAtom);
+  const clearPitchList = useSetAtom(clearPitchListAtom);
+
   return (
     <Card className="mt-4 w-full max-w-lg">
       <CardHeader>
@@ -97,7 +96,7 @@ export const PitchList: React.FC<PitchListProps> = ({
               </Button>
               <Button
                 variant="outline"
-                onClick={clearPitchList}
+                onClick={() => clearPitchList()}
                 className="mt-2 sm:mt-0"
               >
                 全てクリア
@@ -108,4 +107,4 @@ export const PitchList: React.FC<PitchListProps> = ({
       </CardContent>
     </Card>
   );
-};
+}

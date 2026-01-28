@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useAtom, useSetAtom } from "jotai";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -11,19 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { PresetSaveDialog } from "@/components/feature/PresetSaveDialog";
 import { PresetList } from "@/components/feature/PresetList";
-import { PitchPreset, formType } from "@/lib/schema";
+import type { PitchPreset } from "@/lib/types";
 import { getPresets, isLocalStorageAvailable } from "@/lib/presets";
 import { Save } from "lucide-react";
+import { pitchListAtom, loadPresetAtom } from "@/lib/store";
 
-interface PresetManagerProps {
-  pitchList: formType[];
-  onLoadPreset: (pitchList: formType[]) => void;
-}
-
-export const PresetManager: React.FC<PresetManagerProps> = ({
-  pitchList,
-  onLoadPreset,
-}) => {
+export function PresetManager() {
+  const [pitchList] = useAtom(pitchListAtom);
+  const loadPreset = useSetAtom(loadPresetAtom);
   const [presets, setPresets] = useState<PitchPreset[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [localStorageAvailable, setLocalStorageAvailable] = useState(true);
@@ -53,7 +49,7 @@ export const PresetManager: React.FC<PresetManagerProps> = ({
   };
 
   const handleLoadPreset = (preset: PitchPreset) => {
-    onLoadPreset(preset.pitchList);
+    loadPreset(preset.pitchList);
   };
 
   const handleDeletePreset = () => {
@@ -111,4 +107,4 @@ export const PresetManager: React.FC<PresetManagerProps> = ({
       />
     </>
   );
-};
+}

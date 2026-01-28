@@ -21,18 +21,15 @@ export const FormSchema = z.object({
     required_error: "オクターブ番号を選択してください",
   }),
   isRoot: z.boolean().optional(),
-  enabled: z.boolean().optional().default(true),
+  enabled: z.boolean().default(true),
 });
 
 /**
  * ピッチ（音高）を表す型
  * 音名、オクターブ番号、ルート音フラグから構成される
+ * z.outputを使用してdefaultが適用された後の型を取得
  */
-export type Pitch = z.infer<typeof FormSchema>;
-
-// 後方互換性のためのエイリアス（非推奨）
-/** @deprecated `Pitch` を使用してください */
-export type formType = Pitch;
+export type Pitch = z.output<typeof FormSchema>;
 
 // ========================================
 // プリセット関連の型定義

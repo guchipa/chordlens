@@ -1,13 +1,13 @@
 import { estimateRoot } from "@/lib/audio_analysis/rootEstimation";
-import type { formType } from "@/lib/schema";
+import type { Pitch } from "@/lib/schema";
 
 describe("rootEstimation", () => {
   describe("estimateRoot", () => {
     it("Cメジャーコード(C-E-G)から根音Cを推定する", () => {
-      const pitchList: formType[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: false },
-        { pitchName: "E", octaveNum: 4, isRoot: false },
-        { pitchName: "G", octaveNum: 4, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "C", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "E", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -23,10 +23,10 @@ describe("rootEstimation", () => {
     });
 
     it("Dマイナーコード(D-F-A)から根音Dを推定する", () => {
-      const pitchList: formType[] = [
-        { pitchName: "D", octaveNum: 4, isRoot: false },
-        { pitchName: "F", octaveNum: 4, isRoot: false },
-        { pitchName: "A", octaveNum: 4, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "D", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "F", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "A", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -42,11 +42,11 @@ describe("rootEstimation", () => {
     });
 
     it("G7コード(G-B-D-F)から根音Gを推定する", () => {
-      const pitchList: formType[] = [
-        { pitchName: "G", octaveNum: 3, isRoot: false },
-        { pitchName: "B", octaveNum: 3, isRoot: false },
-        { pitchName: "D", octaveNum: 4, isRoot: false },
-        { pitchName: "F", octaveNum: 4, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "G", octaveNum: 3, enabled: true, isRoot: false },
+        { pitchName: "B", octaveNum: 3, enabled: true, isRoot: false },
+        { pitchName: "D", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "F", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -60,8 +60,8 @@ describe("rootEstimation", () => {
     });
 
     it("音が2つ未満の場合は何もしない", () => {
-      const pitchList: formType[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "C", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -71,7 +71,7 @@ describe("rootEstimation", () => {
     });
 
     it("空配列の場合は何もしない", () => {
-      const pitchList: formType[] = [];
+      const pitchList: Pitch[] = [];
 
       const mockSetPitchList = jest.fn();
       estimateRoot(pitchList, mockSetPitchList);
@@ -80,11 +80,11 @@ describe("rootEstimation", () => {
     });
 
     it("同じ音名が複数オクターブにまたがっても正しく推定する", () => {
-      const pitchList: formType[] = [
-        { pitchName: "C", octaveNum: 3, isRoot: false },
-        { pitchName: "E", octaveNum: 4, isRoot: false },
-        { pitchName: "G", octaveNum: 4, isRoot: false },
-        { pitchName: "C", octaveNum: 5, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "C", octaveNum: 3, enabled: true, isRoot: false },
+        { pitchName: "E", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "C", octaveNum: 5, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -101,10 +101,10 @@ describe("rootEstimation", () => {
     });
 
     it("転回形でも正しく根音を推定する（第1転回形：E-G-C）", () => {
-      const pitchList: formType[] = [
-        { pitchName: "E", octaveNum: 4, isRoot: false },
-        { pitchName: "G", octaveNum: 4, isRoot: false },
-        { pitchName: "C", octaveNum: 5, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "E", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "C", octaveNum: 5, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -120,11 +120,11 @@ describe("rootEstimation", () => {
     });
 
     it("Am7コード(A-C-E-G)から根音Aを推定する", () => {
-      const pitchList: formType[] = [
-        { pitchName: "A", octaveNum: 3, isRoot: false },
-        { pitchName: "C", octaveNum: 4, isRoot: false },
-        { pitchName: "E", octaveNum: 4, isRoot: false },
-        { pitchName: "G", octaveNum: 4, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "A", octaveNum: 3, enabled: true, isRoot: false },
+        { pitchName: "C", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "E", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -138,10 +138,10 @@ describe("rootEstimation", () => {
     });
 
     it("G7コードの3度欠け(G-D-F)でも根音Gを推定する", () => {
-      const pitchList: formType[] = [
-        { pitchName: "G", octaveNum: 3, isRoot: false },
-        { pitchName: "D", octaveNum: 4, isRoot: false },
-        { pitchName: "F", octaveNum: 4, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "G", octaveNum: 3, enabled: true, isRoot: false },
+        { pitchName: "D", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "F", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -156,10 +156,10 @@ describe("rootEstimation", () => {
     });
 
     it("G7コードの5度欠け(G-B-F)でも根音Gを推定する", () => {
-      const pitchList: formType[] = [
-        { pitchName: "G", octaveNum: 3, isRoot: false },
-        { pitchName: "B", octaveNum: 3, isRoot: false },
-        { pitchName: "F", octaveNum: 4, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "G", octaveNum: 3, enabled: true, isRoot: false },
+        { pitchName: "B", octaveNum: 3, enabled: true, isRoot: false },
+        { pitchName: "F", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();
@@ -174,10 +174,10 @@ describe("rootEstimation", () => {
     });
 
     it("Am7コードの5度欠け(A-C-G)でも根音Aを推定する", () => {
-      const pitchList: formType[] = [
-        { pitchName: "A", octaveNum: 3, isRoot: false },
-        { pitchName: "C", octaveNum: 4, isRoot: false },
-        { pitchName: "G", octaveNum: 4, isRoot: false },
+      const pitchList: Pitch[] = [
+        { pitchName: "A", octaveNum: 3, enabled: true, isRoot: false },
+        { pitchName: "C", octaveNum: 4, enabled: true, isRoot: false },
+        { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
       const mockSetPitchList = jest.fn();

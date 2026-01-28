@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
+import { Provider, createStore } from "jotai";
 import { PresetManager } from "@/components/feature/PresetManager";
-import { formType } from "@/lib/schema";
+import { pitchListAtom } from "@/lib/store/pitchListAtoms";
+import type { Pitch } from "@/lib/types";
 
 // localStorageのモック
 const localStorageMock = (() => {
@@ -25,26 +27,29 @@ Object.defineProperty(window, "localStorage", {
 });
 
 describe("PresetManager", () => {
-  const mockPitchList: formType[] = [
-    { pitchName: "C", octaveNum: 4, isRoot: true },
-    { pitchName: "E", octaveNum: 4, isRoot: false },
-    { pitchName: "G", octaveNum: 4, isRoot: false },
+  const mockPitchList: Pitch[] = [
+    { pitchName: "C", octaveNum: 4, enabled: true, isRoot: true },
+    { pitchName: "E", octaveNum: 4, enabled: true, isRoot: false },
+    { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
   ];
-
-  const mockOnLoadPreset = jest.fn();
 
   beforeEach(() => {
     localStorageMock.clear();
-    mockOnLoadPreset.mockClear();
   });
 
-  it("renders preset manager card", () => {
-    render(
-      <PresetManager
-        pitchList={mockPitchList}
-        onLoadPreset={mockOnLoadPreset}
-      />
+  // Jotai storeをセットアップするヘルパー関数
+  const renderWithJotai = (pitchList: Pitch[]) => {
+    const store = createStore();
+    store.set(pitchListAtom, pitchList);
+    return render(
+      <Provider store={store}>
+        <PresetManager />
+      </Provider>
     );
+  };
+
+  it("renders preset manager card", () => {
+    renderWithJotai(mockPitchList);
 
     expect(screen.getByText("プリセット")).toBeDefined();
     expect(
@@ -53,12 +58,7 @@ describe("PresetManager", () => {
   });
 
   it("shows save button", () => {
-    render(
-      <PresetManager
-        pitchList={mockPitchList}
-        onLoadPreset={mockOnLoadPreset}
-      />
-    );
+    renderWithJotai(mockPitchList);
 
     const saveButton = screen.getByRole("button", { name: /保存/i });
     expect(saveButton).toBeDefined();
@@ -66,19 +66,14 @@ describe("PresetManager", () => {
   });
 
   it("disables save button when pitch list is empty", () => {
-    render(<PresetManager pitchList={[]} onLoadPreset={mockOnLoadPreset} />);
+    renderWithJotai([]);
 
     const saveButton = screen.getByRole("button", { name: /保存/i });
     expect(saveButton.hasAttribute("disabled")).toBe(true);
   });
 
   it("shows empty state when no presets exist", () => {
-    render(
-      <PresetManager
-        pitchList={mockPitchList}
-        onLoadPreset={mockOnLoadPreset}
-      />
-    );
+    renderWithJotai(mockPitchList);
 
     expect(screen.getByText("プリセットがありません")).toBeDefined();
   });

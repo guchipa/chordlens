@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+"use client";
+
+import { useAtom } from "jotai";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
@@ -16,142 +18,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { SettingsFormProps } from "@/lib/types";
 import {
-  A4_FREQ,
-  EVAL_RANGE_CENTS,
-  FFT_SIZE,
-  SMOOTHING_TIME_CONSTANT,
-  SENSITIVITY_DEFAULT,
+  evalRangeCentsAtom,
+  a4FreqAtom,
+  fftSizeAtom,
+  smoothingTimeConstantAtom,
+  sensitivityAtom,
+  holdEnabledAtom,
+  experimentModeAtom,
+} from "@/lib/store";
+import {
   SENSITIVITY_MIN,
   SENSITIVITY_MAX,
-  HOLD_ENABLED_DEFAULT,
-  sensitivityToDb,
-  dbToSensitivity,
 } from "@/lib/constants";
 
-export function SettingsForm({
-  onEvalRangeChange,
-  onA4FreqChange,
-  onEvalThresholdChange,
-  onFftSizeChange,
-  onSmoothingTimeConstantChange,
-  onHoldEnabledChange,
-  onExperimentModeChange,
-}: SettingsFormProps) {
-  const [evalRange, setEvalRange] = useState(EVAL_RANGE_CENTS);
-  const [a4Freq, setA4Freq] = useState(A4_FREQ);
-  const [sensitivity, setSensitivity] = useState(SENSITIVITY_DEFAULT); // 感度として管理
-  const [fftSize, setFftSize] = useState(FFT_SIZE); // FFT_SIZEのstate
-  const [smoothingTimeConstant, setSmoothingTimeConstant] = useState(
-    SMOOTHING_TIME_CONSTANT
-  ); // SMOOTHING_TIME_CONSTANTのstate
-  const [holdEnabled, setHoldEnabled] = useState(HOLD_ENABLED_DEFAULT); // 表示保持（ホールド）のトグル
-  const [experimentMode, setExperimentMode] = useState(false); // 実験用機能のトグル
+const FFT_SIZE_OPTIONS = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
 
-  useEffect(() => {
-    // localStorageからevalRangeCentsを読み込む
-    const savedEvalRange = localStorage.getItem("evalRangeCents");
-    if (savedEvalRange) {
-      const parsedValue = parseInt(savedEvalRange, 10);
-      setEvalRange(parsedValue);
-      onEvalRangeChange(parsedValue);
-    } else {
-      onEvalRangeChange(EVAL_RANGE_CENTS);
-    }
-
-    // localStorageからa4Freqを読み込む
-    const savedA4Freq = localStorage.getItem("a4Freq");
-    if (savedA4Freq) {
-      const parsedValue = parseInt(savedA4Freq, 10);
-      setA4Freq(parsedValue);
-      onA4FreqChange(parsedValue);
-    } else {
-      onA4FreqChange(A4_FREQ);
-    }
-
-    // localStorageからevalThresholdを読み込む（後方互換性のため）
-    // または感度として読み込む
-    const savedSensitivity = localStorage.getItem("sensitivity");
-    const savedEvalThreshold = localStorage.getItem("evalThreshold");
-
-    if (savedSensitivity) {
-      // 感度が保存されている場合
-      const parsedValue = parseInt(savedSensitivity, 10);
-      setSensitivity(parsedValue);
-      onEvalThresholdChange(sensitivityToDb(parsedValue));
-    } else if (savedEvalThreshold) {
-      // 旧形式のdB値が保存されている場合は感度に変換
-      const parsedValue = parseInt(savedEvalThreshold, 10);
-      const convertedSensitivity = dbToSensitivity(parsedValue);
-      setSensitivity(convertedSensitivity);
-      onEvalThresholdChange(parsedValue);
-      // 新形式で保存し直す
-      localStorage.setItem("sensitivity", convertedSensitivity.toString());
-    } else {
-      // 何も保存されていない場合はデフォルト値
-      setSensitivity(SENSITIVITY_DEFAULT);
-      onEvalThresholdChange(sensitivityToDb(SENSITIVITY_DEFAULT));
-    }
-
-    // localStorageからfftSizeを読み込む
-    const savedFftSize = localStorage.getItem("fftSize");
-    if (savedFftSize) {
-      const parsedValue = parseInt(savedFftSize, 10);
-      setFftSize(parsedValue);
-      onFftSizeChange(parsedValue);
-    } else {
-      onFftSizeChange(FFT_SIZE);
-    }
-
-    // localStorageからsmoothingTimeConstantを読み込む
-    const savedSmoothingTimeConstant = localStorage.getItem(
-      "smoothingTimeConstant"
-    );
-    if (savedSmoothingTimeConstant) {
-      const parsedValue = parseFloat(savedSmoothingTimeConstant);
-      setSmoothingTimeConstant(parsedValue);
-      onSmoothingTimeConstantChange(parsedValue);
-    } else {
-      onSmoothingTimeConstantChange(SMOOTHING_TIME_CONSTANT);
-    }
-
-    // localStorageからholdEnabledを読み込む
-    const savedHoldEnabled = localStorage.getItem("holdEnabled");
-    if (savedHoldEnabled !== null) {
-      const isEnabled = savedHoldEnabled === "true";
-      setHoldEnabled(isEnabled);
-      onHoldEnabledChange?.(isEnabled);
-    } else {
-      setHoldEnabled(HOLD_ENABLED_DEFAULT);
-      onHoldEnabledChange?.(HOLD_ENABLED_DEFAULT);
-    }
-
-    // localStorageからexperimentModeを読み込む
-    const savedExperimentMode = localStorage.getItem("experimentMode");
-    if (savedExperimentMode) {
-      const isEnabled = savedExperimentMode === "true";
-      setExperimentMode(isEnabled);
-      onExperimentModeChange?.(isEnabled);
-    } else {
-      onExperimentModeChange?.(false);
-    }
-  }, [
-    onEvalRangeChange,
-    onA4FreqChange,
-    onEvalThresholdChange,
-    onFftSizeChange,
-    onSmoothingTimeConstantChange,
-    onHoldEnabledChange,
-    onExperimentModeChange,
-  ]);
+export function SettingsForm() {
+  // Jotai atoms を直接使用
+  const [evalRange, setEvalRange] = useAtom(evalRangeCentsAtom);
+  const [a4Freq, setA4Freq] = useAtom(a4FreqAtom);
+  const [sensitivity, setSensitivity] = useAtom(sensitivityAtom);
+  const [fftSize, setFftSize] = useAtom(fftSizeAtom);
+  const [smoothingTimeConstant, setSmoothingTimeConstant] = useAtom(
+    smoothingTimeConstantAtom
+  );
+  const [holdEnabled, setHoldEnabled] = useAtom(holdEnabledAtom);
+  const [experimentMode, setExperimentMode] = useAtom(experimentModeAtom);
 
   const handleEvalRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
       setEvalRange(value);
-      localStorage.setItem("evalRangeCents", value.toString());
-      onEvalRangeChange(value);
     }
   };
 
@@ -159,8 +57,6 @@ export function SettingsForm({
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
       setA4Freq(value);
-      localStorage.setItem("a4Freq", value.toString());
-      onA4FreqChange(value);
     }
   };
 
@@ -168,17 +64,12 @@ export function SettingsForm({
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
       setSensitivity(value);
-      const dbValue = sensitivityToDb(value);
-      localStorage.setItem("sensitivity", value.toString());
-      onEvalThresholdChange(dbValue);
     }
   };
 
   const handleFftSizeChange = (value: string) => {
     const intValue = parseInt(value, 10);
     setFftSize(intValue);
-    localStorage.setItem("fftSize", intValue.toString());
-    onFftSizeChange(intValue);
   };
 
   const handleSmoothingTimeConstantChange = (
@@ -187,24 +78,8 @@ export function SettingsForm({
     const value = parseFloat(e.target.value);
     if (!isNaN(value) && value >= 0.0 && value <= 1.0) {
       setSmoothingTimeConstant(value);
-      localStorage.setItem("smoothingTimeConstant", value.toString());
-      onSmoothingTimeConstantChange(value);
     }
   };
-
-  const handleHoldEnabledChange = (checked: boolean) => {
-    setHoldEnabled(checked);
-    localStorage.setItem("holdEnabled", checked.toString());
-    onHoldEnabledChange?.(checked);
-  };
-
-  const handleExperimentModeChange = (checked: boolean) => {
-    setExperimentMode(checked);
-    localStorage.setItem("experimentMode", checked.toString());
-    onExperimentModeChange?.(checked);
-  };
-
-  const fftSizeOptions = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
 
   return (
     <Card className="w-full max-w-md">
@@ -220,7 +95,7 @@ export function SettingsForm({
             value={evalRange}
             onChange={handleEvalRangeChange}
             min="1"
-            max="100" // 仮の最大値
+            max="100"
           />
           <p className="text-sm text-gray-500 mt-1">
             ±この値の範囲で音程のズレを評価します。
@@ -234,7 +109,7 @@ export function SettingsForm({
             value={a4Freq}
             onChange={handleA4FreqChange}
             min="430"
-            max="450" // 仮の範囲
+            max="450"
           />
           <p className="text-sm text-gray-500 mt-1">
             基準となるA4の周波数を設定します。
@@ -276,7 +151,7 @@ export function SettingsForm({
                       <SelectValue placeholder="FFTサイズを選択" />
                     </SelectTrigger>
                     <SelectContent>
-                      {fftSizeOptions.map((size) => (
+                      {FFT_SIZE_OPTIONS.map((size) => (
                         <SelectItem key={size} value={size.toString()}>
                           {size}
                         </SelectItem>
@@ -307,7 +182,9 @@ export function SettingsForm({
                   <Checkbox
                     id="holdEnabled"
                     checked={holdEnabled}
-                    onCheckedChange={handleHoldEnabledChange}
+                    onCheckedChange={(checked: boolean) =>
+                      setHoldEnabled(checked)
+                    }
                   />
                   <div>
                     <Label htmlFor="holdEnabled" className="cursor-pointer">
@@ -323,7 +200,9 @@ export function SettingsForm({
                   <Checkbox
                     id="experimentMode"
                     checked={experimentMode}
-                    onCheckedChange={handleExperimentModeChange}
+                    onCheckedChange={(checked: boolean) =>
+                      setExperimentMode(checked)
+                    }
                   />
                   <div>
                     <Label htmlFor="experimentMode" className="cursor-pointer">
