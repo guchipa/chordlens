@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import {
   evalRangeCentsAtom,
   a4FreqAtom,
@@ -60,10 +61,9 @@ export function SettingsForm() {
     }
   };
 
-  const handleSensitivityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value)) {
-      setSensitivity(value);
+  const handleSensitivityChange = (value: number[]) => {
+    if (value.length > 0) {
+      setSensitivity(value[0]);
     }
   };
 
@@ -117,22 +117,21 @@ export function SettingsForm() {
         </div>
         <div>
           <Label htmlFor="sensitivity">音量感度</Label>
-          <Input
+          <Slider
             id="sensitivity"
-            type="range"
-            value={sensitivity}
-            onChange={handleSensitivityChange}
+            value={[sensitivity]}
+            onValueChange={handleSensitivityChange}
             min={SENSITIVITY_MIN}
             max={SENSITIVITY_MAX}
-            step="1"
-            className="cursor-pointer"
+            step={1}
+            className="cursor-pointer mt-2"
           />
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <div className="flex justify-between text-xs text-muted-foreground mt-2">
             <span>低（大きい音のみ）</span>
             <span className="font-medium text-foreground">{sensitivity}</span>
             <span>高（小さい音も検出）</span>
           </div>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             小さい音も検出したい場合は感度を上げてください。
           </p>
         </div>
@@ -178,40 +177,36 @@ export function SettingsForm() {
                   </p>
                 </div>
                 {/* 表示保持（ホールド）機能トグル */}
-                <div className="flex items-center space-x-3 pt-2 border-t border-gray-200 mt-4">
-                  <Checkbox
-                    id="holdEnabled"
-                    checked={holdEnabled}
-                    onCheckedChange={(checked: boolean) =>
-                      setHoldEnabled(checked)
-                    }
-                  />
-                  <div>
+                <div className="flex items-center justify-between pt-2 border-t border-border mt-4">
+                  <div className="space-y-0.5">
                     <Label htmlFor="holdEnabled" className="cursor-pointer">
                       表示保持（ホールド）
                     </Label>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted-foreground">
                       音が途切れても約250ms表示を保持します。
                     </p>
                   </div>
+                  <Switch
+                    id="holdEnabled"
+                    checked={holdEnabled}
+                    onCheckedChange={setHoldEnabled}
+                  />
                 </div>
                 {/* 実験用機能トグル */}
-                <div className="flex items-center space-x-3 pt-2 border-t border-gray-200 mt-4">
-                  <Checkbox
-                    id="experimentMode"
-                    checked={experimentMode}
-                    onCheckedChange={(checked: boolean) =>
-                      setExperimentMode(checked)
-                    }
-                  />
-                  <div>
+                <div className="flex items-center justify-between pt-2 border-t border-border mt-4">
+                  <div className="space-y-0.5">
                     <Label htmlFor="experimentMode" className="cursor-pointer">
                       実験用機能を使う
                     </Label>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted-foreground">
                       ログ記録・周波数観測パネルを表示します。
                     </p>
                   </div>
+                  <Switch
+                    id="experimentMode"
+                    checked={experimentMode}
+                    onCheckedChange={setExperimentMode}
+                  />
                 </div>
               </div>
             </AccordionContent>

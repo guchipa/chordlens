@@ -11,6 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PitchPreset } from "@/lib/schema";
 import { deletePreset, getRelativeTimeString } from "@/lib/presets";
 import { Trash2, Music } from "lucide-react";
@@ -112,30 +122,30 @@ export const PresetList: React.FC<PresetListProps> = ({
         ))}
       </div>
 
-      {/* 削除確認ダイアログ */}
-      <Dialog
+      {/* 削除確認ダイアログ - AlertDialogを使用 */}
+      <AlertDialog
         open={deleteConfirmId !== null}
         onOpenChange={(open) => !open && handleDeleteCancel()}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>プリセット削除</DialogTitle>
-            <DialogDescription>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>プリセット削除</AlertDialogTitle>
+            <AlertDialogDescription>
               このプリセットを削除しますか？この操作は取り消せません。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleDeleteCancel}>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel}>
               キャンセル
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
+            </AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleDeleteConfirm}>
               削除
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* 読み込み確認ダイアログ */}
+      {/* 読み込み確認ダイアログ - 通常のDialogを維持 */}
       <Dialog
         open={loadConfirmPreset !== null}
         onOpenChange={(open) => !open && handleLoadCancel()}

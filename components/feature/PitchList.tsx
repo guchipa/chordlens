@@ -3,6 +3,7 @@
 import { useAtom, useSetAtom } from "jotai";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // 根音を推定する関数
@@ -27,7 +28,7 @@ export function PitchList() {
       </CardHeader>
       <CardContent>
         {currentPitchList.length === 0 ? (
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             まだ評価する音がありません。上のフォームから追加してください。
           </p>
         ) : (
@@ -66,20 +67,7 @@ export function PitchList() {
                       : "hover:bg-gray-200"
                   )}
                 >
-                  <svg
-                    className="h-3.5 w-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    ></path>
-                  </svg>
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
             ))}
