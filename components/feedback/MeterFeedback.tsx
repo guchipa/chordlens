@@ -98,8 +98,10 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
       }
       // 既にタイマー待ち中の場合は何もしない（タイマーは継続）
     }
+  }, [analysisData, holdEnabled]); // analysisData が変更されるたびに effect を実行
 
-    // コンポーネントがアンマウントされるときにタイマーをクリア
+  // コンポーネントがアンマウントされるときにタイマーをクリア
+  useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -107,7 +109,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
       }
       isWaitingForTimeoutRef.current = false;
     };
-  }, [analysisData, holdEnabled]); // analysisData が変更されるたびに effect を実行
+  }, []);
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>

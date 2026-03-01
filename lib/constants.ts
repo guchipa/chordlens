@@ -177,7 +177,7 @@ export const METER_NEEDLE_HOLD_MS = 250;
  * 針のスムージング係数（0〜1）
  * 値が大きいほど追従が速い（=揺れも残る）。
  */
-export const METER_NEEDLE_SMOOTHING_ALPHA = 0.35;
+export const METER_NEEDLE_SMOOTHING_ALPHA = 1.0; // 1.0 = EMAスムージング無効（生の値をそのまま使用）
 
 /**
  * 表示保持（ホールド）機能のデフォルト有効状態

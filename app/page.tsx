@@ -82,6 +82,7 @@ export default function HomePage() {
         )}
 
         <MainHeader />
+
         <AnalysisControl
           isProcessing={isProcessing}
           startProcessing={startProcessing}
@@ -104,6 +105,7 @@ export default function HomePage() {
           a4Freq={a4Freq}
           holdEnabled={holdEnabled}
         />
+
         <CentDisplay
           pitchList={currentPitchList}
           a4Freq={a4Freq}
