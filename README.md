@@ -141,6 +141,46 @@ npm test            # Jestテスト実行
 npm run test:watch  # Jestウォッチモード
 ```
 
+### 音声ファイル解析 CLI (Audio File Analysis CLI)
+
+マイク入力に加えて、録音済みの音声ファイル (wav / m4a / mp4 など ffmpeg が扱える形式) を
+60fps でフレーム解析し、既存のログ形式と同じ CSV にエクスポートできます。
+ブラウザの `AnalyserNode` と同等の挙動 (Blackman 窓・`smoothingTimeConstant` による
+指数平滑化・dB 変換) をエミュレートしており、`lib/audio_analysis/justAnalyze.ts` の
+`evaluateSpectrum()` をそのまま利用しています。
+
+構成音は **ファイル名末尾** で指定し、**先頭の音がルート** に固定されます。
+(`_` で区切られた最後のブロックを `-` で分割して音名 + オクターブ番号として解釈)
+
+```bash
+# 基本: 同ディレクトリに <入力名>.csv を出力
+npm run analyze:file -- path/to/song_C4-E4-G4.wav
+
+# 出力先を指定
+npm run analyze:file -- path/to/Cmaj7_C4-E4-G4-B4.m4a ./out.csv
+
+# サンプルレートを指定 (既定: 48000)
+npm run analyze:file -- path/to/F#4-A4-C#5.wav --sample-rate 44100
+```
+
+ファイル名の例:
+
+| 入力ファイル名 | 解釈される構成音 (先頭がルート) |
+| :-- | :-- |
+| `song_C4-E4-G4.wav` | C4 (root), E4, G4 |
+| `Cmaj7_C4-E4-G4-B4.m4a` | C4 (root), E4, G4, B4 |
+| `F#4-A4-C#5.wav` | F#4 (root), A4, C#5 |
+
+出力 CSV の列は実験モードのログと同一 (`timestamp`, `elapsedMs`, `sessionId`,
+`pitchName`, `pitchIsRoot`, `deviation`, `centDeviation`, `centDeviationRaw`,
+`centDeviationDisplay`, `isDetected`, `isHeld`, `a4Freq`, `evalRangeCents`,
+`evalThreshold`, `fftSize`, `smoothingTimeConstant`) で、60fps で 1 フレームにつき
+構成音ごとに 1 行ずつ書き出します。解析パラメータ (A4 周波数・FFT サイズ・評価範囲・
+閾値・スムージング定数) は `lib/constants.ts` のブラウザ側デフォルトを使用します。
+
+> ffmpeg バイナリは `ffmpeg-static` (devDependency) から自動で解決されるため、
+> 別途のインストールは不要です。
+
 ## 使い方 (Usage)
 
 ### 基本的な使用方法
