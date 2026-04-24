@@ -205,7 +205,6 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
                   style={{
                     transformOrigin: "50px 50px",
                     transform: `rotate(${needleRotation}deg)`,
-                    transition: "transform 0.2s ease-out",
                   }}
                 />
               );
