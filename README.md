@@ -141,6 +141,61 @@ npm test            # Jestテスト実行
 npm run test:watch  # Jestウォッチモード
 ```
 
+### 実験参加者フロー `/experiments`
+
+評価実験用のセルフサーブ動線を `/experiments` 以下に用意しています。
+参加者ごとに実験者が事前に URL を発行し、参加者はブラウザだけで以下の流れを完了できます。
+
+1. `/experiments` 事前アンケート (ペア 2 名分)
+2. `/experiments/test1` 練習前テスト (B♭ / Cm / F7 を 5 秒録音)
+3. `/experiments/practice` 10 分間練習 (`cond=with` は ChordLens 表示あり)
+4. `/experiments/test2` 練習後テスト
+5. `/experiments/post-survey` 事後アンケート
+
+URL フォーマット:
+
+```
+/experiments/?cond=with&pairId=PR01    # 提案システム条件
+/experiments/?cond=without&pairId=PR02 # 比較条件
+```
+
+#### Firebase 設定
+
+録音 / 解析 CSV / アンケート回答は Firebase (Firestore + Cloud Storage) に
+匿名認証で保存します。Firebase コンソールで Web アプリを 1 つ作成し、
+`.env.local.example` をコピーして以下を設定してください。
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+```
+
+##### Firestore / Storage Security Rules (推奨)
+
+```
+// Firestore
+match /pairs/{pairId} {
+  allow create, update: if request.auth != null;
+  allow read: if false; // 参加者からは読み取らせない
+  match /attempts/{attemptId} {
+    allow create, update: if request.auth != null;
+    allow read: if false;
+  }
+}
+
+// Storage
+match /pairs/{pairId}/{phase}/{attempt}/{file} {
+  allow write: if request.auth != null;
+  allow read: if false;
+}
+```
+
+実験者は Firebase コンソール (または別途用意した管理ツール) で
+`/pairs/{pairId}` 以下のドキュメントと Storage オブジェクトを取得します。
+
 ### 音声ファイル解析 CLI (Audio File Analysis CLI)
 
 マイク入力に加えて、録音済みの音声ファイル (wav / m4a / mp4 など ffmpeg が扱える形式) を
