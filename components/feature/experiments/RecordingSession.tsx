@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAtomValue } from "jotai";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChordRecordingCard,
   type ChordRecordingResult,
@@ -30,6 +30,9 @@ interface Props {
 
 export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const cond = searchParams.get("cond") ?? "";
+  const pairId = searchParams.get("pairId") ?? "";
   const {
     session,
     incrementAttempt,
@@ -143,7 +146,8 @@ export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
           );
         }
       }
-      router.push(nextPath);
+      const queryString = new URLSearchParams({ cond, pairId }).toString();
+      router.push(`${nextPath}?${queryString}`);
     }
   };
 

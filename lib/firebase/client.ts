@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   signInAnonymously,
 } from "firebase/auth";
-import { Firestore, getFirestore } from "firebase/firestore";
+import { Firestore, getFirestore, initializeFirestore } from "firebase/firestore";
 import { FirebaseStorage, getStorage } from "firebase/storage";
 
 const config = {
@@ -21,6 +21,7 @@ const config = {
 };
 
 let appInstance: FirebaseApp | null = null;
+let firestoreInstance: Firestore | null = null;
 let anonAuthPromise: Promise<string> | null = null;
 
 export function isFirebaseConfigured(): boolean {
@@ -49,7 +50,17 @@ export function getFirebaseAuth(): Auth {
 }
 
 export function getFirebaseFirestore(): Firestore {
-  return getFirestore(getFirebaseApp());
+  if (firestoreInstance) return firestoreInstance;
+  const app = getFirebaseApp();
+  try {
+    firestoreInstance = initializeFirestore(app, {
+      ignoreUndefinedProperties: true,
+    });
+  } catch {
+    // 既に初期化済み（HMR などで二重呼び出しされた場合）は既存インスタンスを取得
+    firestoreInstance = getFirestore(app);
+  }
+  return firestoreInstance;
 }
 
 export function getFirebaseStorage(): FirebaseStorage {
