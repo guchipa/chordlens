@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import { useCountdownTimer } from "@/lib/hooks/experiments/useCountdownTimer";
 import { RootPlaybackToggle } from "./RootPlaybackToggle";
 import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSession";
@@ -33,6 +34,7 @@ import {
   smoothingTimeConstantAtom,
   holdEnabledAtom,
   feedbackTypeAtom,
+  sensitivityAtom,
 } from "@/lib/store";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { updatePairStatus } from "@/lib/firebase/session";
@@ -51,9 +53,12 @@ export function PracticeWithTuner() {
   const holdEnabled = useAtomValue(holdEnabledAtom);
   const feedbackType = useAtomValue(feedbackTypeAtom);
 
+  const [sensitivity, setSensitivity] = useAtom(sensitivityAtom);
+
+  const [showInstructions, setShowInstructions] = useState(true);
   const [selectedChord, setSelectedChord] = useState<ChordKey>("Bb");
   const [navigated, setNavigated] = useState(false);
-  
+
   const cond = searchParams.get("cond");
   const pairId = searchParams.get("pairId");
 
@@ -108,9 +113,10 @@ export function PracticeWithTuner() {
     onComplete: handleComplete,
   });
 
-  useEffect(() => {
+  const handleStartPractice = () => {
+    setShowInstructions(false);
     start();
-  }, [start]);
+  };
 
   const handleSelectChord = (chord: ChordKey) => {
     if (!session?.chordPitches) return;
@@ -120,6 +126,50 @@ export function PracticeWithTuner() {
 
   const minutes = Math.floor(remainingMs / 60000);
   const seconds = Math.floor((remainingMs % 60000) / 1000);
+
+  if (showInstructions) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>練習の前に — ChordLens の使い方</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm">
+          <div className="space-y-3">
+            <section>
+              <p className="font-semibold">ChordLens とは</p>
+              <p className="text-muted-foreground">
+                ChordLens はあなたのピッチをリアルタイムで解析し、目標ピッチとのずれを視覚的に表示するツールです。練習中はこのフィードバックを参考に、純正律のピッチに合わせていきます。
+              </p>
+            </section>
+            <section>
+              <p className="font-semibold">操作方法</p>
+              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                <li>練習したい和音のボタンを選択します（B♭ major / C minor / F7）。</li>
+                <li>「根音再生」ボタンで根音を鳴らし、音程の基準を確認します。</li>
+                <li>「解析開始」ボタンを押してから歌い始めると、画面にピッチの偏差が表示されます。</li>
+                <li>フィードバック表示を見ながらピッチを調整してください。</li>
+              </ol>
+            </section>
+            <section>
+              <p className="font-semibold">フィードバックの見方</p>
+              <p className="text-muted-foreground">
+                各パートのバーが中央（0 cent）に近いほどピッチが合っています。上にずれているときは少し低めに、下にずれているときは少し高めに調整してください。
+              </p>
+            </section>
+            <section>
+              <p className="font-semibold">練習時間</p>
+              <p className="text-muted-foreground">
+                練習時間は <span className="font-semibold text-foreground">10 分間</span> です。3つの和音を自由に切り替えながら練習してください。時間になると自動的に次のフェーズへ進みます。
+              </p>
+            </section>
+          </div>
+          <Button className="w-full" onClick={handleStartPractice}>
+            練習を始める
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -165,6 +215,26 @@ export function PracticeWithTuner() {
             label={`根音 (${CHORD_ROOT_KEY[selectedChord]})`}
           />
         </div>
+
+        {cond === "with" && (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">マイク感度</span>
+              <span className="text-muted-foreground tabular-nums">{sensitivity}</span>
+            </div>
+            <Slider
+              min={0}
+              max={100}
+              step={1}
+              value={[sensitivity]}
+              onValueChange={([v]) => setSensitivity(v)}
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>低（大きい音のみ）</span>
+              <span>高（小さい音も検出）</span>
+            </div>
+          </div>
+        )}
 
         <UnifiedFeedback
           feedbackType={feedbackType}
