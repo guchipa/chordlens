@@ -101,12 +101,16 @@ export async function writePreSurvey(
 
 export async function writePostSurvey(
   pairId: string,
-  postSurvey: PostSurveyAnswers,
-  usabilitySurvey: UsabilitySurveyAnswers | null
+  postSurveyA: PostSurveyAnswers,
+  postSurveyB: PostSurveyAnswers,
+  usabilitySurveyA: UsabilitySurveyAnswers | null,
+  usabilitySurveyB: UsabilitySurveyAnswers | null
 ): Promise<void> {
   await updateDoc(pairDocRef(pairId), {
-    postSurvey,
-    usabilitySurvey: usabilitySurvey ?? null,
+    postSurveyA,
+    postSurveyB,
+    usabilitySurveyA: usabilitySurveyA ?? null,
+    usabilitySurveyB: usabilitySurveyB ?? null,
     updatedAt: serverTimestamp(),
   });
 }

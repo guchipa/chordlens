@@ -12,9 +12,12 @@ import {
   CHORD_LABELS,
   CHORD_ROOT_KEY,
   PRACTICE_MS,
-  ROOT_FREQ_HZ,
   type ChordKey,
 } from "@/lib/experiments/constants";
+import {
+  getRootFreqHz,
+  type InstrumentKey,
+} from "@/lib/experiments/instrumentChordMap";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { updatePairStatus } from "@/lib/firebase/session";
 
@@ -24,6 +27,11 @@ export function PracticeWithoutTuner() {
   const { session } = useExperimentSession();
   const [selectedChord, setSelectedChord] = useState<ChordKey>("Bb");
   const [navigated, setNavigated] = useState(false);
+
+  const instruments: [InstrumentKey | null, InstrumentKey | null] = [
+    (session?.members[0]?.instrument ?? null) as InstrumentKey | null,
+    (session?.members[1]?.instrument ?? null) as InstrumentKey | null,
+  ];
   
   const cond = searchParams.get("cond");
   const pairId = searchParams.get("pairId");
@@ -99,7 +107,7 @@ export function PracticeWithoutTuner() {
           <div className="mt-2">
             <RootPlaybackToggle
               key={selectedChord}
-              frequencyHz={ROOT_FREQ_HZ[CHORD_ROOT_KEY[selectedChord]]}
+              frequencyHz={getRootFreqHz(CHORD_ROOT_KEY[selectedChord], instruments)}
               label={`${CHORD_LABELS[selectedChord]} の根音 (${CHORD_ROOT_KEY[selectedChord]})`}
             />
           </div>

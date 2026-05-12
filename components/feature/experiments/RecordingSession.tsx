@@ -12,6 +12,7 @@ import { uploadAttempt } from "@/lib/firebase/upload";
 import { markAttemptFinal, updatePairStatus } from "@/lib/firebase/session";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { CHORD_KEYS, type ChordKey } from "@/lib/experiments/constants";
+import { type InstrumentKey } from "@/lib/experiments/instrumentChordMap";
 import {
   evalRangeCentsAtom,
   a4FreqAtom,
@@ -48,6 +49,11 @@ export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
 
   const [chordIndex, setChordIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+
+  const instruments: [InstrumentKey | null, InstrumentKey | null] = [
+    (session?.members[0]?.instrument ?? null) as InstrumentKey | null,
+    (session?.members[1]?.instrument ?? null) as InstrumentKey | null,
+  ];
 
   if (!session || !session.partAssignment || !session.chordPitches) {
     return (
@@ -173,6 +179,7 @@ export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
         chord={chord}
         pitchList={session.chordPitches[chord]}
         partAssignment={session.partAssignment}
+        instruments={instruments}
         evalRangeCents={evalRangeCents}
         a4Freq={a4Freq}
         evalThreshold={evalThreshold}

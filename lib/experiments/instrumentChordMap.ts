@@ -6,6 +6,7 @@
  * 楽器の音域（= INSTRUMENT_RANGE）から自動的に割り振る。
  *
  */
+import { A4_FREQ } from "@/lib/constants";
 import type { Pitch } from "@/lib/types";
 import type { ChordKey, RootNote } from "./constants";
 import { CHORD_ROOT_KEY } from "./constants";
@@ -81,16 +82,47 @@ const CHORD_PART_NOTES: Record<
   F7: { notes: ["A", "Eb"], defaultOctave: 4 },
 };
 
-/**
- * 各和音の根音オクターブ。`ROOT_FREQ_HZ` で再生される音と一致させる
- * (Bb→Bb3, C→C4, F→F3)。純正律周波数計算は根音を必須とするため、
- * `isRoot: true, enabled: false` で常に pitchList に含める。
- */
-const ROOT_OCTAVE: Record<RootNote, number> = {
-  Bb: 3,
-  C: 4,
-  F: 3,
+/** 根音の音名から C を基準とした半音クラス */
+const ROOT_PITCH_CLASS: Record<RootNote, number> = {
+  C: 0,
+  F: 5,
+  Bb: 10,
 };
+
+/** 楽器音域平均オクターブからの根音オクターブ補正値 */
+const ROOT_OCTAVE_OFFSET: Record<RootNote, number> = {
+  C: 0,
+  F: 0,
+  Bb: -1,
+};
+
+// OCTAVE_NUM_LIST = [1,2,3,4,5,6] なので A4 の半音インデックス = 9 + 12*(4-1) = 45
+const A4_SEMITONE_IDX = 45;
+
+/**
+ * 2人の楽器の得意オクターブの平均から根音を再生するオクターブを決定する。
+ */
+function getRootOctaveForInstruments(
+  instruments: [InstrumentKey | null, InstrumentKey | null]
+): number {
+  const [instA, instB] = instruments;
+  const centerA = instA ? INSTRUMENT_RANGE_CENTER[instA] : 4;
+  const centerB = instB ? INSTRUMENT_RANGE_CENTER[instB] : 4;
+  return Math.round((centerA + centerB) / 2);
+}
+
+/**
+ * 2人の楽器の得意オクターブに合わせた根音の周波数 (Hz) を返す。
+ * A4 = A4_FREQ Hz の平均律を使用。
+ */
+export function getRootFreqHz(
+  rootNote: RootNote,
+  instruments: [InstrumentKey | null, InstrumentKey | null]
+): number {
+  const octave = getRootOctaveForInstruments(instruments) + ROOT_OCTAVE_OFFSET[rootNote];
+  const semitoneIdx = ROOT_PITCH_CLASS[rootNote] + 12 * (octave - 1);
+  return A4_FREQ * Math.pow(2, (semitoneIdx - A4_SEMITONE_IDX) / 12);
+}
 
 /**
  * オクターブ数を楽器音域に合わせてシフトする（＋/−1オクターブのみ許容）。
@@ -144,6 +176,7 @@ export function derivePitchLists(
   instruments: [InstrumentKey | null, InstrumentKey | null],
   assignment: ChordPartAssignments
 ): ChordPitches {
+  const rootOctave = getRootOctaveForInstruments(instruments);
   const build = (chord: ChordKey): Pitch[] => {
     const { defaultOctave } = CHORD_PART_NOTES[chord];
     const octA = adjustOctaveForInstrument(defaultOctave, instruments[0]);
@@ -152,7 +185,7 @@ export function derivePitchLists(
     const notes: Pitch[] = [
       {
         pitchName: rootKey,
-        octaveNum: ROOT_OCTAVE[rootKey],
+        octaveNum: rootOctave + ROOT_OCTAVE_OFFSET[rootKey],
         isRoot: true,
         enabled: false,
       },

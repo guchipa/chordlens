@@ -118,9 +118,12 @@ export default function ExperimentSurveyPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>事前アンケート</CardTitle>
+          <CardTitle>実験前アンケート</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="gap-4 flex flex-col">
+          <p className="text-sm text-muted-foreground">
+            どちらがメンバーAなのか，Bなのかを忘れないでください．テストや実験後アンケートで必要になります．
+          </p>
           <FormProvider {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}

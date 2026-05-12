@@ -14,9 +14,12 @@ import {
   CHORD_LABELS,
   CHORD_ROOT_KEY,
   PRACTICE_MS,
-  ROOT_FREQ_HZ,
   type ChordKey,
 } from "@/lib/experiments/constants";
+import {
+  getRootFreqHz,
+  type InstrumentKey,
+} from "@/lib/experiments/instrumentChordMap";
 import {
   installExperimentPresets,
   restoreUserPresets,
@@ -54,6 +57,11 @@ export function PracticeWithTuner() {
   const feedbackType = useAtomValue(feedbackTypeAtom);
 
   const [sensitivity, setSensitivity] = useAtom(sensitivityAtom);
+
+  const instruments: [InstrumentKey | null, InstrumentKey | null] = [
+    (session?.members[0]?.instrument ?? null) as InstrumentKey | null,
+    (session?.members[1]?.instrument ?? null) as InstrumentKey | null,
+  ];
 
   const [showInstructions, setShowInstructions] = useState(true);
   const [selectedChord, setSelectedChord] = useState<ChordKey>("Bb");
@@ -211,7 +219,7 @@ export function PracticeWithTuner() {
           </Button>
           <RootPlaybackToggle
             key={selectedChord}
-            frequencyHz={ROOT_FREQ_HZ[CHORD_ROOT_KEY[selectedChord]]}
+            frequencyHz={getRootFreqHz(CHORD_ROOT_KEY[selectedChord], instruments)}
             label={`根音 (${CHORD_ROOT_KEY[selectedChord]})`}
           />
         </div>

@@ -6,11 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   COUNTDOWN_MS,
   RECORD_MS,
-  ROOT_FREQ_HZ,
   CHORD_ROOT_KEY,
   CHORD_LABELS,
   type ChordKey,
 } from "@/lib/experiments/constants";
+import {
+  getRootFreqHz,
+  type InstrumentKey,
+} from "@/lib/experiments/instrumentChordMap";
 import { useRecordingWithAnalysis } from "@/lib/hooks/experiments/useRecordingWithAnalysis";
 import type { Pitch } from "@/lib/types";
 import type { ChordPartAssignments } from "@/lib/experiments/types";
@@ -29,6 +32,7 @@ interface Props {
   chord: ChordKey;
   pitchList: Pitch[];
   partAssignment: ChordPartAssignments;
+  instruments: [InstrumentKey | null, InstrumentKey | null];
   evalRangeCents: number;
   a4Freq: number;
   evalThreshold: number;
@@ -71,7 +75,7 @@ export function ChordRecordingCard(props: Props) {
   };
 
   const rootKey = CHORD_ROOT_KEY[chord];
-  const rootFreqHz = ROOT_FREQ_HZ[rootKey];
+  const rootFreqHz = getRootFreqHz(rootKey, props.instruments);
   const assignment = props.partAssignment[chord];
 
   const cancelRaf = () => {
@@ -205,10 +209,12 @@ export function ChordRecordingCard(props: Props) {
       <CardContent className="space-y-4">
         <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-900">
           <p>
-            <span className="font-medium">担当音 A：</span>
+            <span className="font-medium">メンバー A の担当音：</span>
             {assignment.memberA}
 
-            <span className="font-medium">担当音 B：</span>
+              <br />
+
+            <span className="font-medium">メンバー B の担当音：</span>
             {assignment.memberB}
           </p>
           <p className="mt-1 text-xs">

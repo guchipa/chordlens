@@ -73,13 +73,17 @@ export function useExperimentSession() {
 
   const setPostSurvey = useCallback(
     (
-      postSurvey: PostSurveyAnswers,
-      usability: UsabilitySurveyAnswers | null
+      postSurveyA: PostSurveyAnswers,
+      postSurveyB: PostSurveyAnswers,
+      usabilityA: UsabilitySurveyAnswers | null,
+      usabilityB: UsabilitySurveyAnswers | null
     ) => {
       update((prev) => ({
         ...prev,
-        postSurvey,
-        usabilitySurvey: usability,
+        postSurveyA,
+        postSurveyB,
+        usabilitySurveyA: usabilityA,
+        usabilitySurveyB: usabilityB,
       }));
     },
     [update]

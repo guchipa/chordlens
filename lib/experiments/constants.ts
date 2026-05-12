@@ -11,16 +11,6 @@ export type ChordKey = (typeof CHORD_KEYS)[number];
 
 export type RootNote = "Bb" | "C" | "F";
 
-/**
- * テスト時に鳴らす根音の周波数 (Hz)。
- * 暫定値：Bb3 / C4 / F3。実装後に調整する。
- */
-export const ROOT_FREQ_HZ: Record<RootNote, number> = {
-  Bb: 233.08,
-  C: 261.63,
-  F: 174.61,
-};
-
 export const CHORD_ROOT_KEY: Record<ChordKey, RootNote> = {
   Bb: "Bb",
   Cm: "C",

@@ -79,8 +79,10 @@ export interface ExperimentSessionState {
   partAssignment: ChordPartAssignments | null;
   chordPitches: ChordPitches | null;
   preSurvey: PreSurveyAnswers | null;
-  postSurvey: PostSurveyAnswers | null;
-  usabilitySurvey: UsabilitySurveyAnswers | null;
+  postSurveyA: PostSurveyAnswers | null;
+  postSurveyB: PostSurveyAnswers | null;
+  usabilitySurveyA: UsabilitySurveyAnswers | null;
+  usabilitySurveyB: UsabilitySurveyAnswers | null;
   pendingUploads: PendingUpload[];
   /** 各 chord の attempt カウンタ（test1/test2 別） */
   attemptCounters: {
@@ -107,8 +109,10 @@ export function createInitialSession(
     partAssignment: null,
     chordPitches: null,
     preSurvey: null,
-    postSurvey: null,
-    usabilitySurvey: null,
+    postSurveyA: null,
+    postSurveyB: null,
+    usabilitySurveyA: null,
+    usabilitySurveyB: null,
     pendingUploads: [],
     attemptCounters: {
       test1: { Bb: 0, Cm: 0, F7: 0 },

@@ -21,6 +21,10 @@ import {
   updatePairStatus,
   writePostSurvey,
 } from "@/lib/firebase/session";
+import type {
+  PostSurveyAnswers,
+  UsabilitySurveyAnswers,
+} from "@/lib/experiments/types";
 
 const Combined = z.object({
   post: PostSurveySchema,
@@ -33,9 +37,11 @@ export default function ExperimentPostSurveyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { session, setPostSurvey, setPhase } = useExperimentSession();
+  const [step, setStep] = useState<"A" | "B">("A");
+  const [memberAData, setMemberAData] = useState<CombinedOutput | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const cond = searchParams.get("cond");
   const pairId = searchParams.get("pairId");
 
@@ -44,15 +50,31 @@ export default function ExperimentPostSurveyPage() {
     resolver: zodResolver(Combined),
   });
 
-  const onSubmit = async (data: CombinedOutput) => {
-    if (!session) return;
+  const handleStepA = (data: CombinedOutput) => {
+    setMemberAData(data);
+    form.reset();
+    setStep("B");
+  };
+
+  const handleStepB = async (data: CombinedOutput) => {
+    if (!session || !memberAData) return;
     setSubmitting(true);
     setError(null);
-    const usability = isWith ? (data.usability ?? null) : null;
-    setPostSurvey(data.post, usability);
+
+    const postA: PostSurveyAnswers = memberAData.post;
+    const postB: PostSurveyAnswers = data.post;
+    const usabilityA: UsabilitySurveyAnswers | null = isWith
+      ? (memberAData.usability ?? null)
+      : null;
+    const usabilityB: UsabilitySurveyAnswers | null = isWith
+      ? (data.usability ?? null)
+      : null;
+
+    setPostSurvey(postA, postB, usabilityA, usabilityB);
+
     if (isFirebaseConfigured()) {
       try {
-        await writePostSurvey(session.pairId, data.post, usability);
+        await writePostSurvey(session.pairId, postA, postB, usabilityA, usabilityB);
         await updatePairStatus(session.pairId, "complete");
       } catch (err) {
         console.error("[post-survey] write failed:", err);
@@ -61,27 +83,52 @@ export default function ExperimentPostSurveyPage() {
         return;
       }
     }
+
     setPhase("complete");
-    const queryString = new URLSearchParams({ cond: cond || "", pairId: pairId || "" }).toString();
+    const queryString = new URLSearchParams({
+      cond: cond || "",
+      pairId: pairId || "",
+    }).toString();
     router.push(`/experiments/complete/?${queryString}`);
   };
+
+  const memberLabel = step === "A" ? "被験者 A" : "被験者 B";
+  const isLastStep = step === "B";
 
   return (
     <main className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>事後アンケート</CardTitle>
+          <CardTitle>
+            事後アンケート — {memberLabel}
+          </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex gap-2 text-sm text-muted-foreground">
+            <span
+              className={
+                step === "A" ? "font-semibold text-foreground" : ""
+              }
+            >
+              被験者 A
+            </span>
+            <span>→</span>
+            <span
+              className={
+                step === "B" ? "font-semibold text-foreground" : ""
+              }
+            >
+              被験者 B
+            </span>
+          </div>
+
           <FormProvider {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={form.handleSubmit(isLastStep ? handleStepB : handleStepA)}
               className="space-y-6"
             >
               <fieldset className="space-y-4 rounded-lg border p-4">
-                <legend className="px-2 font-semibold">
-                  練習の感想
-                </legend>
+                <legend className="px-2 font-semibold">練習の感想</legend>
                 <FivePointField
                   name="post.improvementPerceived"
                   label="10分の練習で音程が改善したと感じる"
@@ -129,7 +176,11 @@ export default function ExperimentPostSurveyPage() {
               )}
 
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "送信中..." : "送信して完了"}
+                {isLastStep
+                  ? submitting
+                    ? "送信中..."
+                    : "送信して完了"
+                  : "次の被験者へ →"}
               </Button>
             </form>
           </FormProvider>
