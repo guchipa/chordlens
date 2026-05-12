@@ -20,6 +20,15 @@ export interface UseAudioContextOptions {
     smoothingTimeConstant: number;
 }
 
+export interface InitializeOptions {
+    /**
+     * 既に取得済みの MediaStream を注入する。
+     * 指定時は getUserMedia() を呼ばず、cleanup でも tracks を停止しない。
+     * 注入側（/experiments フロー）が stream の寿命を握る前提。
+     */
+    externalStream?: MediaStream;
+}
+
 export interface UseAudioContextReturn {
     /** オーディオノードへの参照 (null = 未初期化 or 停止中) */
     nodesRef: React.RefObject<AudioNodes | null>;
@@ -28,7 +37,7 @@ export interface UseAudioContextReturn {
     /** 周波数ビン配列 */
     freqBinsRef: React.RefObject<number[] | null>;
     /** 処理を開始 */
-    initialize: () => Promise<boolean>;
+    initialize: (options?: InitializeOptions) => Promise<boolean>;
     /** 処理を終了・リソース解放 */
     cleanup: () => void;
     /** 設定更新（fftSize, smoothingTimeConstant） */
@@ -42,6 +51,8 @@ export function useAudioContext(
     const spectrumDataRef = useRef<Float32Array | null>(null);
     const freqBinsRef = useRef<number[] | null>(null);
     const lastFreqBinsKeyRef = useRef<string | null>(null);
+    /** externalStream 注入時は true。cleanup で tracks を停止しない。 */
+    const ownsStreamRef = useRef<boolean>(true);
 
     // 最新の設定を保持
     const optionsRef = useRef(options);
@@ -49,7 +60,7 @@ export function useAudioContext(
         optionsRef.current = options;
     }, [options]);
 
-    const initialize = useCallback(async (): Promise<boolean> => {
+    const initialize = useCallback(async (initOptions?: InitializeOptions): Promise<boolean> => {
         // 既に初期化済みの場合はスキップ
         if (nodesRef.current) return true;
 
@@ -57,14 +68,21 @@ export function useAudioContext(
             // AudioContextを初期化
             const audioContext = new AudioContext();
 
-            // マイクストリーム取得
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: false,
-                    noiseSuppression: false,
-                    autoGainControl: false,
-                },
-            });
+            // マイクストリーム取得（external 指定時は再利用）
+            let stream: MediaStream;
+            if (initOptions?.externalStream) {
+                stream = initOptions.externalStream;
+                ownsStreamRef.current = false;
+            } else {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false,
+                    },
+                });
+                ownsStreamRef.current = true;
+            }
 
             // MediaStreamSourceを作成
             const mediaStreamSource = audioContext.createMediaStreamSource(stream);
@@ -112,10 +130,12 @@ export function useAudioContext(
         const nodes = nodesRef.current;
         if (!nodes) return;
 
-        // メディアストリームを停止
-        nodes.mediaStreamSource.mediaStream
-            .getTracks()
-            .forEach((track) => track.stop());
+        // 自前で getUserMedia した場合のみ stream を停止する
+        if (ownsStreamRef.current) {
+            nodes.mediaStreamSource.mediaStream
+                .getTracks()
+                .forEach((track) => track.stop());
+        }
         nodes.mediaStreamSource.disconnect();
 
         // ノードを切断

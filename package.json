@@ -29,6 +29,7 @@
     "@tailwindcss/postcss": "^4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.12.1",
     "jotai": "^2.16.2",
     "lucide-react": "^0.513.0",
     "next": "15.3.8",
