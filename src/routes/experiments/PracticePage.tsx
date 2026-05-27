@@ -1,11 +1,9 @@
-"use client";
-
 import { useEffect } from "react";
 import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSession";
 import { PracticeWithTuner } from "@/components/feature/experiments/PracticeWithTuner";
 import { PracticeWithoutTuner } from "@/components/feature/experiments/PracticeWithoutTuner";
 
-export default function ExperimentPracticePage() {
+export function PracticePage() {
   const { session, setPhase } = useExperimentSession();
   useEffect(() => {
     setPhase("practice");

@@ -1,8 +1,6 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function ExperimentIneligiblePage() {
+export function IneligiblePage() {
   return (
     <main className="container mx-auto max-w-2xl p-6">
       <Card>

@@ -1,6 +1,6 @@
 /**
  * Firebase クライアント SDK の遅延初期化 + 匿名認証。
- * 静的エクスポート（`output: "export"`）のまま動作する。
+ * Vite の static build のまま動作する。
  */
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 import {
@@ -13,11 +13,11 @@ import { Firestore, getFirestore, initializeFirestore } from "firebase/firestore
 import { FirebaseStorage, getStorage } from "firebase/storage";
 
 const config = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 let appInstance: FirebaseApp | null = null;
@@ -38,7 +38,7 @@ export function getFirebaseApp(): FirebaseApp {
   if (appInstance) return appInstance;
   if (!isFirebaseConfigured()) {
     throw new Error(
-      "Firebase 設定が読み込まれていません。.env.local の NEXT_PUBLIC_FIREBASE_* を確認してください。"
+      "Firebase 設定が読み込まれていません。.env.local の VITE_FIREBASE_* を確認してください。"
     );
   }
   appInstance = getApps().length > 0 ? getApp() : initializeApp(config);

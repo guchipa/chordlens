@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,8 +41,8 @@ import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { updatePairStatus } from "@/lib/firebase/session";
 
 export function PracticeWithTuner() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { session } = useExperimentSession();
   const loadPreset = useSetAtom(loadPresetAtom);
   const currentPitchList = useAtomValue(pitchListAtom);
@@ -113,7 +111,7 @@ export function PracticeWithTuner() {
     }
     if (session?.pairId) restoreUserPresets(session.pairId);
     const queryString = new URLSearchParams({ cond: cond || "", pairId: pairId || "" }).toString();
-    router.push(`/experiments/test2/?${queryString}`);
+    navigate(`/experiments/test2/?${queryString}`);
   };
 
   const { remainingMs, start } = useCountdownTimer({

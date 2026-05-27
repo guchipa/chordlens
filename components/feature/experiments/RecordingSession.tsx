@@ -1,8 +1,6 @@
-"use client";
-
 import { useState } from "react";
 import { useAtomValue } from "jotai";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChordRecordingCard,
   type ChordRecordingResult,
@@ -30,8 +28,8 @@ interface Props {
 }
 
 export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const cond = searchParams.get("cond") ?? "";
   const pairId = searchParams.get("pairId") ?? "";
   const {
@@ -153,7 +151,7 @@ export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
         }
       }
       const queryString = new URLSearchParams({ cond, pairId }).toString();
-      router.push(`${nextPath}?${queryString}`);
+      navigate(`${nextPath}?${queryString}`);
     }
   };
 

@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,9 +31,9 @@ const Combined = z.object({
 type CombinedInput = z.input<typeof Combined>;
 type CombinedOutput = z.output<typeof Combined>;
 
-export default function ExperimentPostSurveyPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export function PostSurveyPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { session, setPostSurvey, setPhase } = useExperimentSession();
   const [step, setStep] = useState<"A" | "B">("A");
   const [memberAData, setMemberAData] = useState<CombinedOutput | null>(null);
@@ -89,7 +87,7 @@ export default function ExperimentPostSurveyPage() {
       cond: cond || "",
       pairId: pairId || "",
     }).toString();
-    router.push(`/experiments/complete/?${queryString}`);
+    navigate(`/experiments/complete/?${queryString}`);
   };
 
   const memberLabel = step === "A" ? "被験者 A" : "被験者 B";

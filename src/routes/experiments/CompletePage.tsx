@@ -1,8 +1,6 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function ExperimentCompletePage() {
+export function CompletePage() {
   return (
     <main className="space-y-4">
       <Card>
