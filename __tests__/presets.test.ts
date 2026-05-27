@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import {
   savePreset,
   getPresets,
@@ -103,23 +104,23 @@ describe("presets utility functions", () => {
     });
 
     it("should return presets sorted by creation date (newest first)", () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const pitchList: Pitch[] = [
         { pitchName: "C", octaveNum: 4, enabled: true, isRoot: true },
       ];
 
       savePreset("First", pitchList);
       // 少し待つ
-      jest.advanceTimersByTime(10);
+      vi.advanceTimersByTime(10);
       savePreset("Second", pitchList);
-      jest.advanceTimersByTime(10);
+      vi.advanceTimersByTime(10);
       savePreset("Third", pitchList);
 
       const presets = getPresets();
       expect(presets[0].name).toBe("Third");
       expect(presets[1].name).toBe("Second");
       expect(presets[2].name).toBe("First");
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
 
@@ -170,12 +171,12 @@ describe("presets utility functions", () => {
 
   describe("getRelativeTimeString", () => {
     beforeAll(() => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date("2025-10-30T12:00:00Z"));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2025-10-30T12:00:00Z"));
     });
 
     afterAll(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("should return 'たった今' for recent timestamps", () => {

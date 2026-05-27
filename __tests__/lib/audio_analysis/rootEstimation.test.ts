@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { estimateRoot } from "@/lib/audio_analysis/rootEstimation";
 import type { Pitch } from "@/lib/schema";
 
@@ -10,7 +11,7 @@ describe("rootEstimation", () => {
         { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);
@@ -29,7 +30,7 @@ describe("rootEstimation", () => {
         { pitchName: "A", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);
@@ -49,7 +50,7 @@ describe("rootEstimation", () => {
         { pitchName: "F", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);
@@ -64,7 +65,7 @@ describe("rootEstimation", () => {
         { pitchName: "C", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).not.toHaveBeenCalled();
@@ -73,7 +74,7 @@ describe("rootEstimation", () => {
     it("空配列の場合は何もしない", () => {
       const pitchList: Pitch[] = [];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).not.toHaveBeenCalled();
@@ -87,7 +88,7 @@ describe("rootEstimation", () => {
         { pitchName: "C", octaveNum: 5, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);
@@ -107,7 +108,7 @@ describe("rootEstimation", () => {
         { pitchName: "C", octaveNum: 5, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);
@@ -127,7 +128,7 @@ describe("rootEstimation", () => {
         { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);
@@ -144,7 +145,7 @@ describe("rootEstimation", () => {
         { pitchName: "F", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);
@@ -162,7 +163,7 @@ describe("rootEstimation", () => {
         { pitchName: "F", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);
@@ -180,7 +181,7 @@ describe("rootEstimation", () => {
         { pitchName: "G", octaveNum: 4, enabled: true, isRoot: false },
       ];
 
-      const mockSetPitchList = jest.fn();
+      const mockSetPitchList = vi.fn();
       estimateRoot(pitchList, mockSetPitchList);
 
       expect(mockSetPitchList).toHaveBeenCalledTimes(1);

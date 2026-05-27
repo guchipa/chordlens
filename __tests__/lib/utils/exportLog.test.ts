@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { convertLogToCSV, exportLogSession } from "@/lib/utils/exportLog";
 import type { LogSession, LogEntry } from "@/lib/types";
 
@@ -318,7 +319,7 @@ describe("exportLog", () => {
 
   describe("exportLogSession", () => {
     // DOM操作のモック
-    let createElementSpy: jest.SpyInstance;
+    let createElementSpy: ReturnType<typeof vi.spyOn>;
     let mockLink: any;
 
     beforeEach(() => {
@@ -327,24 +328,24 @@ describe("exportLog", () => {
         href: "",
         download: "",
         style: { display: "" },
-        click: jest.fn(),
+        click: vi.fn(),
       };
 
-      createElementSpy = jest
+      createElementSpy = vi
         .spyOn(document, "createElement")
         .mockReturnValue(mockLink as any);
 
       // appendChild/removeChild のモック
-      jest.spyOn(document.body, "appendChild").mockImplementation(() => mockLink as any);
-      jest.spyOn(document.body, "removeChild").mockImplementation(() => mockLink as any);
+      vi.spyOn(document.body, "appendChild").mockImplementation(() => mockLink as any);
+      vi.spyOn(document.body, "removeChild").mockImplementation(() => mockLink as any);
 
       // URL API のモック
-      (global as any).URL.createObjectURL = jest.fn(() => "blob:mock-url");
-      (global as any).URL.revokeObjectURL = jest.fn();
+      (global as any).URL.createObjectURL = vi.fn(() => "blob:mock-url");
+      (global as any).URL.revokeObjectURL = vi.fn();
     });
 
     afterEach(() => {
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
 
     it("CSVファイルのダウンロードを正しくトリガーする", () => {
