@@ -1,7 +1,5 @@
-"use client";
-
 import { useLayoutEffect, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSession";
 import {
   CONDITIONS,
@@ -18,8 +16,8 @@ interface Props {
 }
 
 export function ExperimentSessionProvider({ children }: Props) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { session, initialize, reset } = useExperimentSession();
   const [authReady, setAuthReady] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -41,7 +39,7 @@ export function ExperimentSessionProvider({ children }: Props) {
         cond,
         pairId,
       });
-      router.replace("/experiments/invalid/");
+      navigate("/experiments/invalid/", { replace: true });
       return;
     }
     if (!CONDITIONS.includes(cond as Condition)) {
@@ -49,7 +47,7 @@ export function ExperimentSessionProvider({ children }: Props) {
         cond,
         validConditions: CONDITIONS,
       });
-      router.replace("/experiments/invalid/");
+      navigate("/experiments/invalid/", { replace: true });
       return;
     }
     // 既存セッションが別 pairId / cond だったらリセットする
@@ -70,13 +68,13 @@ export function ExperimentSessionProvider({ children }: Props) {
       cond,
     });
     initialize(pairId, cond as Condition);
-  }, [cond, pairId, router, session, initialize, reset]);
+  }, [cond, pairId, navigate, session, initialize, reset]);
 
   useEffect(() => {
     if (!cond || !pairId) return;
     if (!isFirebaseConfigured()) {
       setAuthError(
-        "Firebase 設定が見つかりません (.env.local の NEXT_PUBLIC_FIREBASE_* を確認してください)。"
+        "Firebase 設定が見つかりません (.env.local の VITE_FIREBASE_* を確認してください)。"
       );
       return;
     }

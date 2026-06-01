@@ -22,11 +22,11 @@ export type AudioAnalysisClientLogPayload = {
 };
 
 function isEnabled(): boolean {
-    return process.env.NEXT_PUBLIC_VERCEL_CLIENT_LOG === "1";
+    return import.meta.env.VITE_CLIENT_LOG === "1";
 }
 
 export function getClientLogFps(defaultFps = 1): number {
-    const raw = process.env.NEXT_PUBLIC_VERCEL_CLIENT_LOG_FPS;
+    const raw = import.meta.env.VITE_CLIENT_LOG_FPS as string | undefined;
     const n = raw ? Number(raw) : defaultFps;
     return Number.isFinite(n) ? n : defaultFps;
 }

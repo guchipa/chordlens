@@ -1,10 +1,11 @@
+import { vi } from "vitest";
 
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 
 describe("AnalysisControl", () => {
-  const startProcessing = jest.fn();
-  const stopProcessing = jest.fn();
+  const startProcessing = vi.fn();
+  const stopProcessing = vi.fn();
 
   it("renders correctly when not processing", () => {
     render(

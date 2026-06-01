@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import { pickSupportedMimeType } from "@/lib/hooks/experiments/useMediaRecorder";
 
 describe("pickSupportedMimeType", () => {

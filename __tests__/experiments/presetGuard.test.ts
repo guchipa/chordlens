@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import {
   installExperimentPresets,
   restoreUserPresets,

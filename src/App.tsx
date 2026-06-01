@@ -1,12 +1,8 @@
-"use client";
-
 import { useState } from "react";
 import { useAtomValue } from "jotai";
 
-// カスタムフック（音声解析のみ使用）
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
 
-// コンポーネント
 import { AppFooter } from "@/components/layout/AppFooter";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
@@ -15,7 +11,6 @@ import { MainHeader } from "@/components/layout/MainHeader";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { ExperimentModePanel } from "@/components/feature/experiment/ExperimentModePanel";
 
-// Jotai atoms
 import {
   pitchListAtom,
   evalRangeCentsAtom,
@@ -28,10 +23,9 @@ import {
   feedbackTypeAtom,
 } from "@/lib/store";
 
-export default function HomePage() {
+export function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Jotai atoms から状態を取得
   const currentPitchList = useAtomValue(pitchListAtom);
   const evalRangeCents = useAtomValue(evalRangeCentsAtom);
   const a4Freq = useAtomValue(a4FreqAtom);
@@ -42,7 +36,6 @@ export default function HomePage() {
   const experimentMode = useAtomValue(experimentModeAtom);
   const feedbackType = useAtomValue(feedbackTypeAtom);
 
-  // 音声解析フック
   const {
     isProcessing,
     analysisResult,
@@ -63,7 +56,6 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* 設定ドロワー */}
       <SettingsDrawer
         isOpen={isSettingsOpen}
         onOpen={() => setIsSettingsOpen(true)}
@@ -71,7 +63,6 @@ export default function HomePage() {
       />
 
       <main className="container mx-auto flex grow flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
-        {/* 実験モード：バナー、ログ、デバッグパネル */}
         {experimentMode && (
           <ExperimentModePanel
             isProcessing={isProcessing}

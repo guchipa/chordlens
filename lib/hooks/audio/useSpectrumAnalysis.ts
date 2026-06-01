@@ -90,7 +90,7 @@ export function useSpectrumAnalysis(
             console.log("[AudioDebug] Max spectrum dB:", maxDb.toFixed(1), "| AudioContext state:", audioContext.state);
         }
 
-        const enableClientLog = process.env.NEXT_PUBLIC_VERCEL_CLIENT_LOG === "1";
+        const enableClientLog = import.meta.env.VITE_CLIENT_LOG === "1";
 
         // スペクトラムデータ取得
         if (spectrumData.length !== analyserNode.frequencyBinCount) {

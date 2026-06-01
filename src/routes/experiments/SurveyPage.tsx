@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -22,13 +20,13 @@ import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSessi
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { writePreSurvey } from "@/lib/firebase/session";
 
-export default function ExperimentSurveyPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export function SurveyPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { session, setPreSurvey, setPhase } = useExperimentSession();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  
+
   const cond = searchParams.get("cond");
   const pairId = searchParams.get("pairId");
 
@@ -37,24 +35,14 @@ export default function ExperimentSurveyPage() {
   });
 
   const onSubmit = async (data: PreSurveyOutput) => {
-    console.log("[experiments/page] onSubmit called with data:", data);
-    console.log("[experiments/page] session state:", session);
-    
     if (!session) {
-      console.error("[experiments/page] session is null at form submission", {
-        sessionFromHook: session,
-        timestamp: new Date().toISOString(),
-      });
       setSubmitError("セッションが見つかりません。ページをリロードしてください。");
       return;
     }
-    
-    console.log("[experiments/page] eligibility check:", isEligible(data));
-    
+
     if (!isEligible(data)) {
-      console.log("[experiments/page] user is ineligible, redirecting");
       const queryString = new URLSearchParams({ cond: cond || "", pairId: pairId || "" }).toString();
-      router.replace(`/experiments/ineligible/?${queryString}`);
+      navigate(`/experiments/ineligible/?${queryString}`, { replace: true });
       return;
     }
     const instruments: [InstrumentKey, InstrumentKey] = [
@@ -81,7 +69,7 @@ export default function ExperimentSurveyPage() {
           /* isRootIncluded */ false
         );
       } catch (err) {
-        console.error("[experiments/page] writePreSurvey failed:", err);
+        console.error("[experiments/SurveyPage] writePreSurvey failed:", err);
         setSubmitError(
           "アンケートの送信に失敗しました。通信状況を確認して再度お試しください。"
         );
@@ -92,7 +80,7 @@ export default function ExperimentSurveyPage() {
 
     setPhase("test1");
     const queryString = new URLSearchParams({ cond: cond || "", pairId: pairId || "" }).toString();
-    router.push(`/experiments/test1/?${queryString}`);
+    navigate(`/experiments/test1/?${queryString}`);
   };
 
   return (

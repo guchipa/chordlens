@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
 import { PitchSettingForm } from "@/components/feature/PitchSettingForm";
@@ -6,31 +7,31 @@ import type { Pitch } from "@/lib/types";
 
 // AudioContext のモック
 const mockAudioContext = {
-  createAnalyser: jest.fn(() => ({
+  createAnalyser: vi.fn(() => ({
     fftSize: 2048,
     frequencyBinCount: 1024,
-    getFloatTimeDomainData: jest.fn(),
+    getFloatTimeDomainData: vi.fn(),
   })),
-  createMediaStreamSource: jest.fn(() => ({
-    connect: jest.fn(),
-    disconnect: jest.fn(),
+  createMediaStreamSource: vi.fn(() => ({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
   })),
   sampleRate: 44100,
-  close: jest.fn(),
+  close: vi.fn(),
 };
 
 // navigator.mediaDevices のモック
 Object.defineProperty(navigator, "mediaDevices", {
   value: {
-    getUserMedia: jest.fn().mockResolvedValue({
-      getTracks: jest.fn().mockReturnValue([{ stop: jest.fn() }]),
+    getUserMedia: vi.fn().mockResolvedValue({
+      getTracks: vi.fn().mockReturnValue([{ stop: vi.fn() }]),
     }),
   },
   writable: true,
 });
 
 // AudioContext のモック
-(global as unknown as { AudioContext: unknown }).AudioContext = jest.fn(
+(global as unknown as { AudioContext: unknown }).AudioContext = vi.fn(
   () => mockAudioContext
 );
 
