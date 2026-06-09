@@ -3,9 +3,9 @@ import { AnalysisResult } from "@/components/feature/AnalysisResult";
 
 describe("AnalysisResult", () => {
   const pitchList = [
-    { pitchName: "C", octaveNum: 4, isRoot: true },
-    { pitchName: "E", octaveNum: 4, isRoot: false },
-    { pitchName: "G", octaveNum: 4, isRoot: false },
+    { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+    { pitchName: "E", octaveNum: 4, isRoot: false, enabled: true },
+    { pitchName: "G", octaveNum: 4, isRoot: false, enabled: true },
   ];
 
   it("renders a message when the pitch list is empty and not processing", () => {

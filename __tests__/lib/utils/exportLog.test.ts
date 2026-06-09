@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi, type MockInstance } from "vitest";
 import { convertLogToCSV, exportLogSession } from "@/lib/utils/exportLog";
 import type { LogSession, LogEntry } from "@/lib/types";
 
@@ -18,8 +18,8 @@ describe("exportLog", () => {
             elapsedMs: 0,
             sessionId: "test-session-123",
             pitchList: [
-              { pitchName: "C", octaveNum: 4, isRoot: true },
-              { pitchName: "E", octaveNum: 4, isRoot: false },
+              { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+              { pitchName: "E", octaveNum: 4, isRoot: false, enabled: true },
             ],
             analysisResult: [0.1, -0.05],
             centDeviations: [5.0, -2.5],
@@ -73,7 +73,7 @@ describe("exportLog", () => {
             timestamp: "2025-11-14T10:00:00.000Z",
             elapsedMs: 0,
             sessionId: "session-456",
-            pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true }],
+            pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true, enabled: true }],
             analysisResult: [0.0],
             centDeviations: [0.0],
             settings: {
@@ -88,7 +88,7 @@ describe("exportLog", () => {
             timestamp: "2025-11-14T10:00:00.100Z",
             elapsedMs: 100,
             sessionId: "session-456",
-            pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true }],
+            pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true, enabled: true }],
             analysisResult: [0.02],
             centDeviations: [1.0],
             settings: {
@@ -129,7 +129,7 @@ describe("exportLog", () => {
             timestamp: "2025-11-14T10:00:00.000Z",
             elapsedMs: 0,
             sessionId: "test,session",
-            pitchList: [{ pitchName: "C", octaveNum: 4, isRoot: true }],
+            pitchList: [{ pitchName: "C", octaveNum: 4, isRoot: true, enabled: true }],
             analysisResult: [0.0],
             centDeviations: [0.0],
             settings: {
@@ -160,7 +160,7 @@ describe("exportLog", () => {
             timestamp: "2025-11-14T10:00:00.000Z",
             elapsedMs: 0,
             sessionId: "session-null",
-            pitchList: [{ pitchName: "C", octaveNum: 4, isRoot: true }],
+            pitchList: [{ pitchName: "C", octaveNum: 4, isRoot: true, enabled: true }],
             analysisResult: [null],
             centDeviations: [null],
             settings: {
@@ -209,7 +209,7 @@ describe("exportLog", () => {
             timestamp: "2025-11-14T10:00:00.000Z",
             elapsedMs: 0,
             sessionId: "session-optional",
-            pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true }],
+            pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true, enabled: true }],
             analysisResult: [0.0],
             centDeviations: [0.0],
             settings: {
@@ -238,7 +238,7 @@ describe("exportLog", () => {
         timestamp: "2025-11-14T10:00:00.000Z",
         elapsedMs: 0,
         sessionId: "session-with-extra",
-        pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true }],
+        pitchList: [{ pitchName: "A", octaveNum: 4, isRoot: true, enabled: true }],
         analysisResult: [0.0],
         centDeviations: [0.0],
         centDeviationsRaw: [0.0],
@@ -282,9 +282,9 @@ describe("exportLog", () => {
             elapsedMs: 0,
             sessionId: "chord-session",
             pitchList: [
-              { pitchName: "C", octaveNum: 4, isRoot: true },
-              { pitchName: "E", octaveNum: 4, isRoot: false },
-              { pitchName: "G", octaveNum: 4, isRoot: false },
+              { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+              { pitchName: "E", octaveNum: 4, isRoot: false, enabled: true },
+              { pitchName: "G", octaveNum: 4, isRoot: false, enabled: true },
             ],
             analysisResult: [0.0, 0.1, -0.05],
             centDeviations: [0.0, 5.0, -2.5],
@@ -319,7 +319,7 @@ describe("exportLog", () => {
 
   describe("exportLogSession", () => {
     // DOM操作のモック
-    let createElementSpy: ReturnType<typeof vi.spyOn>;
+    let createElementSpy: MockInstance;
     let mockLink: any;
 
     beforeEach(() => {
@@ -359,7 +359,7 @@ describe("exportLog", () => {
             timestamp: "2025-11-14T10:00:00.000Z",
             elapsedMs: 0,
             sessionId: "abc123-def456-ghi789",
-            pitchList: [{ pitchName: "C", octaveNum: 4, isRoot: true }],
+            pitchList: [{ pitchName: "C", octaveNum: 4, isRoot: true, enabled: true }],
             analysisResult: [0.0],
             centDeviations: [0.0],
             settings: {
