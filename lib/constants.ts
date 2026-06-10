@@ -237,6 +237,31 @@ export const PITCH_COLOR_MAP: { [key: string]: string } = {
 };
 
 /**
+ * SWIPE' バンドパスフィルタ幅のデフォルト値（セント）
+ * ±600 cents = 1 オクターブ分の帯域で倍音を含む
+ */
+export const SWIPE_BANDWIDTH_CENTS_DEFAULT = 1200;
+
+/**
+ * ピッチ推定アルゴリズムの定義
+ */
+export const PITCH_ALGORITHMS = ["fft", "swipe", "phasevocoder"] as const;
+export type PitchAlgorithm = (typeof PITCH_ALGORITHMS)[number];
+export const PITCH_ALGORITHM_DEFAULT: PitchAlgorithm = "fft";
+
+export const PITCH_ALGORITHM_LABELS: Record<PitchAlgorithm, string> = {
+  fft: "FFT (標準)",
+  swipe: "SWIPE'",
+  phasevocoder: "位相ボコーダ",
+};
+
+export const PITCH_ALGORITHM_DESCRIPTIONS: Record<PitchAlgorithm, string> = {
+  fft: "スペクトルのピーク検出でズレを評価します",
+  swipe: "鋸波テンプレートとの相関で F0 を推定します",
+  phasevocoder: "FFT の位相差から高精度に F0 を推定します",
+};
+
+/**
  * フィードバック形式の定義
  */
 export const FEEDBACK_TYPES = [

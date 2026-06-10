@@ -21,6 +21,8 @@ import {
   holdEnabledAtom,
   experimentModeAtom,
   feedbackTypeAtom,
+  pitchAlgorithmAtom,
+  swipeBandwidthCentsAtom,
 } from "@/lib/store";
 
 export function App() {
@@ -35,12 +37,15 @@ export function App() {
   const holdEnabled = useAtomValue(holdEnabledAtom);
   const experimentMode = useAtomValue(experimentModeAtom);
   const feedbackType = useAtomValue(feedbackTypeAtom);
+  const pitchAlgorithm = useAtomValue(pitchAlgorithmAtom);
+  const swipeBandwidthCents = useAtomValue(swipeBandwidthCentsAtom);
 
   const {
     isProcessing,
     analysisResult,
     centDeviations,
     peakSearchDebug,
+    comparisonResults,
     startProcessing,
     stopProcessing,
   } = useAudioAnalysis({
@@ -50,6 +55,9 @@ export function App() {
     evalThreshold,
     fftSize,
     smoothingTimeConstant,
+    pitchAlgorithm,
+    swipeBandwidthCents,
+    enableComparison: experimentMode,
     enablePeakSearchDebug: experimentMode,
     peakSearchDebugFps: experimentMode ? 12 : undefined,
   });
@@ -69,6 +77,7 @@ export function App() {
             analysisResult={analysisResult}
             centDeviations={centDeviations}
             peakSearchDebug={peakSearchDebug}
+            comparisonResults={comparisonResults}
           />
         )}
 

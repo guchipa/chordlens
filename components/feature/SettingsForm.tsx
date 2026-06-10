@@ -27,10 +27,15 @@ import {
   sensitivityAtom,
   holdEnabledAtom,
   experimentModeAtom,
+  pitchAlgorithmAtom,
+  swipeBandwidthCentsAtom,
 } from "@/lib/store";
 import {
   SENSITIVITY_MIN,
   SENSITIVITY_MAX,
+  PITCH_ALGORITHMS,
+  PITCH_ALGORITHM_LABELS,
+  PITCH_ALGORITHM_DESCRIPTIONS,
 } from "@/lib/constants";
 
 const FFT_SIZE_OPTIONS = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
@@ -46,6 +51,8 @@ export function SettingsForm() {
   );
   const [holdEnabled, setHoldEnabled] = useAtom(holdEnabledAtom);
   const [experimentMode, setExperimentMode] = useAtom(experimentModeAtom);
+  const [pitchAlgorithm, setPitchAlgorithm] = useAtom(pitchAlgorithmAtom);
+  const [swipeBandwidthCents, setSwipeBandwidthCents] = useAtom(swipeBandwidthCentsAtom);
 
   const handleEvalRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -87,6 +94,47 @@ export function SettingsForm() {
         <CardTitle>設定</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor="pitchAlgorithm">アルゴリズム</Label>
+          <Select
+            value={pitchAlgorithm}
+            onValueChange={(v) => setPitchAlgorithm(v as typeof pitchAlgorithm)}
+          >
+            <SelectTrigger id="pitchAlgorithm">
+              <SelectValue placeholder="アルゴリズムを選択" />
+            </SelectTrigger>
+            <SelectContent>
+              {PITCH_ALGORITHMS.map((alg) => (
+                <SelectItem key={alg} value={alg}>
+                  {PITCH_ALGORITHM_LABELS[alg]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-gray-500 mt-1">
+            {PITCH_ALGORITHM_DESCRIPTIONS[pitchAlgorithm]}
+          </p>
+        </div>
+        {pitchAlgorithm === "swipe" && (
+          <div>
+            <Label htmlFor="swipeBandwidthCents">バンドパス幅 (セント)</Label>
+            <Input
+              id="swipeBandwidthCents"
+              type="number"
+              value={swipeBandwidthCents}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v) && v >= 100) setSwipeBandwidthCents(v);
+              }}
+              min="100"
+              max="4800"
+              step="100"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              各構成音の周囲をこの幅でバンドパスフィルタします。広いほど倍音を含みます。
+            </p>
+          </div>
+        )}
         <div>
           <Label htmlFor="evalRangeCents">音程評価範囲 (セント)</Label>
           <Input

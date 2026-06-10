@@ -14,6 +14,8 @@ export {
     experimentModeAtom,
     sensitivityAtom,
     audioSettingsAtom,
+    pitchAlgorithmAtom,
+    swipeBandwidthCentsAtom,
 } from "./audioSettingsAtoms";
 
 // ピッチリスト

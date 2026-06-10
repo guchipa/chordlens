@@ -15,6 +15,7 @@ import { useAtomValue } from "jotai";
 import { useLogRecorder } from "@/lib/hooks/useLogRecorder";
 import { LogExportButton } from "@/components/feature/LogExportButton";
 import { PeakSearchBinsPanel } from "@/components/feature/PeakSearchBinsPanel";
+import { AlgorithmComparisonPanel } from "@/components/feature/AlgorithmComparisonPanel";
 import {
     pitchListAtom,
     evalRangeCentsAtom,
@@ -26,7 +27,7 @@ import {
 } from "@/lib/store";
 import { METER_NEEDLE_HOLD_MS, METER_NEEDLE_SMOOTHING_ALPHA } from "@/lib/constants";
 import { updateEmaHoldList, type EmaHoldState } from "@/lib/utils/emaHold";
-import type { PeakSearchDebug } from "@/lib/types";
+import type { PeakSearchDebug, AlgorithmComparisonEntry } from "@/lib/types";
 
 export interface ExperimentModePanelProps {
     /** 解析中かどうか */
@@ -37,6 +38,8 @@ export interface ExperimentModePanelProps {
     centDeviations: (number | null)[] | null;
     /** ピーク探索デバッグ情報 */
     peakSearchDebug: PeakSearchDebug[] | null;
+    /** FFT vs SWIPE' 比較結果 */
+    comparisonResults: AlgorithmComparisonEntry[] | null;
 }
 
 export function ExperimentModePanel({
@@ -44,6 +47,7 @@ export function ExperimentModePanel({
     analysisResult,
     centDeviations,
     peakSearchDebug,
+    comparisonResults,
 }: ExperimentModePanelProps) {
     // Jotai atoms から状態を取得
     const currentPitchList = useAtomValue(pitchListAtom);
@@ -133,6 +137,11 @@ export function ExperimentModePanel({
                 onStopRecording={stopRecording}
                 onClearLog={clearLog}
             />
+
+            {/* アルゴリズム比較テーブル */}
+            {comparisonResults && comparisonResults.length > 0 && (
+                <AlgorithmComparisonPanel entries={comparisonResults} />
+            )}
 
             {/* ピーク探索デバッグパネル */}
             <PeakSearchBinsPanel
