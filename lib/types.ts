@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { PITCH_NAME_LIST } from "@/lib/constants";
+import { PITCH_NAME_LIST, type PitchAlgorithm } from "@/lib/constants";
 
 // ========================================
 // フォーム関連の型定義
@@ -89,6 +89,15 @@ export interface AnalysisResult {
 }
 
 /**
+ * アルゴリズム比較の1エントリ（音1つ分）
+ */
+export interface AlgorithmComparisonEntry {
+  pitch: Pitch;
+  fftCentDeviation: number | null;
+  swipeCentDeviation: number | null;
+}
+
+/**
  * useAudioAnalysisフックのprops型定義
  */
 export interface UseAudioAnalysisProps {
@@ -99,6 +108,12 @@ export interface UseAudioAnalysisProps {
   fftSize: number;
   smoothingTimeConstant: number;
 
+  /** ピッチ推定アルゴリズム (デフォルト: "fft") */
+  pitchAlgorithm?: PitchAlgorithm;
+  /** SWIPE' バンドパスフィルタ幅（セント） */
+  swipeBandwidthCents?: number;
+  /** true のとき FFT と SWIPE' を並列実行して比較結果を返す */
+  enableComparison?: boolean;
   /** 実験モード向け: ピーク探索範囲（ビン列）を取得する */
   enablePeakSearchDebug?: boolean;
   /** 実験モード向け: デバッグ情報の更新FPS（デフォルト: 12） */

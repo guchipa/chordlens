@@ -16,6 +16,9 @@ export function useAudioAnalysis({
   evalThreshold,
   fftSize,
   smoothingTimeConstant,
+  pitchAlgorithm,
+  swipeBandwidthCents,
+  enableComparison,
   enablePeakSearchDebug,
   peakSearchDebugFps,
 }: UseAudioAnalysisProps) {
@@ -36,6 +39,7 @@ export function useAudioAnalysis({
     analysisResult,
     centDeviations,
     peakSearchDebug,
+    comparisonResults,
     startLoop,
     stopLoop,
     clearResults,
@@ -44,6 +48,9 @@ export function useAudioAnalysis({
     evalRangeCents,
     a4Freq,
     evalThreshold,
+    pitchAlgorithm,
+    swipeBandwidthCents,
+    enableComparison,
     enablePeakSearchDebug,
     peakSearchDebugFps,
   });
@@ -77,6 +84,7 @@ export function useAudioAnalysis({
     analysisResult,
     centDeviations,
     peakSearchDebug,
+    comparisonResults,
     startProcessing,
     stopProcessing,
   };

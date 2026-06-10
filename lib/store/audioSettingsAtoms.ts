@@ -11,8 +11,11 @@ import {
     FFT_SIZE,
     SMOOTHING_TIME_CONSTANT,
     HOLD_ENABLED_DEFAULT,
+    PITCH_ALGORITHM_DEFAULT,
+    SWIPE_BANDWIDTH_CENTS_DEFAULT,
     sensitivityToDb,
     dbToSensitivity,
+    type PitchAlgorithm,
 } from "@/lib/constants";
 
 // 基本設定atoms（localStorageに永続化）
@@ -40,6 +43,18 @@ export const evalThresholdAtom = atomWithStorage<number>(
 export const holdEnabledAtom = atomWithStorage<boolean>(
     "chordlens-holdEnabled",
     HOLD_ENABLED_DEFAULT
+);
+
+// ピッチ推定アルゴリズム（localStorageに永続化）
+export const pitchAlgorithmAtom = atomWithStorage<PitchAlgorithm>(
+    "chordlens-pitchAlgorithm",
+    PITCH_ALGORITHM_DEFAULT
+);
+
+// SWIPE' バンドパスフィルタ幅（セント、localStorageに永続化）
+export const swipeBandwidthCentsAtom = atomWithStorage<number>(
+    "chordlens-swipeBandwidthCents",
+    SWIPE_BANDWIDTH_CENTS_DEFAULT
 );
 
 // 実験モード（localStorageには保存しない）
