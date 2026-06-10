@@ -95,6 +95,7 @@ export interface AlgorithmComparisonEntry {
   pitch: Pitch;
   fftCentDeviation: number | null;
   swipeCentDeviation: number | null;
+  phaseVocoderCentDeviation: number | null;
 }
 
 /**
