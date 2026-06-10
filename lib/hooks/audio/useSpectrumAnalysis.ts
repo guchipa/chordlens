@@ -10,6 +10,7 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { evaluateSpectrum } from "@/lib/audio_analysis/justAnalyze";
 import { estimateF0WithSWIPE } from "@/lib/audio_analysis/swipePitchEstimation";
+import { estimateF0WithPhaseVocoder } from "@/lib/audio_analysis/phaseVocoderEstimation";
 import { getJustFrequencies } from "@/lib/audio_analysis/calcJustFreq";
 import type { PeakSearchDebug, Pitch, AlgorithmComparisonEntry } from "@/lib/types";
 import type { PitchAlgorithm } from "@/lib/constants";
@@ -115,11 +116,12 @@ export function useSpectrumAnalysis(
 
         // スペクトラム評価（アルゴリズムで分岐）
         const algo: PitchAlgorithm = props.pitchAlgorithm ?? "fft";
+        const usesTimeDomain = algo === "swipe" || algo === "phasevocoder";
         let deviations: (number | null)[];
         let cents: (number | null)[];
 
-        if (algo === "swipe") {
-            // SWIPE': 時間領域データを使用
+        if (usesTimeDomain) {
+            // SWIPE' / 位相ボコーダ: 時間領域データを使用
             const bufLen = analyserNode.fftSize;
             if (!timeDomainBufferRef.current || timeDomainBufferRef.current.length !== bufLen) {
                 timeDomainBufferRef.current = new Float32Array(bufLen);
@@ -137,12 +139,20 @@ export function useSpectrumAnalysis(
                 deviations = props.currentPitchList.map(() => null);
                 cents = props.currentPitchList.map(() => null);
             } else {
-                const estimatedF0s: (number | null)[] = estimateF0WithSWIPE(
-                    timeDomainBufferRef.current,
-                    audioContext.sampleRate,
-                    expectedFreqs,
-                    props.swipeBandwidthCents ?? SWIPE_BANDWIDTH_CENTS_DEFAULT
-                ).map((r) => r.estimatedF0);
+                const estimatedF0s: (number | null)[] =
+                    algo === "swipe"
+                        ? estimateF0WithSWIPE(
+                            timeDomainBufferRef.current,
+                            audioContext.sampleRate,
+                            expectedFreqs,
+                            props.swipeBandwidthCents ?? SWIPE_BANDWIDTH_CENTS_DEFAULT
+                        ).map((r) => r.estimatedF0)
+                        : estimateF0WithPhaseVocoder(
+                            timeDomainBufferRef.current,
+                            audioContext.sampleRate,
+                            expectedFreqs,
+                            props.evalRangeCents * 2
+                        ).map((r) => r.estimatedF0);
 
                 cents = estimatedF0s.map((f0, i) =>
                     f0 === null ? null : 1200 * Math.log2(f0 / expectedFreqs[i])
@@ -249,7 +259,7 @@ export function useSpectrumAnalysis(
             }
         }
 
-        // 比較モード: FFT / SWIPE' を並列実行してエントリを生成
+        // 比較モード: FFT / SWIPE' / 位相ボコーダ を並列実行してエントリを生成
         if (props.enableComparison) {
             // FFT 結果
             const fftCents: (number | null)[] = evaluateSpectrum(
@@ -261,7 +271,7 @@ export function useSpectrumAnalysis(
                 props.evalThreshold
             ).map((e) => e.centDeviation);
 
-            // 時間領域データ (SWIPE' 用)
+            // 時間領域データ (SWIPE' / 位相ボコーダ共通)
             const bufLen = analyserNode.fftSize;
             if (!timeDomainBufferRef.current || timeDomainBufferRef.current.length !== bufLen) {
                 timeDomainBufferRef.current = new Float32Array(bufLen);
@@ -284,11 +294,22 @@ export function useSpectrumAnalysis(
                         props.swipeBandwidthCents ?? SWIPE_BANDWIDTH_CENTS_DEFAULT
                     ).map((r, i) => toCents(r.estimatedF0, i));
 
+            const phaseVocoderCents: (number | null)[] =
+                expectedFreqs.length === 0
+                    ? props.currentPitchList.map(() => null)
+                    : estimateF0WithPhaseVocoder(
+                        timeDomainBufferRef.current,
+                        audioContext.sampleRate,
+                        expectedFreqs,
+                        props.evalRangeCents * 2
+                    ).map((r, i) => toCents(r.estimatedF0, i));
+
             setComparisonResults(
                 props.currentPitchList.map((pitch, i) => ({
                     pitch,
                     fftCentDeviation: fftCents[i] ?? null,
                     swipeCentDeviation: swipeCents[i] ?? null,
+                    phaseVocoderCentDeviation: phaseVocoderCents[i] ?? null,
                 }))
             );
         } else if (comparisonResults !== null) {

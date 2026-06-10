@@ -25,7 +25,7 @@ export function AlgorithmComparisonPanel({ entries }: AlgorithmComparisonPanelPr
         <div className="w-full max-w-2xl rounded-lg border border-border bg-background overflow-hidden">
             <div className="px-4 py-3 bg-muted/50 border-b border-border">
                 <h3 className="text-sm font-semibold text-foreground">アルゴリズム比較（セント偏差）</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">実験モード中は FFT・SWIPE&#39; を並列実行します</p>
+                <p className="text-xs text-muted-foreground mt-0.5">実験モード中は FFT・SWIPE&#39;・位相ボコーダを並列実行します</p>
             </div>
             <table className="w-full text-sm">
                 <thead>
@@ -33,6 +33,7 @@ export function AlgorithmComparisonPanel({ entries }: AlgorithmComparisonPanelPr
                         <th className="px-4 py-2 text-left font-medium">音名</th>
                         <th className="px-4 py-2 text-right font-medium">FFT (cents)</th>
                         <th className="px-4 py-2 text-right font-medium">SWIPE&#39; (cents)</th>
+                        <th className="px-4 py-2 text-right font-medium">位相 (cents)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -46,6 +47,9 @@ export function AlgorithmComparisonPanel({ entries }: AlgorithmComparisonPanelPr
                             </td>
                             <td className={`px-4 py-2 text-right font-mono ${centColor(entry.swipeCentDeviation)}`}>
                                 {formatCent(entry.swipeCentDeviation)}
+                            </td>
+                            <td className={`px-4 py-2 text-right font-mono ${centColor(entry.phaseVocoderCentDeviation)}`}>
+                                {formatCent(entry.phaseVocoderCentDeviation)}
                             </td>
                         </tr>
                     ))}
