@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*", "__tests__/**/*", "scripts/**/*", "vitest.config.ts"],
+  // ambient.d.ts の console 宣言は @types/node と衝突するため除外
+  "exclude": ["src/ambient.d.ts"]
+}

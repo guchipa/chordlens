@@ -1,0 +1,111 @@
+/**
+ * logCsv - ログセッションを CSV 文字列に変換する
+ *
+ * ISO 8601 形式のタイムスタンプと経過時間を含む CSV を生成する。
+ * ファイル保存・ダウンロードなどプラットフォーム依存の処理は含まない
+ * (Web のダウンロード処理は apps/web/lib/utils/exportLog.ts)。
+ */
+
+import type { LogSession } from "../types";
+
+/**
+ * CSV用に文字列をエスケープ
+ * カンマや改行、ダブルクォートが含まれる場合に適切にエスケープ
+ */
+function escapeCsvValue(
+  value: string | number | boolean | null | undefined
+): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  // 数値とbooleanはそのまま出力（Excelで数値として認識させる）
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  const str = String(value);
+
+  // カンマ、改行、ダブルクォートを含む場合はダブルクォートで囲む
+  if (str.includes(",") || str.includes("\n") || str.includes('"')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+
+  return str;
+}
+
+/**
+ * ログセッションをCSV形式に変換
+ */
+export function convertLogToCSV(session: LogSession): string {
+  // CSVヘッダー
+  const headers = [
+    "timestamp",
+    "elapsedMs",
+    "sessionId",
+    "pitchName",
+    "pitchIsRoot",
+    "deviation",
+    // 互換列（従来と同じ列名。推奨運用: Rawを格納）
+    "centDeviation",
+
+    // 追加列（評価の再現性・介入影響の分析用）
+    "centDeviationRaw",
+    "centDeviationDisplay",
+    "isDetected",
+    "isHeld",
+    "a4Freq",
+    "evalRangeCents",
+    "evalThreshold",
+    "fftSize",
+    "smoothingTimeConstant",
+  ];
+
+  // ヘッダー行を作成
+  const csvRows: string[] = [headers.join(",")];
+
+  // 各エントリをCSV行に変換
+  for (const entry of session.entries) {
+    // 構成音ごとに1行ずつ作成
+    for (let i = 0; i < entry.pitchList.length; i++) {
+      const pitch = entry.pitchList[i];
+      const deviation = entry.analysisResult[i];
+      const centDeviation = entry.centDeviations[i];
+      const centDeviationRaw = entry.centDeviationsRaw?.[i] ?? null;
+      const centDeviationDisplay = entry.centDeviationsDisplay?.[i] ?? null;
+      const isDetected = entry.isDetectedList?.[i] ?? null;
+      const isHeld = entry.isHeldList?.[i] ?? null;
+
+      const row = [
+        escapeCsvValue(entry.timestamp),
+        escapeCsvValue(entry.elapsedMs),
+        escapeCsvValue(entry.sessionId),
+        escapeCsvValue(`${pitch.pitchName}${pitch.octaveNum}`),
+        escapeCsvValue(pitch.isRoot ?? false),
+        escapeCsvValue(deviation),
+        // centDeviationが数値であることを保証
+        centDeviation !== null && centDeviation !== undefined
+          ? escapeCsvValue(Number(centDeviation))
+          : "",
+        // 追加列（未指定なら空欄）
+        centDeviationRaw !== null && centDeviationRaw !== undefined
+          ? escapeCsvValue(Number(centDeviationRaw))
+          : "",
+        centDeviationDisplay !== null && centDeviationDisplay !== undefined
+          ? escapeCsvValue(Number(centDeviationDisplay))
+          : "",
+        isDetected === null ? "" : escapeCsvValue(isDetected),
+        isHeld === null ? "" : escapeCsvValue(isHeld),
+        escapeCsvValue(entry.settings.a4Freq),
+        escapeCsvValue(entry.settings.evalRangeCents),
+        escapeCsvValue(entry.settings.evalThreshold),
+        escapeCsvValue(entry.settings.fftSize),
+        escapeCsvValue(entry.settings.smoothingTimeConstant),
+      ];
+
+      csvRows.push(row.join(","));
+    }
+  }
+
+  return csvRows.join("\n");
+}
