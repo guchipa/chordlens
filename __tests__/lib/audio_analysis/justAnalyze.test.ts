@@ -42,9 +42,9 @@ describe("evaluateSpectrum", () => {
   // 周波数分解能 ≈ 10.77Hz
 
   const cMajorPitchList: Pitch[] = [
-    { pitchName: "C", octaveNum: 4, isRoot: true },
-    { pitchName: "E", octaveNum: 4, isRoot: false },
-    { pitchName: "G", octaveNum: 4, isRoot: false },
+    { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+    { pitchName: "E", octaveNum: 4, isRoot: false, enabled: true },
+    { pitchName: "G", octaveNum: 4, isRoot: false, enabled: true },
   ];
 
   describe("基本動作", () => {
@@ -54,7 +54,7 @@ describe("evaluateSpectrum", () => {
       const spec = makeSpectrum(freq, c4Freq, 0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -111,7 +111,7 @@ describe("evaluateSpectrum", () => {
       const spec = makeSpectrum(freq, shiftedFreq, 0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -137,7 +137,7 @@ describe("evaluateSpectrum", () => {
       const spec = makeSpectrum(freq, sharpFreq, 0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -160,7 +160,7 @@ describe("evaluateSpectrum", () => {
       const spec = makeSpectrum(freq, flatFreq, 0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -184,7 +184,7 @@ describe("evaluateSpectrum", () => {
       const spec = new Float32Array(freq.length).fill(-150);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -206,7 +206,7 @@ describe("evaluateSpectrum", () => {
       const spec = makeSpectrum(freq, c4Freq, EVAL_THRESHOLD + 5, -150);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -227,7 +227,7 @@ describe("evaluateSpectrum", () => {
       const spec = new Float32Array(freq.length).fill(0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: false },
+        { pitchName: "C", octaveNum: 4, isRoot: false, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -286,7 +286,7 @@ describe("evaluateSpectrum", () => {
       const spec = makeSpectrum(freq, c4Freq, 0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       expect(() => {
@@ -308,7 +308,7 @@ describe("evaluateSpectrum", () => {
       const spec = makeSpectrum(freq, c4Freq, 0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -332,7 +332,7 @@ describe("evaluateSpectrum", () => {
       const spec = makeSpectrum(freq, c4Freq, 0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(
@@ -355,7 +355,7 @@ describe("evaluateSpectrum", () => {
       const a4Spec = makeSpectrum(freq, customA4, 0);
 
       const pitchList: Pitch[] = [
-        { pitchName: "A", octaveNum: 4, isRoot: true },
+        { pitchName: "A", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = evaluateSpectrum(

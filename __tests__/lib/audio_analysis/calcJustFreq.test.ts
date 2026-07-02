@@ -7,9 +7,9 @@ describe("calcJustFreq", () => {
   describe("getJustFrequencies", () => {
     it("Cメジャーコード(C-E-G)の純正律周波数を正しく計算する", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
-        { pitchName: "E", octaveNum: 4, isRoot: false },
-        { pitchName: "G", octaveNum: 4, isRoot: false },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+        { pitchName: "E", octaveNum: 4, isRoot: false, enabled: true },
+        { pitchName: "G", octaveNum: 4, isRoot: false, enabled: true },
       ];
 
       const result = getJustFrequencies(pitchList, A4_FREQ);
@@ -29,8 +29,8 @@ describe("calcJustFreq", () => {
 
     it("根音が設定されていない場合は空配列を返す", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: false },
-        { pitchName: "E", octaveNum: 4, isRoot: false },
+        { pitchName: "C", octaveNum: 4, isRoot: false, enabled: true },
+        { pitchName: "E", octaveNum: 4, isRoot: false, enabled: true },
       ];
 
       const result = getJustFrequencies(pitchList, A4_FREQ);
@@ -40,8 +40,8 @@ describe("calcJustFreq", () => {
 
     it("根音が複数設定されている場合は空配列を返す", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
-        { pitchName: "E", octaveNum: 4, isRoot: true },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+        { pitchName: "E", octaveNum: 4, isRoot: true, enabled: true },
       ];
 
       const result = getJustFrequencies(pitchList, A4_FREQ);
@@ -51,8 +51,8 @@ describe("calcJustFreq", () => {
 
     it("オクターブをまたぐ音でも正しく計算する", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
-        { pitchName: "E", octaveNum: 5, isRoot: false }, // 1オクターブ上
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+        { pitchName: "E", octaveNum: 5, isRoot: false, enabled: true }, // 1オクターブ上
       ];
 
       const result = getJustFrequencies(pitchList, A4_FREQ);
@@ -64,8 +64,8 @@ describe("calcJustFreq", () => {
 
     it("異なるA4基準周波数でも正しく計算する", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "A", octaveNum: 4, isRoot: true },
-        { pitchName: "C#", octaveNum: 5, isRoot: false },
+        { pitchName: "A", octaveNum: 4, isRoot: true, enabled: true },
+        { pitchName: "C#", octaveNum: 5, isRoot: false, enabled: true },
       ];
 
       const customA4 = 442; // 442Hz基準
@@ -80,9 +80,9 @@ describe("calcJustFreq", () => {
   describe("getEqualJustDiff", () => {
     it("Cメジャーコードの平均律と純正律の差をセント値で返す", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
-        { pitchName: "E", octaveNum: 4, isRoot: false },
-        { pitchName: "G", octaveNum: 4, isRoot: false },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+        { pitchName: "E", octaveNum: 4, isRoot: false, enabled: true },
+        { pitchName: "G", octaveNum: 4, isRoot: false, enabled: true },
       ];
 
       const result = getEqualJustDiff(pitchList, A4_FREQ);
@@ -101,7 +101,7 @@ describe("calcJustFreq", () => {
 
     it("根音が設定されていない場合は空配列を返す", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: false },
+        { pitchName: "C", octaveNum: 4, isRoot: false, enabled: true },
       ];
 
       const result = getEqualJustDiff(pitchList, A4_FREQ);
@@ -111,8 +111,8 @@ describe("calcJustFreq", () => {
 
     it("完全1度（同じ音）は差が0セント", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "D", octaveNum: 4, isRoot: true },
-        { pitchName: "D", octaveNum: 5, isRoot: false }, // オクターブ上も純正
+        { pitchName: "D", octaveNum: 4, isRoot: true, enabled: true },
+        { pitchName: "D", octaveNum: 5, isRoot: false, enabled: true }, // オクターブ上も純正
       ];
 
       const result = getEqualJustDiff(pitchList, A4_FREQ);
@@ -123,9 +123,9 @@ describe("calcJustFreq", () => {
 
     it("マイナーコード(Cm)でも正しく計算する", () => {
       const pitchList: Pitch[] = [
-        { pitchName: "C", octaveNum: 4, isRoot: true },
-        { pitchName: "D#", octaveNum: 4, isRoot: false }, // 短3度
-        { pitchName: "G", octaveNum: 4, isRoot: false },
+        { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+        { pitchName: "D#", octaveNum: 4, isRoot: false, enabled: true }, // 短3度
+        { pitchName: "G", octaveNum: 4, isRoot: false, enabled: true },
       ];
 
       const result = getEqualJustDiff(pitchList, A4_FREQ);
