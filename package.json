@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "analyze:file": "tsx scripts/analyze-audio-file.ts",
