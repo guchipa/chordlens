@@ -14,10 +14,10 @@ ChordLensでは、軽量かつ柔軟な状態管理ライブラリである[Jota
 
 ## 2. Store構造
 
-`lib/store/` ディレクトリ配下に以下のファイルで構成されています。
+`apps/web/lib/store/` ディレクトリ配下に以下のファイルで構成されています。
 
 ```
-lib/store/
+apps/web/lib/store/
 ├── index.ts                # エントリーポイント（全Atomをエクスポート）
 ├── audioSettingsAtoms.ts   # 音声解析の設定（FFTサイズ、A4周波数など）
 ├── pitchListAtoms.ts       # 構成音リストの管理

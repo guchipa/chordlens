@@ -39,7 +39,7 @@ graph TD
 
 ## 3. 解析アルゴリズム詳細
 
-解析の核となるのは `lib/audio_analysis/justAnalyze.ts` 内の `evaluateSpectrum` 関数です。
+解析の核となるのは `packages/core/src/audio_analysis/justAnalyze.ts` 内の `evaluateSpectrum` 関数です。
 
 ### 3.1. 純正律周波数の計算 (`calcJustFreq.ts`)
 

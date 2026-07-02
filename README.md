@@ -7,7 +7,7 @@
   <a href="https://github.com/guchipa/chordlens/actions">
     <img src="https://img.shields.io/github/actions/workflow/status/guchipa/chordlens/test.yml?style=for-the-badge&label=Tests" alt="Tests">
   </a>
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js 15">
+  <img src="https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 6">
   <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" alt="React 19">
 </p>
 
@@ -39,81 +39,77 @@
 
 | カテゴリ             | 技術                                                                                                                                                                                                                             |
 | :------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Framework**        | ![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=next.js&logoColor=white)                                                                                                                      |
+| **Build Tool**       | ![Vite](https://img.shields.io/badge/Vite_6-646CFF?style=for-the-badge&logo=vite&logoColor=white)                                                                                                                                |
 | **Language**         | ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)                                                                                                                |
 | **UI Library**       | ![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)                                                                                                                           |
 | **Styling**          | ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)                                                                                                        |
 | **UI Components**    | ![shadcn/ui](https://img.shields.io/badge/shadcn/ui-000000?style=for-the-badge&logo=shadcnui&logoColor=white) ![Radix UI](https://img.shields.io/badge/Radix_UI-161618?style=for-the-badge&logo=radixui&logoColor=white)         |
 | **Form Management**  | ![React Hook Form](https://img.shields.io/badge/React_Hook_Form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white)      |
 | **Audio Processing** | ![Web Audio API](https://img.shields.io/badge/Web_Audio_API-E34F26?style=for-the-badge&logo=html5&logoColor=white)                                                                                                               |
-| **Testing**          | ![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white) ![Testing Library](https://img.shields.io/badge/Testing_Library-E33332?style=for-the-badge&logo=testing-library&logoColor=white) |
+| **Testing**          | ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white) ![Testing Library](https://img.shields.io/badge/Testing_Library-E33332?style=for-the-badge&logo=testing-library&logoColor=white) |
 | **Deployment**       | [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)                                                                                                     |
-| **Package Manager**  | ![npm](https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)                                                                                                                                     |
+| **Package Manager**  | ![pnpm](https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white) (workspaces monorepo)                                                                                                            |
 
 ## プロジェクト構造 (Project Structure)
 
+pnpm workspaces による monorepo 構成です。プラットフォーム非依存のコアロジック
+（`packages/core`）と Web アプリ本体（`apps/web`）を分離しており、将来のモバイル
+アプリ追加（`apps/mobile`）を見据えた土台になっています
+（詳細は [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)、移行計画は
+[docs/MOBILE_MIGRATION.md](./docs/MOBILE_MIGRATION.md) を参照）。
+
 ```
-ChordLens-web/
-├── app/                      # Next.js App Router
-│   ├── page.tsx             # メインページ（音声解析統合）
-│   ├── layout.tsx           # 全体レイアウト
-│   ├── globals.css          # グローバルスタイル
-│   ├── manifest.json        # PWAマニフェスト
-│   └── experiment/          # 実験用ページ
-├── components/              # Reactコンポーネント
-│   ├── feature/             # 機能コンポーネント
-│   │   ├── PitchSettingForm.tsx    # 構成音入力フォーム
-│   │   ├── PitchList.tsx           # 構成音リスト表示
-│   │   ├── AnalysisControl.tsx     # 解析開始/停止制御
-│   │   ├── AnalysisResult.tsx      # 解析結果表示
-│   │   ├── SettingsForm.tsx        # 設定パネル
-│   │   ├── PresetManager.tsx       # プリセット管理
-│   │   ├── FeedbackTypeSelector.tsx # フィードバック表示切替
-│   │   └── LogExportButton.tsx     # ログエクスポート
-│   ├── feedback/            # 視覚フィードバック
-│   │   ├── UnifiedFeedback.tsx     # 統合フィードバック
-│   │   ├── BarFeedback.tsx         # バー表示
-│   │   ├── CircleFeedback.tsx      # 円形表示
-│   │   ├── StroboFeedback.tsx      # ストロボ表示
-│   │   ├── WaveformFeedback.tsx    # 波形表示
-│   │   └── NumericFeedback.tsx     # 数値表示
-│   ├── layout/              # レイアウトコンポーネント
-│   ├── TunerMeter.tsx       # メーター表示（旧）
-│   ├── CentDisplay.tsx      # セント表示
-│   ├── AppFooter.tsx        # フッター
-│   └── ui/                  # shadcn/ui プリミティブ
-├── lib/                     # ユーティリティ・ロジック
-│   ├── audio_analysis/      # 音声解析ロジック
-│   │   ├── calcJustFreq.ts         # 純正律周波数計算
-│   │   ├── justAnalyze.ts          # スペクトル解析・評価
-│   │   └── rootEstimation.ts       # 根音推定アルゴリズム
-│   ├── hooks/               # カスタムフック
-│   │   ├── useAudioAnalysis.ts     # 音声解析管理
-│   │   ├── useAudioSettings.ts     # 設定管理
-│   │   ├── usePitchList.ts         # 構成音リスト管理
-│   │   ├── useFeedbackType.ts      # フィードバック表示管理
-│   │   └── useLogRecorder.ts       # ログ記録
-│   ├── utils/               # ユーティリティ
-│   │   └── exportLog.ts            # ログエクスポート
-│   ├── constants.ts         # 定数定義
-│   ├── schema.ts            # Zodスキーマ定義
-│   ├── types.ts             # 型定義
-│   ├── presets.ts           # プリセット管理
-│   └── utils.ts             # 共通ユーティリティ
-├── __tests__/               # Jestテスト
-├── public/                  # 静的ファイル
-│   ├── sw.js               # Service Worker
-│   └── workbox-*.js        # Workbox
-├── docs/                    # ドキュメント
-└── .github/                 # GitHub設定・CI/CD
+chordlens/
+├── packages/
+│   └── core/                 # @chordlens/core: プラットフォーム非依存コア
+│       ├── src/
+│       │   ├── audio_analysis/       # 音声解析ロジック（純粋 TypeScript）
+│       │   │   ├── calcJustFreq.ts          # 純正律周波数計算
+│       │   │   ├── justAnalyze.ts           # スペクトル解析・評価
+│       │   │   ├── rootEstimation.ts        # 根音推定アルゴリズム
+│       │   │   ├── pitchDetection.ts        # ピッチ検出（自己相関法）
+│       │   │   ├── swipePitchEstimation.ts  # SWIPE' ピッチ推定
+│       │   │   ├── phaseVocoderEstimation.ts # 位相ボコーダ法
+│       │   │   └── fft.ts                   # FFT 共通ユーティリティ
+│       │   ├── adapters/             # プラットフォーム抽象 (storage / audio)
+│       │   ├── presets/              # プリセット管理コア（ストレージ注入式）
+│       │   ├── logging/              # ログ CSV 変換
+│       │   ├── constants.ts          # 定数定義
+│       │   └── types.ts              # 型定義（Zodスキーマ含む）
+│       ├── scripts/                  # 音声ファイル解析 CLI
+│       └── __tests__/                # コアロジックのテスト (Node 環境)
+│
+├── apps/
+│   └── web/                  # @chordlens/web: Web アプリ (Vite + React)
+│       ├── src/              # エントリーポイント・ルーティング
+│       │   └── routes/experiments/   # 評価実験フロー
+│       ├── components/
+│       │   ├── feature/      # 機能コンポーネント
+│       │   ├── feedback/     # 視覚フィードバック（バー、円形、ストロボ等）
+│       │   ├── layout/       # レイアウトコンポーネント
+│       │   └── ui/           # shadcn/ui プリミティブ
+│       ├── lib/              # Web 依存ロジック
+│       │   ├── hooks/        # カスタムフック（Web Audio API 使用）
+│       │   ├── store/        # Jotai atoms（localStorage 永続化）
+│       │   ├── experiments/  # 評価実験ロジック
+│       │   ├── firebase/     # Firebase 連携
+│       │   ├── presets.ts    # プリセット管理（Web バインディング）
+│       │   └── utils/exportLog.ts  # CSV ダウンロード（Web バインディング）
+│       ├── functions/        # Cloudflare Pages Functions (client-log API)
+│       ├── public/           # 静的ファイル
+│       └── __tests__/        # コンポーネントテスト (jsdom)
+│
+├── docs/                     # ドキュメント
+├── pnpm-workspace.yaml       # ワークスペース定義
+└── .github/                  # GitHub設定・CI/CD
 ```
 
 ## セットアップ (Getting Started)
 
 ### 必要な環境
 
-- **Node.js**: v18以上
-- **npm**: v9以上（または pnpm）
+- **Node.js**: v20以上
+- **pnpm**: v10以上
 
 ### インストールと起動
 
@@ -122,23 +118,26 @@ ChordLens-web/
 git clone https://github.com/guchipa/chordlens.git
 cd chordlens
 
-# 依存関係のインストール
-npm install
+# 依存関係のインストール (pnpm workspaces)
+pnpm install
 
 # 開発サーバーの起動
-npm run dev
+pnpm dev
 ```
 
 ブラウザで http://localhost:3000 を開きます。
 
 ### その他のコマンド
 
+いずれもリポジトリルートで実行できます（各 workspace へ委譲されます）。
+
 ```bash
-npm run build       # プロダクションビルド
-npm run start       # プロダクションサーバー起動
-npm run lint        # ESLint実行
-npm test            # Jestテスト実行
-npm run test:watch  # Jestウォッチモード
+pnpm build       # プロダクションビルド (apps/web/dist に出力)
+pnpm preview     # ビルド結果のプレビュー
+pnpm lint        # ESLint実行
+pnpm typecheck   # 全 workspace の型チェック
+pnpm test        # 全 workspace の Vitest テスト実行
+pnpm test:watch  # Vitest ウォッチモード
 ```
 
 ### 実験参加者フロー `/experiments`
@@ -166,12 +165,14 @@ URL フォーマット:
 `.env.local.example` をコピーして以下を設定してください。
 
 ```
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_APP_ID=
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_APP_ID=
 ```
+
+(`.env.local.example` は `apps/web/` にあります)
 
 ##### Firestore / Storage Security Rules (推奨)
 
@@ -201,7 +202,7 @@ match /pairs/{pairId}/{phase}/{attempt}/{file} {
 マイク入力に加えて、録音済みの音声ファイル (wav / m4a / mp4 など ffmpeg が扱える形式) を
 60fps でフレーム解析し、既存のログ形式と同じ CSV にエクスポートできます。
 ブラウザの `AnalyserNode` と同等の挙動 (Blackman 窓・`smoothingTimeConstant` による
-指数平滑化・dB 変換) をエミュレートしており、`lib/audio_analysis/justAnalyze.ts` の
+指数平滑化・dB 変換) をエミュレートしており、`packages/core/src/audio_analysis/justAnalyze.ts` の
 `evaluateSpectrum()` をそのまま利用しています。
 
 構成音は **ファイル名末尾** で指定し、**先頭の音がルート** に固定されます。
@@ -209,13 +210,13 @@ match /pairs/{pairId}/{phase}/{attempt}/{file} {
 
 ```bash
 # 基本: 同ディレクトリに <入力名>.csv を出力
-npm run analyze:file -- path/to/song_C4-E4-G4.wav
+pnpm analyze:file -- path/to/song_C4-E4-G4.wav
 
 # 出力先を指定
-npm run analyze:file -- path/to/Cmaj7_C4-E4-G4-B4.m4a ./out.csv
+pnpm analyze:file -- path/to/Cmaj7_C4-E4-G4-B4.m4a ./out.csv
 
 # サンプルレートを指定 (既定: 48000)
-npm run analyze:file -- path/to/F#4-A4-C#5.wav --sample-rate 44100
+pnpm analyze:file -- path/to/F#4-A4-C#5.wav --sample-rate 44100
 ```
 
 ファイル名の例:
@@ -231,7 +232,7 @@ npm run analyze:file -- path/to/F#4-A4-C#5.wav --sample-rate 44100
 `centDeviationDisplay`, `isDetected`, `isHeld`, `a4Freq`, `evalRangeCents`,
 `evalThreshold`, `fftSize`, `smoothingTimeConstant`) で、60fps で 1 フレームにつき
 構成音ごとに 1 行ずつ書き出します。解析パラメータ (A4 周波数・FFT サイズ・評価範囲・
-閾値・スムージング定数) は `lib/constants.ts` のブラウザ側デフォルトを使用します。
+閾値・スムージング定数) は `packages/core/src/constants.ts` のブラウザ側デフォルトを使用します。
 
 > ffmpeg バイナリは `ffmpeg-static` (devDependency) から自動で解決されるため、
 > 別途のインストールは不要です。
@@ -287,17 +288,18 @@ npm run analyze:file -- path/to/F#4-A4-C#5.wav --sample-rate 44100
 
 ## テスト (Testing)
 
-このプロジェクトはJestとReact Testing Libraryを使用してテストされています。
+このプロジェクトはVitestとReact Testing Libraryを使用してテストされています。
+コアロジック（`packages/core`）は Node 環境、UI（`apps/web`）は jsdom 環境でテストします。
 
 ```bash
-# すべてのテストを実行
-npm test
+# すべてのテストを実行 (core + web)
+pnpm test
 
 # ウォッチモードで実行
-npm run test:watch
+pnpm test:watch
 
 # カバレッジレポート生成
-npm test -- --coverage
+pnpm --filter @chordlens/web test -- --coverage
 ```
 
 **テスト対象:**
@@ -310,8 +312,14 @@ npm test -- --coverage
 
 ## ドキュメント (Documentation)
 
-- **[仕様書](./docs/仕様書.md)**: システム全体の詳細仕様
-- **[Copilot Instructions](./.github/copilot-instructions.md)**: AI開発支援用プロジェクトガイド
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)**: アーキテクチャ概要・ディレクトリ構成
+- **[SPECIFICATION.md](./docs/SPECIFICATION.md)**: システム全体の詳細仕様
+- **[MOBILE_MIGRATION.md](./docs/MOBILE_MIGRATION.md)**: モバイルアプリ移行計画
+- **[AUDIO_PIPELINE.md](./docs/AUDIO_PIPELINE.md)**: 音声解析パイプラインの詳細
+- **[STATE_MANAGEMENT.md](./docs/STATE_MANAGEMENT.md)**: Jotai状態管理の詳細
+- **[COMPONENTS.md](./docs/COMPONENTS.md)**: コンポーネント一覧
+- **[EVALUATION.md](./docs/EVALUATION.md)**: 評価実験ガイド
+- **[CLAUDE.md](./CLAUDE.md)**: AI開発支援用プロジェクトガイド
 
 ## 対応ブラウザ (Browser Support)
 

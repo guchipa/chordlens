@@ -94,7 +94,7 @@ components/
    - `layout/` = Templates
    
 2. **Container/Presenter パターン**:
-   - 状態管理は `app/page.tsx` や `feature/` コンポーネント（Container）で行う
+   - 状態管理は `apps/web/src/App.tsx` や `feature/` コンポーネント（Container）で行う
    - `feedback/` コンポーネント（Presenter）はデータを受け取って描画するだけにする
 
 3. **コンポジション**:
