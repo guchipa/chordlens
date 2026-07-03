@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // DOM lib を意図的に含めない。
+    // ブラウザ API (window / document / localStorage / Web Audio 等) への依存が
+    // 混入するとコンパイルエラーになり、プラットフォーム非依存性が保証される。
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/**/*"]
+}

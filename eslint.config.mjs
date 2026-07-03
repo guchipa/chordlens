@@ -6,7 +6,13 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist", "dev-dist", "node_modules", ".wrangler", "coverage"],
+    ignores: [
+      "**/dist",
+      "**/dev-dist",
+      "**/node_modules",
+      "**/.wrangler",
+      "**/coverage",
+    ],
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
