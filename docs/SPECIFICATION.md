@@ -1060,7 +1060,7 @@ timestamp,elapsedMs,sessionId,pitchName,pitchIsRoot,deviation,centDeviation,a4Fr
 ### 7.1.1. 環境要件
 
 - **Node.js**: v18以上推奨
-- **パッケージマネージャー**: npm（Node.js付属）
+- **パッケージマネージャー**: pnpm（`corepack enable` で有効化，バージョンは package.json の packageManager で固定）
 - **OS**: Windows, macOS, Linux対応
 
 ### 7.1.2. インストール
@@ -1231,8 +1231,8 @@ export const CHORD_DEFINITIONS = [
     
     - **Framework Preset**: Vite
     - **Root Directory**: リポジトリルート（`vercel.json` が `apps/web` のビルドを指定）
-    - **Build Command**: `npm run build`
-    - **Output Directory**: `.next`
+    - **Build Command**: `pnpm build`
+    - **Output Directory**: `apps/web/dist`
 3. **環境変数**: 現在は不要（将来的に追加予定）
     
 4. **自動デプロイ**: mainブランチへのpushで自動デプロイ
@@ -1268,15 +1268,15 @@ export const CHORD_DEFINITIONS = [
 
 ### 7.5.3. ビルドエラー
 
-**症状**: `npm run build`で失敗
+**症状**: `pnpm build`で失敗
 
 **解決策**:
 
 ```bash
-# node_modulesとキャッシュをクリア
-rm -rf node_modules .next
-npm install
-npm run build
+# node_modulesとビルド成果物をクリア
+rm -rf node_modules apps/web/dist
+pnpm install
+pnpm build
 ```
 
 ### 7.5.4. 型エラー
@@ -1286,10 +1286,10 @@ npm run build
 **解決策**:
 
 ```bash
-# 型定義を再生成
-npm run build
+# 型チェック
+pnpm typecheck
 # または
-npx tsc --noEmit
+pnpm exec tsc --noEmit
 ```
 
 ## 7.6. コーディング規約
