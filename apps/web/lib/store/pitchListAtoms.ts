@@ -76,3 +76,22 @@ export const setRootAtom = atom(null, (get, set, index: number) => {
     }));
     set(pitchListAtom, newList);
 });
+
+// 検出した構成音リストを反映するaction atom
+// 現在のリストと同一 (音名・オクターブ・ルートが一致) なら更新しない。
+// 連続追従モードでの無駄な再レンダリングを防ぐ
+export const applyDetectedPitchListAtom = atom(
+    null,
+    (get, set, detected: Pitch[]): boolean => {
+        const toKey = (list: Pitch[]) =>
+            list
+                .map((p) => `${p.pitchName}${p.octaveNum}${p.isRoot ? "*" : ""}`)
+                .join(",");
+
+        if (toKey(get(pitchListAtom)) === toKey(detected)) {
+            return false;
+        }
+        set(pitchListAtom, detected);
+        return true;
+    }
+);

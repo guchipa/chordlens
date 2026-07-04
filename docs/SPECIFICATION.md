@@ -103,7 +103,7 @@ chordlens/                    # プロジェクトルート (monorepo)
 │   │   │   ├── calcJustFreq.ts         # 純正律周波数計算
 │   │   │   ├── justAnalyze.ts          # スペクトル解析・評価
 │   │   │   ├── rootEstimation.ts       # 根音推定アルゴリズム
-│   │   │   ├── pitchDetection.ts       # ピッチ検出
+│   │   │   ├── chordToneEstimation.ts  # 構成音推定
 │   │   │   ├── swipePitchEstimation.ts # SWIPE' ピッチ推定
 │   │   │   └── phaseVocoderEstimation.ts # 位相ボコーダ法
 │   │   ├── adapters/        # プラットフォーム抽象 (storage / audio)

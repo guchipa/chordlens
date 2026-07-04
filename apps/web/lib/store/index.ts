@@ -27,7 +27,16 @@ export {
     loadPresetAtom,
     togglePitchEnabledAtom,
     setRootAtom,
+    applyDetectedPitchListAtom,
 } from "./pitchListAtoms";
 
 // フィードバック
 export { feedbackTypeAtom } from "./feedbackAtoms";
+
+// 構成音自動追従
+export {
+    chordFollowEnabledAtom,
+    chordFollowStatusAtom,
+    chordFollowErrorAtom,
+    type ChordFollowStatus,
+} from "./chordDetectionAtoms";

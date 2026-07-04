@@ -30,6 +30,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@spotify/basic-pitch": "^1.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^12.12.1",
@@ -58,6 +59,7 @@
     "typescript": "^5",
     "vite": "^6.0.7",
     "vite-plugin-pwa": "^1.3.0",
+    "vite-plugin-static-copy": "^4.1.1",
     "vitest": "^3.2.4",
     "wrangler": "^3.99.0"
   }

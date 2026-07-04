@@ -1,5 +1,6 @@
 "use client";
 
+import { ChordFollowToggle } from "@/components/feature/ChordFollowToggle";
 import { PitchSettingForm } from "@/components/feature/PitchSettingForm";
 import { PitchList } from "@/components/feature/PitchList";
 import { SettingsForm } from "@/components/feature/SettingsForm";
@@ -51,6 +52,7 @@ export function SettingsDrawer({
           <SheetTitle className="text-xl">設定</SheetTitle>
         </SheetHeader>
         <div className="space-y-8 py-4">
+          <ChordFollowToggle />
           <PitchSettingForm />
           <PitchList />
           <PresetManager />

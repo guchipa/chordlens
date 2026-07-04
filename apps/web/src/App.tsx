@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAtomValue } from "jotai";
 
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
+import { useChordFollow } from "@/lib/hooks/useChordFollow";
 
 import { AppFooter } from "@/components/layout/AppFooter";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
@@ -27,6 +28,9 @@ import {
 
 export function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // 構成音の自動追従ループ (トグルは SettingsDrawer 内、状態は Jotai atom)
+  useChordFollow();
 
   const currentPitchList = useAtomValue(pitchListAtom);
   const evalRangeCents = useAtomValue(evalRangeCentsAtom);

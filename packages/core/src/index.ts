@@ -8,6 +8,7 @@ export * from "./constants";
 export * from "./types";
 export * from "./adapters/storage";
 export * from "./adapters/audio";
+export * from "./adapters/noteDetection";
 export * from "./presets/presetStore";
 export * from "./logging/logCsv";
 export * from "./utils/emaHold";

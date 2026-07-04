@@ -111,14 +111,15 @@ chordlens/
 │       │   │   ├── justAnalyze.ts          # スペクトル評価
 │       │   │   ├── calcJustFreq.ts         # 純正律周波数計算
 │       │   │   ├── rootEstimation.ts       # 根音推定
-│       │   │   ├── pitchDetection.ts       # ピッチ検出（自己相関法）
+│       │   │   ├── chordToneEstimation.ts  # 構成音推定（ノートイベント→Pitch[] 変換）
 │       │   │   ├── swipePitchEstimation.ts # SWIPE' ピッチ推定
 │       │   │   ├── phaseVocoderEstimation.ts # 位相ボコーダ法
 │       │   │   ├── peakInterpolation.ts    # ピーク補間
 │       │   │   └── fft.ts                  # FFT 共通ユーティリティ
 │       │   ├── adapters/        # プラットフォーム抽象インターフェース
 │       │   │   ├── storage.ts              # KeyValueStorage（localStorage 等の抽象）
-│       │   │   └── audio.ts                # SpectrumSource（音声入力の抽象）
+│       │   │   ├── audio.ts                # SpectrumSource（音声入力の抽象）
+│       │   │   └── noteDetection.ts        # NoteDetector（構成音検出の抽象）
 │       │   ├── presets/         # プリセット管理コア（ストレージ注入式）
 │       │   ├── logging/         # ログ CSV 変換
 │       │   ├── utils/           # emaHold（EMA + ホールド平滑化）
@@ -142,6 +143,7 @@ chordlens/
 │       │   └── ui/              # shadcn/ui プリミティブ
 │       ├── lib/                 # Web 依存のロジック
 │       │   ├── hooks/           # カスタムフック（Web Audio API 使用）
+│       │   ├── audio/           # basic-pitch NoteDetector 実装・録音ユーティリティ
 │       │   ├── store/           # Jotai atoms（localStorage 永続化）
 │       │   ├── experiments/     # 評価実験ロジック
 │       │   ├── firebase/        # Firebase 連携
@@ -220,6 +222,35 @@ sequenceDiagram
 
 詳細は [AUDIO_PIPELINE.md](./AUDIO_PIPELINE.md) を参照。
 
+### 5.3. 構成音自動追従フロー (basic-pitch)
+
+構成音を手動入力せずに、演奏した和音にチューナー設定を自動で追従させられる。
+SettingsDrawer 内の `ChordFollowToggle` で ON/OFF し、ループ本体は
+App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共有するため、
+ドロワーを閉じても追従は継続する）。
+
+1. **音量ゲート** → `SoundLevelMonitor` が入力の RMS を監視し、
+   閾値 (`SOUND_RMS_THRESHOLD`) を超えるまで待機（無音時は推論しない）
+2. **録音** → `recordMonoAudio()` が MediaRecorder で数秒間録音し、
+   22050 Hz モノラル PCM にデコード（追従: 3 秒 / 単音入力: 1.5 秒）
+3. **推論** → `BasicPitchNoteDetector` (`NoteDetector` 実装) が
+   [@spotify/basic-pitch](https://github.com/spotify/basic-pitch) (TensorFlow.js) で
+   MIDI ノートイベントを推定。ライブラリは初回検出時に遅延ロード、
+   モデルは `/models/basic-pitch/` から配信（vite-plugin-static-copy が
+   node_modules からコピー）
+4. **変換** → core の `noteEventsToPitchList()` がノートイベントを集約・
+   フィルタし `Pitch[]` へ変換。ルート音は `estimateRoot()` で自動推定
+   （確定しない場合は最低音）
+5. **反映** → `applyDetectedPitchListAtom` が `pitchListAtom` を即時更新
+   （変化がなければ更新しない）
+
+単音入力は `MicInputButton`（PitchSettingForm 内）が同じ録音・推論経路で
+最有力の 1 音を追加する。
+
+注意: basic-pitch は平均律 (A4=440Hz) 基準の半音格子に量子化するため、
+構成音の**音名特定**にのみ使い、純正律偏差の計測は従来どおり
+`evaluateSpectrum` 系が担う。
+
 ---
 
 ## 6. 状態管理アーキテクチャ
@@ -239,6 +270,9 @@ graph TD
         A6[holdEnabledAtom]
         A7[experimentModeAtom]
         B1[pitchListAtom]
+        B2[chordFollowEnabledAtom]
+        B3[chordFollowStatusAtom]
+        B4[chordFollowErrorAtom]
         C1[feedbackTypeAtom]
     end
 
@@ -254,11 +288,12 @@ graph TD
         E4[loadPresetAtom]
         E5[togglePitchEnabledAtom]
         E6[setRootAtom]
+        E7[applyDetectedPitchListAtom]
     end
 
     A5 --> D1
     A1 & A2 & A3 & A4 & A5 & A6 & A7 --> D2
-    B1 --> E1 & E2 & E3 & E4 & E5 & E6
+    B1 --> E1 & E2 & E3 & E4 & E5 & E6 & E7
 
     style Primitive fill:#e3f2fd
     style Derived fill:#fff3e0
@@ -285,6 +320,7 @@ graph TD
 | **useAudioContext** | Web Audio APIのセットアップ・クリーンアップ |
 | **useSpectrumAnalysis** | スペクトル解析ループ、評価結果の算出 |
 | **usePitchList** | 構成音リストの操作（追加、削除、プリセット） |
+| **useChordFollow** | basic-pitch による構成音の自動追従（音量ゲート付き検出ループ） |
 
 ### 7.2. 音声解析関数
 
@@ -293,6 +329,7 @@ graph TD
 | **evaluateSpectrum** | スペクトルから各音の純正律評価を実施 |
 | **getJustFrequencies** | 構成音から純正律周波数を計算 |
 | **estimateRoot** | 和音の根音を自動推定 |
+| **noteEventsToPitchList** | 検出ノートイベントを構成音リスト (Pitch[]) に変換 |
 | **quadraticInterpolation** | パラボラ補間でサブビン精度の周波数推定 |
 
 ---

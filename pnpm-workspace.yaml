@@ -2,6 +2,10 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# core-js の postinstall はバナー表示のみのため実行しない
+ignoredBuiltDependencies:
+  - core-js
+
 packageExtensions:
   "@hookform/resolvers":
     peerDependencies:
