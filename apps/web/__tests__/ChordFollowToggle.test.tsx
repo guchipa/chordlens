@@ -3,6 +3,7 @@ import { Provider, createStore } from "jotai";
 import { ChordFollowToggle } from "@/components/feature/ChordFollowToggle";
 import {
     chordFollowEnabledAtom,
+    chordDetectionAlgorithmAtom,
     chordFollowStatusAtom,
     chordFollowErrorAtom,
 } from "@/lib/store/chordDetectionAtoms";
@@ -45,6 +46,18 @@ describe("ChordFollowToggle", () => {
         });
 
         expect(screen.getByText("楽器音を待機中...")).toBeInTheDocument();
+    });
+
+    it("検出アルゴリズムの選択肢と説明を表示する", () => {
+        renderWithStore((store) => {
+            store.set(chordDetectionAlgorithmAtom, "pitchplease");
+        });
+
+        expect(screen.getByText("検出アルゴリズム")).toBeInTheDocument();
+        expect(screen.getByText("PitchPlease")).toBeInTheDocument();
+        expect(
+            screen.getByText(/音名ごとの周波数相関で構成音を推定します/)
+        ).toBeInTheDocument();
     });
 
     it("エラーメッセージを表示する", () => {

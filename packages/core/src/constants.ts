@@ -262,6 +262,31 @@ export const PITCH_ALGORITHM_DESCRIPTIONS: Record<PitchAlgorithm, string> = {
 };
 
 /**
+ * 構成音検出 (和音認識) アルゴリズムの定義
+ */
+export const CHORD_DETECTION_ALGORITHMS = ["basicpitch", "pitchplease"] as const;
+export type ChordDetectionAlgorithm =
+  (typeof CHORD_DETECTION_ALGORITHMS)[number];
+export const CHORD_DETECTION_ALGORITHM_DEFAULT: ChordDetectionAlgorithm =
+  "basicpitch";
+
+export const CHORD_DETECTION_ALGORITHM_LABELS: Record<
+  ChordDetectionAlgorithm,
+  string
+> = {
+  basicpitch: "Basic Pitch (標準)",
+  pitchplease: "PitchPlease",
+};
+
+export const CHORD_DETECTION_ALGORITHM_DESCRIPTIONS: Record<
+  ChordDetectionAlgorithm,
+  string
+> = {
+  basicpitch: "ニューラルネットでノートイベントを推定します (A4=440Hz 基準)",
+  pitchplease: "音名ごとの周波数相関で構成音を推定します (A4 設定に追従)",
+};
+
+/**
  * フィードバック形式の定義
  */
 export const FEEDBACK_TYPES = [

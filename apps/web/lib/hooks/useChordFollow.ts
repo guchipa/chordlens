@@ -17,11 +17,13 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { noteEventsToPitchList } from "@chordlens/core/audio_analysis/chordToneEstimation";
 import {
     applyDetectedPitchListAtom,
+    a4FreqAtom,
     chordFollowEnabledAtom,
+    chordDetectionAlgorithmAtom,
     chordFollowStatusAtom,
     chordFollowErrorAtom,
 } from "@/lib/store";
-import { BasicPitchNoteDetector } from "@/lib/audio/basicPitchNoteDetector";
+import { createNoteDetector } from "@/lib/audio/noteDetectorFactory";
 import { recordMonoAudio } from "@/lib/audio/recordMonoAudio";
 import {
     SoundLevelMonitor,
@@ -62,6 +64,8 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
     } = options;
 
     const enabled = useAtomValue(chordFollowEnabledAtom);
+    const algorithm = useAtomValue(chordDetectionAlgorithmAtom);
+    const a4Freq = useAtomValue(a4FreqAtom);
     const setEnabled = useSetAtom(chordFollowEnabledAtom);
     const setStatus = useSetAtom(chordFollowStatusAtom);
     const setError = useSetAtom(chordFollowErrorAtom);
@@ -79,7 +83,7 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
         (async () => {
             setError(null);
             try {
-                const detector = new BasicPitchNoteDetector();
+                const detector = createNoteDetector(algorithm, { a4Freq });
                 stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         echoCancellation: false,
@@ -137,6 +141,8 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
         };
     }, [
         enabled,
+        algorithm,
+        a4Freq,
         recordDurationMs,
         followIntervalMs,
         rmsThreshold,

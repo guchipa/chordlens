@@ -6,9 +6,21 @@
  * 両者の間の状態共有を atom で行う。
  */
 import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
+import {
+    CHORD_DETECTION_ALGORITHM_DEFAULT,
+    type ChordDetectionAlgorithm,
+} from "@chordlens/core/constants";
 
 /** 自動追従モードの ON/OFF (マイク権限が絡むため永続化しない) */
 export const chordFollowEnabledAtom = atom<boolean>(false);
+
+/** 構成音検出アルゴリズムの選択 (localStorage に永続化) */
+export const chordDetectionAlgorithmAtom =
+    atomWithStorage<ChordDetectionAlgorithm>(
+        "chordlens-chordDetectionAlgorithm",
+        CHORD_DETECTION_ALGORITHM_DEFAULT
+    );
 
 /**
  * 追従ループの現在の状態

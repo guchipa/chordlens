@@ -3,10 +3,13 @@ packages:
   - "packages/*"
 
 # core-js の postinstall はバナー表示のみのため実行しない
-ignoredBuiltDependencies:
-  - core-js
+allowBuilds:
+  core-js: false
 
 packageExtensions:
   "@hookform/resolvers":
     peerDependencies:
       zod: "*"
+
+patchedDependencies:
+  pitchplease@1.3.1: patches/pitchplease@1.3.1.patch

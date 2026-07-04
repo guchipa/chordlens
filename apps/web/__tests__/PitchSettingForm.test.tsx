@@ -89,5 +89,6 @@ describe("PitchSettingForm", () => {
       expect(addedPitch).toBeDefined();
       expect(addedPitch?.enabled).toBe(true);
     });
-  });
+    // Radix Select の操作を含み並列実行時に 5s の既定タイムアウトを超えることがある
+  }, 15000);
 });

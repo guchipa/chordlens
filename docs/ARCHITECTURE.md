@@ -112,6 +112,7 @@ chordlens/
 │       │   │   ├── calcJustFreq.ts         # 純正律周波数計算
 │       │   │   ├── rootEstimation.ts       # 根音推定
 │       │   │   ├── chordToneEstimation.ts  # 構成音推定（ノートイベント→Pitch[] 変換）
+│       │   │   ├── pitchPleaseNoteDetection.ts # pitchplease 構成音検出（NoteDetector 実装）
 │       │   │   ├── swipePitchEstimation.ts # SWIPE' ピッチ推定
 │       │   │   ├── phaseVocoderEstimation.ts # 位相ボコーダ法
 │       │   │   ├── peakInterpolation.ts    # ピーク補間
@@ -233,11 +234,20 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
    閾値 (`SOUND_RMS_THRESHOLD`) を超えるまで待機（無音時は推論しない）
 2. **録音** → `recordMonoAudio()` が MediaRecorder で数秒間録音し、
    22050 Hz モノラル PCM にデコード（追従: 3 秒 / 単音入力: 1.5 秒）
-3. **推論** → `BasicPitchNoteDetector` (`NoteDetector` 実装) が
-   [@spotify/basic-pitch](https://github.com/spotify/basic-pitch) (TensorFlow.js) で
-   MIDI ノートイベントを推定。ライブラリは初回検出時に遅延ロード、
-   モデルは `/models/basic-pitch/` から配信（vite-plugin-static-copy が
-   node_modules からコピー）
+3. **推論** → `createNoteDetector()` (noteDetectorFactory) が選択中の
+   アルゴリズムの `NoteDetector` 実装を生成し、MIDI ノートイベントを推定
+   - **basicpitch** (デフォルト): `BasicPitchNoteDetector` (apps/web)。
+     [@spotify/basic-pitch](https://github.com/spotify/basic-pitch)
+     (TensorFlow.js) を初回検出時に遅延ロード。モデルは
+     `/models/basic-pitch/` から配信（vite-plugin-static-copy が
+     node_modules からコピー）。A4=440Hz 基準
+   - **pitchplease**: `PitchPleaseNoteDetector` (core)。
+     [pitchplease](https://www.npmjs.com/package/pitchplease) の音名別
+     周波数相関でフレームごとに振幅を計算し、相対閾値と倍音抑制で
+     構成音を選別する。純粋 TypeScript のため core に置かれ、
+     A4 設定 (a4FreqAtom) に追従する
+   - アルゴリズムは `chordDetectionAlgorithmAtom` (localStorage 永続化) で
+     選択し、`ChordFollowToggle` の Select で切り替える
 4. **変換** → core の `noteEventsToPitchList()` がノートイベントを集約・
    フィルタし `Pitch[]` へ変換。ルート音は `estimateRoot()` で自動推定
    （確定しない場合は最低音）
@@ -271,6 +281,7 @@ graph TD
         A7[experimentModeAtom]
         B1[pitchListAtom]
         B2[chordFollowEnabledAtom]
+        B5[chordDetectionAlgorithmAtom]
         B3[chordFollowStatusAtom]
         B4[chordFollowErrorAtom]
         C1[feedbackTypeAtom]
@@ -330,6 +341,7 @@ graph TD
 | **getJustFrequencies** | 構成音から純正律周波数を計算 |
 | **estimateRoot** | 和音の根音を自動推定 |
 | **noteEventsToPitchList** | 検出ノートイベントを構成音リスト (Pitch[]) に変換 |
+| **PitchPleaseNoteDetector** | pitchplease による構成音検出 (NoteDetector 実装、core) |
 | **quadraticInterpolation** | パラボラ補間でサブビン精度の周波数推定 |
 
 ---

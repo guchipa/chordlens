@@ -18,12 +18,15 @@ vi.mock("@/lib/audio/recordMonoAudio", () => ({
 }));
 
 const mockDetectNotes = vi.fn();
-vi.mock("@/lib/audio/basicPitchNoteDetector", () => ({
-    BasicPitchNoteDetector: class {
-        requiredSampleRate = 22050;
-        detectNotes(...args: unknown[]) {
-            return mockDetectNotes(...args);
-        }
+const mockCreateNoteDetector = vi.fn();
+vi.mock("@/lib/audio/noteDetectorFactory", () => ({
+    createNoteDetector: (...args: unknown[]) => {
+        mockCreateNoteDetector(...args);
+        return {
+            requiredSampleRate: 22050,
+            detectNotes: (...detectArgs: unknown[]) =>
+                mockDetectNotes(...detectArgs),
+        };
     },
 }));
 
@@ -78,6 +81,10 @@ describe("useChordFollow", () => {
         expect(store.get(pitchListAtom).find((p) => p.isRoot)?.pitchName).toBe(
             "C"
         );
+        // デフォルトのアルゴリズム (basicpitch) と A4 設定で検出器を生成する
+        expect(mockCreateNoteDetector).toHaveBeenCalledWith("basicpitch", {
+            a4Freq: 442,
+        });
 
         act(() => {
             store.set(chordFollowEnabledAtom, false);

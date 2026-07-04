@@ -54,9 +54,10 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
 - 基準は**純正律** (平均律ではない)。根音からの周波数比 (`JUST_RATIOS`) で期待周波数を計算
 - 偏差の単位は**セント**: `1200 * log2(actual / expected)`。deviation は ±evalRangeCents で正規化した -1〜1
 - ピッチ推定は 3 アルゴリズム: FFT ピーク (デフォルト) / SWIPE' / 位相ボコーダ
-- 構成音の自動検出は basic-pitch (`@spotify/basic-pitch`, TFJS)。`NoteDetector` adapter 経由で
-  音名特定のみに使い、純正律偏差の計測には使わない。モデルは vite-plugin-static-copy で
-  `/models/basic-pitch/` に配信
+- 構成音の自動検出は 2 アルゴリズム: basic-pitch (`@spotify/basic-pitch`, TFJS, A4=440 固定) /
+  pitchplease (音名別周波数相関, core 実装, A4 設定に追従)。いずれも `NoteDetector` adapter 経由で
+  音名特定のみに使い、純正律偏差の計測には使わない。追加手順は
+  `apps/web/lib/audio/noteDetectorFactory.ts` のコメント参照
 - A4 デフォルトは **442Hz** (`packages/core/src/constants.ts`)
 - 数値解析コードを変更したら必ず `packages/core/__tests__/audio_analysis/` のテストを実行
 

@@ -36,6 +36,7 @@ export { feedbackTypeAtom } from "./feedbackAtoms";
 // 構成音自動追従
 export {
     chordFollowEnabledAtom,
+    chordDetectionAlgorithmAtom,
     chordFollowStatusAtom,
     chordFollowErrorAtom,
     type ChordFollowStatus,

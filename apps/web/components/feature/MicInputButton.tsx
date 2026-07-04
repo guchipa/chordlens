@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useAtomValue } from "jotai";
 import { Mic, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +11,9 @@ import {
 } from "@/components/ui/hover-card";
 import { noteEventsToPitchList } from "@chordlens/core/audio_analysis/chordToneEstimation";
 import type { Pitch } from "@chordlens/core/types";
-import { BasicPitchNoteDetector } from "@/lib/audio/basicPitchNoteDetector";
+import { createNoteDetector } from "@/lib/audio/noteDetectorFactory";
 import { recordMonoAudio } from "@/lib/audio/recordMonoAudio";
+import { a4FreqAtom, chordDetectionAlgorithmAtom } from "@/lib/store";
 
 interface MicInputButtonProps {
     /** 検出完了時のコールバック (最有力の 1 音) */
@@ -38,6 +40,8 @@ export function MicInputButton({
 }: MicInputButtonProps) {
     const [status, setStatus] = useState<DetectionStatus>("idle");
     const [message, setMessage] = useState<string | null>(null);
+    const algorithm = useAtomValue(chordDetectionAlgorithmAtom);
+    const a4Freq = useAtomValue(a4FreqAtom);
 
     const handleClick = useCallback(async () => {
         if (status !== "idle") {
@@ -46,7 +50,7 @@ export function MicInputButton({
         setMessage(null);
 
         try {
-            const detector = new BasicPitchNoteDetector();
+            const detector = createNoteDetector(algorithm, { a4Freq });
 
             setStatus("recording");
             const monoAudio = await recordMonoAudio({
@@ -78,7 +82,7 @@ export function MicInputButton({
         } finally {
             setStatus("idle");
         }
-    }, [status, recordDurationMs, onDetect]);
+    }, [status, recordDurationMs, onDetect, algorithm, a4Freq]);
 
     const isActive = status !== "idle";
 
