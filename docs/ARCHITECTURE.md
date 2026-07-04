@@ -228,7 +228,9 @@ sequenceDiagram
 構成音を手動入力せずに、演奏した和音にチューナー設定を自動で追従させられる。
 SettingsDrawer 内の `ChordFollowToggle` で ON/OFF し、ループ本体は
 App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共有するため、
-ドロワーを閉じても追従は継続する）。
+ドロワーを閉じても追従は継続する）。ループが動くのは
+**トグル ON かつチューナーの解析実行中 (isProcessing)** のみで、
+解析を停止すると追従も止まる。
 
 1. **音量ゲート** → `SoundLevelMonitor` が入力の RMS を監視し、
    閾値 (`SOUND_RMS_THRESHOLD`) を超えるまで待機（無音時は推論しない）

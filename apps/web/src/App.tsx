@@ -29,9 +29,6 @@ import {
 export function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // 構成音の自動追従ループ (トグルは SettingsDrawer 内、状態は Jotai atom)
-  useChordFollow();
-
   const currentPitchList = useAtomValue(pitchListAtom);
   const evalRangeCents = useAtomValue(evalRangeCentsAtom);
   const a4Freq = useAtomValue(a4FreqAtom);
@@ -65,6 +62,10 @@ export function App() {
     enablePeakSearchDebug: experimentMode,
     peakSearchDebugFps: experimentMode ? 12 : undefined,
   });
+
+  // 構成音の自動追従ループ (トグルは SettingsDrawer 内、状態は Jotai atom)。
+  // 解析実行中のみ推定を行う
+  useChordFollow({ active: isProcessing });
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">

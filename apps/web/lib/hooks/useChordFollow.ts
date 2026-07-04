@@ -1,7 +1,8 @@
 /**
- * useChordFollow - basic-pitch による構成音の自動追従
+ * useChordFollow - 構成音の自動追従
  *
- * chordFollowEnabledAtom が ON の間、以下のサイクルを回す:
+ * chordFollowEnabledAtom が ON かつ active (= チューナーの解析実行中) の間、
+ * 以下のサイクルを回す:
  *
  *   1. 音量ゲート: 入力の RMS が閾値を超えるまで待機 (無音時は推論しない)
  *   2. 録音: マイクから数秒間録音し 22050 Hz モノラルにデコード
@@ -31,6 +32,11 @@ import {
 } from "@/lib/audio/soundLevelMonitor";
 
 export interface UseChordFollowOptions {
+    /**
+     * 追従ループを動かすか。チューナーの解析実行中 (isProcessing) を渡し、
+     * 解析していない間はトグル ON でも推定を行わない
+     */
+    active?: boolean;
     /** 1 回の検出で録音する時間 (ms) デフォルト: 3000 */
     recordDurationMs?: number;
     /** 検出サイクル間の待機時間 (ms) デフォルト: 500 */
@@ -58,6 +64,7 @@ function toErrorMessage(err: unknown): string {
 
 export function useChordFollow(options: UseChordFollowOptions = {}): void {
     const {
+        active = true,
         recordDurationMs = 3000,
         followIntervalMs = 500,
         rmsThreshold = SOUND_RMS_THRESHOLD,
@@ -72,7 +79,7 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
     const applyDetectedPitchList = useSetAtom(applyDetectedPitchListAtom);
 
     useEffect(() => {
-        if (!enabled) {
+        if (!enabled || !active) {
             return;
         }
 
@@ -141,6 +148,7 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
         };
     }, [
         enabled,
+        active,
         algorithm,
         a4Freq,
         recordDurationMs,

@@ -70,11 +70,16 @@ export function ChordFollowToggle() {
                         </Label>
                     </div>
                     <p className="text-xs text-gray-500">
-                        演奏した和音から構成音を自動で推定し、リストに反映します。
-                        楽器音を検出したときだけ推定を行います。
+                        解析の実行中に、演奏した和音から構成音を自動で推定し、
+                        リストに反映します。楽器音を検出したときだけ推定を行います。
                     </p>
                     {enabled && label && (
                         <p className="text-sm text-blue-600">{label}</p>
+                    )}
+                    {enabled && !label && (
+                        <p className="text-sm text-gray-500">
+                            解析を開始すると追従が始まります
+                        </p>
                     )}
                     {error && (
                         <p className="text-sm font-medium text-red-600">{error}</p>

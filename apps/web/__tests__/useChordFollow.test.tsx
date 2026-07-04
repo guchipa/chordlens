@@ -151,6 +151,42 @@ describe("useChordFollow", () => {
         });
     });
 
+    it("解析が実行されていない間 (active=false) はトグル ON でも推定しない", async () => {
+        mockDetectNotes.mockResolvedValue([note(60), note(64), note(67)]);
+        const store = createStore();
+        const wrapper = ({ children }: { children: ReactNode }) => (
+            <Provider store={store}>{children}</Provider>
+        );
+        const { rerender } = renderHook(
+            ({ active }: { active: boolean }) =>
+                useChordFollow({ followIntervalMs: 10, active }),
+            { wrapper, initialProps: { active: false } }
+        );
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, true);
+        });
+
+        // 少し待っても検出サイクルは動かない
+        await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+        expect(mockWaitForSound).not.toHaveBeenCalled();
+        expect(mockRecordMonoAudio).not.toHaveBeenCalled();
+        expect(store.get(chordFollowStatusAtom)).toBe("idle");
+
+        // 解析開始 (active=true) で追従が始まる
+        rerender({ active: true });
+        await waitFor(() => {
+            expect(mockDetectNotes).toHaveBeenCalled();
+        });
+
+        // 解析停止 (active=false) で追従も止まる
+        rerender({ active: false });
+        await waitFor(() => {
+            expect(store.get(chordFollowStatusAtom)).toBe("idle");
+        });
+        expect(mockDispose).toHaveBeenCalled();
+    });
+
     it("マイクアクセス拒否時はエラーを設定して追従を OFF にする", async () => {
         const notAllowed = new Error("Permission denied");
         notAllowed.name = "NotAllowedError";
