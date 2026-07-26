@@ -2,12 +2,20 @@
  * useChordFollow - 構成音の自動追従
  *
  * chordFollowEnabledAtom が ON かつ active (= チューナーの解析実行中) の間、
- * 以下のサイクルを回す:
+ * 選択中のアルゴリズムに応じた方式で追従する。
  *
+ * ストリーミング方式 (pitchplease):
+ *   AudioWorklet (StreamingPcmCapture) で生 PCM を連続取得し、
+ *   StreamingChordTracker が 0.25 秒フレームごとに解析、
+ *   直近 1 秒のスライディングウィンドウ + ヒステリシスで確定した和音を
+ *   pitchListAtom へ反映する。体感レイテンシは 1 秒未満。
+ *
+ * バッチ方式 (basic-pitch):
  *   1. 音量ゲート: 入力の RMS が閾値を超えるまで待機 (無音時は推論しない)
  *   2. 録音: マイクから数秒間録音し 22050 Hz モノラルにデコード
  *   3. 推定: basic-pitch でノートイベントを推定し Pitch[] へ変換
  *   4. 反映: pitchListAtom へ即時反映 (和音が変わらなければ更新しない)
+ *   (TFJS 推論が重く短フレームの逐次解析に向かないため従来方式のまま)
  *
  * トグル UI (SettingsDrawer 内) はドロワーを閉じるとアンマウントされるため、
  * このフックは常駐するコンポーネント (App) で呼び、状態は atom で共有する。
@@ -16,6 +24,7 @@
 import { useEffect } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { noteEventsToPitchList } from "@chordlens/core/audio_analysis/chordToneEstimation";
+import { StreamingChordTracker } from "@chordlens/core/audio_analysis/streamingChordTracker";
 import {
     applyDetectedPitchListAtom,
     a4FreqAtom,
@@ -24,8 +33,12 @@ import {
     chordFollowStatusAtom,
     chordFollowErrorAtom,
 } from "@/lib/store";
-import { createNoteDetector } from "@/lib/audio/noteDetectorFactory";
+import {
+    createNoteDetector,
+    supportsStreaming,
+} from "@/lib/audio/noteDetectorFactory";
 import { recordMonoAudio } from "@/lib/audio/recordMonoAudio";
+import { StreamingPcmCapture } from "@/lib/audio/pcmCapture";
 import {
     SoundLevelMonitor,
     SOUND_RMS_THRESHOLD,
@@ -37,11 +50,11 @@ export interface UseChordFollowOptions {
      * 解析していない間はトグル ON でも推定を行わない
      */
     active?: boolean;
-    /** 1 回の検出で録音する時間 (ms) デフォルト: 3000 */
+    /** バッチ方式: 1 回の検出で録音する時間 (ms) デフォルト: 3000 */
     recordDurationMs?: number;
-    /** 検出サイクル間の待機時間 (ms) デフォルト: 500 */
+    /** バッチ方式: 検出サイクル間の待機時間 (ms) デフォルト: 500 */
     followIntervalMs?: number;
-    /** 楽器音とみなす RMS 閾値 デフォルト: SOUND_RMS_THRESHOLD */
+    /** バッチ方式: 楽器音とみなす RMS 閾値 デフォルト: SOUND_RMS_THRESHOLD */
     rmsThreshold?: number;
 }
 
@@ -83,14 +96,24 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
             return;
         }
 
-        const session = { cancelled: false };
+        const session: {
+            cancelled: boolean;
+            onCancel: (() => void) | null;
+        } = { cancelled: false, onCancel: null };
         let stream: MediaStream | null = null;
         let monitor: SoundLevelMonitor | null = null;
+        let capture: StreamingPcmCapture | null = null;
+
+        const fail = (err: unknown) => {
+            if (!session.cancelled) {
+                setError(toErrorMessage(err));
+                setEnabled(false);
+            }
+        };
 
         (async () => {
             setError(null);
             try {
-                const detector = createNoteDetector(algorithm, { a4Freq });
                 stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         echoCancellation: false,
@@ -98,6 +121,49 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
                         autoGainControl: false,
                     },
                 });
+                if (session.cancelled) return;
+
+                if (supportsStreaming(algorithm)) {
+                    // ストリーミング方式: チャンク到着ごとに push + poll。
+                    // poll は tracker 内で直列化されるため多重呼び出しでよい
+                    let tracker: StreamingChordTracker | null = null;
+                    capture = await StreamingPcmCapture.create(
+                        stream,
+                        (chunk) => {
+                            if (session.cancelled || !tracker) return;
+                            tracker.push(chunk);
+                            tracker
+                                .poll()
+                                .then(({ silent, changed }) => {
+                                    if (session.cancelled) return;
+                                    setStatus(silent ? "listening" : "tracking");
+                                    if (changed) {
+                                        applyDetectedPitchList(changed);
+                                    }
+                                })
+                                .catch(fail);
+                        }
+                    );
+                    const detector = createNoteDetector(algorithm, {
+                        a4Freq,
+                        sampleRate: capture.sampleRate,
+                    });
+                    tracker = new StreamingChordTracker({
+                        detector,
+                        sampleRate: capture.sampleRate,
+                    });
+                    setStatus("listening");
+
+                    // キャンセル (トグル OFF / アンマウント) まで維持する
+                    await new Promise<void>((resolve) => {
+                        session.onCancel = resolve;
+                        if (session.cancelled) resolve();
+                    });
+                    return;
+                }
+
+                // バッチ方式
+                const detector = createNoteDetector(algorithm, { a4Freq });
                 monitor = new SoundLevelMonitor(stream);
 
                 while (!session.cancelled) {
@@ -132,12 +198,10 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
                     );
                 }
             } catch (err) {
-                if (!session.cancelled) {
-                    setError(toErrorMessage(err));
-                    setEnabled(false);
-                }
+                fail(err);
             } finally {
                 monitor?.dispose();
+                capture?.dispose();
                 stream?.getTracks().forEach((track) => track.stop());
                 setStatus("idle");
             }
@@ -145,6 +209,7 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
 
         return () => {
             session.cancelled = true;
+            session.onCancel?.();
         };
     }, [
         enabled,

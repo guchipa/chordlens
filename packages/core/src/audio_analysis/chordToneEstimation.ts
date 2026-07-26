@@ -25,6 +25,14 @@ export interface ChordToneEstimationOptions {
   relativeScoreThreshold?: number;
   /** 採用する構成音の最大数 */
   maxNotes?: number;
+  /**
+   * 倍音位置 (オクターブ下 -12 / 12度下 -19) の音に対するスコア比が
+   * この値未満の音を倍音の残滓として除外する (0〜1)。
+   * フレーム単位の倍音抑制をすり抜けて一部フレームだけに出た第2・第3倍音を、
+   * 時間集約後のスコアで刈る。真の重ねはスコアが同程度になるため残る。
+   * 0 で無効
+   */
+  harmonicSuppressionScoreRatio?: number;
 }
 
 export const CHORD_TONE_ESTIMATION_DEFAULTS: Required<ChordToneEstimationOptions> =
@@ -33,7 +41,13 @@ export const CHORD_TONE_ESTIMATION_DEFAULTS: Required<ChordToneEstimationOptions
     minAmplitude: 0.1,
     relativeScoreThreshold: 0.15,
     maxNotes: 6,
+    // 0.5 は実データの座標降下法探索の結果 (docs/CHORD_DETECTION.md §5)。
+    // 調整用 (TUS)・検証用 (YCY) の両方で batch の誤検出が減った
+    harmonicSuppressionScoreRatio: 0.5,
   };
+
+/** 集約段の倍音フィルタで参照する下方の半音オフセット (2f: -12, 3f: -19) */
+const HARMONIC_SEMITONE_OFFSETS = [12, 19];
 
 /**
  * MIDI ノート番号を音名とオクターブ番号に変換する (C4 = 60, A4 = 69)
@@ -90,6 +104,44 @@ function aggregateNoteEvents(events: DetectedNoteEvent[]): AggregatedNote[] {
 }
 
 /**
+ * 倍音位置 (オクターブ下 / 12度下) の音より大幅にスコアが低い音を
+ * 第2・第3倍音の残滓として除外する
+ */
+function suppressWeakHarmonicDuplicates(
+  notes: AggregatedNote[],
+  scoreRatio: number
+): AggregatedNote[] {
+  if (scoreRatio <= 0) {
+    return notes;
+  }
+  const scoreByMidi = new Map(notes.map((n) => [n.midiNote, n.score]));
+  return notes.filter((note) =>
+    HARMONIC_SEMITONE_OFFSETS.every((offset) => {
+      const baseScore = scoreByMidi.get(note.midiNote - offset);
+      return baseScore === undefined || note.score >= baseScore * scoreRatio;
+    })
+  );
+}
+
+/**
+ * 隣接半音のペアはスコアの高い方に解決する。
+ * デチューンした音 (格子の中間の音程) はフレームによって上下どちらの
+ * 半音に量子化されるかが揺れ、集約すると両方が残ってしまう。
+ * この文脈 (和音の構成音) で短2度が同時に鳴ることはないとみなす
+ */
+function resolveAdjacentSemitones(notes: AggregatedNote[]): AggregatedNote[] {
+  const scoreByMidi = new Map(notes.map((n) => [n.midiNote, n.score]));
+  return notes.filter((note) => {
+    const lower = scoreByMidi.get(note.midiNote - 1);
+    const upper = scoreByMidi.get(note.midiNote + 1);
+    // 同点は低い方を優先する (どちらかは必ず残る)
+    if (lower !== undefined && note.score <= lower) return false;
+    if (upper !== undefined && note.score < upper) return false;
+    return true;
+  });
+}
+
+/**
  * ルート音を割り当てる。
  * estimateRoot (コード定義との照合) で推定し、確定できなければ最低音をルートとする。
  * isRoot は必ず 1 音のみ true になるよう正規化する。
@@ -127,15 +179,20 @@ export function noteEventsToPitchList(
   const minOctave = Math.min(...OCTAVE_NUM_LIST);
   const maxOctave = Math.max(...OCTAVE_NUM_LIST);
 
-  const aggregated = aggregateNoteEvents(events).filter((note) => {
-    const { octaveNum } = midiNoteToPitch(note.midiNote);
-    return (
-      note.totalDurationSeconds >= opts.minTotalDurationSeconds &&
-      note.maxAmplitude >= opts.minAmplitude &&
-      octaveNum >= minOctave &&
-      octaveNum <= maxOctave
-    );
-  });
+  const aggregated = suppressWeakHarmonicDuplicates(
+    resolveAdjacentSemitones(
+      aggregateNoteEvents(events).filter((note) => {
+        const { octaveNum } = midiNoteToPitch(note.midiNote);
+        return (
+          note.totalDurationSeconds >= opts.minTotalDurationSeconds &&
+          note.maxAmplitude >= opts.minAmplitude &&
+          octaveNum >= minOctave &&
+          octaveNum <= maxOctave
+        );
+      })
+    ),
+    opts.harmonicSuppressionScoreRatio
+  );
 
   if (aggregated.length === 0) {
     return [];

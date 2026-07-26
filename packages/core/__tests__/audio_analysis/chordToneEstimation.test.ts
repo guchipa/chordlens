@@ -71,8 +71,8 @@ describe("chordToneEstimation", () => {
     });
 
     it("コード照合で根音が確定しない場合は最低音をルートとする", () => {
-      // 半音のクラスタ (C4, C#4) はコード定義に一致しない
-      const events = [note(60), note(61)];
+      // トライトーンのダイアド (C4, F#4) はコード定義に一致しない
+      const events = [note(60), note(66)];
 
       const result = noteEventsToPitchList(events);
 
@@ -182,6 +182,77 @@ describe("chordToneEstimation", () => {
       const events = [note(60, 0.01, 0.01)];
 
       expect(noteEventsToPitchList(events)).toEqual([]);
+    });
+
+    it("オクターブ下よりスコアが大幅に低い音を倍音の残滓として除外する", () => {
+      // C3 は長く強い。C4 は一部フレームにだけ現れた第2倍音
+      // (スコア比 0.06/1.8 ≈ 0.03 < 0.35)。ただし相対スコア閾値は
+      // かからないよう relativeScoreThreshold を下げて分離検証する
+      const events = [
+        note(48, 2.0, 0.9),
+        note(52, 2.0, 0.9),
+        note(55, 2.0, 0.9),
+        note(60, 0.2, 0.3),
+      ];
+
+      const result = noteEventsToPitchList(events, {
+        relativeScoreThreshold: 0,
+        harmonicSuppressionScoreRatio: 0.35,
+      });
+
+      expect(result.map((p) => `${p.pitchName}${p.octaveNum}`)).toEqual([
+        "C3",
+        "E3",
+        "G3",
+      ]);
+    });
+
+    it("12度下 (3倍音位置) よりスコアが大幅に低い音も除外する", () => {
+      // G4 (=3×C3 の位置) が一部フレームにだけ現れた第3倍音
+      const events = [
+        note(48, 2.0, 0.9),
+        note(52, 2.0, 0.9),
+        note(67, 0.2, 0.3),
+      ];
+
+      const result = noteEventsToPitchList(events, {
+        relativeScoreThreshold: 0,
+        harmonicSuppressionScoreRatio: 0.35,
+      });
+
+      expect(result.map((p) => `${p.pitchName}${p.octaveNum}`)).toEqual([
+        "C3",
+        "E3",
+      ]);
+    });
+
+    it("スコアが同程度のオクターブ重ねは残す", () => {
+      const events = [note(48, 2.0, 0.9), note(60, 1.8, 0.8)];
+
+      const result = noteEventsToPitchList(events, {
+        harmonicSuppressionScoreRatio: 0.35,
+      });
+
+      expect(result.map((p) => `${p.pitchName}${p.octaveNum}`)).toEqual([
+        "C3",
+        "C4",
+      ]);
+    });
+
+    it("harmonicSuppressionScoreRatio: 0 で倍音抑制を無効にできる", () => {
+      const events = [
+        note(48, 2.0, 0.9),
+        note(52, 2.0, 0.9),
+        note(55, 2.0, 0.9),
+        note(60, 0.2, 0.3),
+      ];
+
+      const result = noteEventsToPitchList(events, {
+        relativeScoreThreshold: 0,
+        harmonicSuppressionScoreRatio: 0,
+      });
+
+      expect(result.map((p) => `${p.pitchName}${p.octaveNum}`)).toContain("C4");
     });
   });
 });

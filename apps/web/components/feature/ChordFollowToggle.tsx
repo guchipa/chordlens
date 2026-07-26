@@ -32,6 +32,8 @@ function statusLabel(status: ChordFollowStatus): string | null {
             return "録音中...";
         case "processing":
             return "構成音を推定中...";
+        case "tracking":
+            return "追従中...";
         default:
             return null;
     }

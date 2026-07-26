@@ -3,8 +3,10 @@ packages:
   - "packages/*"
 
 # core-js の postinstall はバナー表示のみのため実行しない
+# ffmpeg-static は install スクリプトでバイナリをダウンロードするため許可する
 allowBuilds:
   core-js: false
+  ffmpeg-static: true
 
 packageExtensions:
   "@hookform/resolvers":
@@ -12,4 +14,3 @@ packageExtensions:
       zod: "*"
 
 patchedDependencies:
-  pitchplease@1.3.1: patches/pitchplease@1.3.1.patch

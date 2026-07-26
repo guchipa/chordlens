@@ -26,10 +26,16 @@ export const chordDetectionAlgorithmAtom =
  * 追従ループの現在の状態
  * - idle:       追従 OFF
  * - listening:  音量閾値を超える入力を待機中
- * - recording:  録音中
- * - processing: basic-pitch で推定中
+ * - recording:  録音中 (バッチ方式のみ)
+ * - processing: 推定中 (バッチ方式のみ)
+ * - tracking:   ストリーミング解析で追従中 (pitchplease)
  */
-export type ChordFollowStatus = "idle" | "listening" | "recording" | "processing";
+export type ChordFollowStatus =
+    | "idle"
+    | "listening"
+    | "recording"
+    | "processing"
+    | "tracking";
 
 export const chordFollowStatusAtom = atom<ChordFollowStatus>("idle");
 

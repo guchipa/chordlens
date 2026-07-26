@@ -37,3 +37,6 @@ worker-*.js
 sw.js.map
 workbox-*.js.map
 worker-*.js.map
+
+# 実データ評価用の録音 (被験者データのためコミットしない)
+test-data/
