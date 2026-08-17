@@ -29,10 +29,17 @@ import { Float32RingBuffer } from "./float32RingBuffer";
  * ストリーミング用の集約パラメータ。
  * バッチ用デフォルト (minTotalDurationSeconds: 0.15) は 3 秒録音が前提。
  * 1 秒窓ではフレーム 1 枚 (0.25 秒) で通ってしまいちらつくため、
- * 2 フレーム以上 (0.25 < 0.4 <= 0.5) の継続を最低条件にする
+ * 2 フレーム以上 (0.25 < 0.4 <= 0.5) の継続を最低条件にする。
+ *
+ * subOctaveSuppressionScoreRatio: StreamingChordTracker はアルゴリズム非依存だが、
+ * 実際に streaming 経路を使うのは pitchplease のみ (basic-pitch は
+ * noteDetectorFactory.supportsStreaming で false、バッチ専用)。
+ * pitchPleaseNoteDetection.ts の PITCH_PLEASE_SUB_OCTAVE_SUPPRESSION_RATIO と
+ * 同値を batch・streaming 両経路に適用する (値の由来はそちらのコメント参照)
  */
 export const STREAMING_CHORD_ESTIMATION_DEFAULTS: ChordToneEstimationOptions = {
   minTotalDurationSeconds: 0.4,
+  subOctaveSuppressionScoreRatio: 0.4,
 };
 
 export interface StreamingChordTrackerOptions {

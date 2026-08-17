@@ -44,6 +44,34 @@ export interface PitchPleaseNoteDetectorOptions {
   fundamentalThreshold?: number;
   /** フレーム内最大サリエンスに対する採用閾値 (0〜1) */
   salienceThreshold?: number;
+  /**
+   * 音名ビンの正規化方式。
+   * "noiseFloor" (既定): 各ビンのパワーを dB 化し、MIDI 軸上近傍ビンの
+   * 分位点で推定したノイズ床からの SNR (headroomDb で 0〜1 に正規化) を
+   * 振幅とする。大音量奏者がいても他奏者の基音の相対的な強さが揺れない。
+   * "frameMax": 旧実装 (フレーム内最大パワーで正規化)。比較実験用に残す
+   */
+  normalizationMode?: "frameMax" | "noiseFloor";
+  /** noiseFloor: 床推定に使う分位点 (0〜1) */
+  floorPercentile?: number;
+  /** noiseFloor: 床推定の近傍窓幅 (半音、片側) */
+  floorWindowSemitones?: number;
+  /** noiseFloor: 振幅 1.0 に相当する床からの SNR (dB) */
+  headroomDb?: number;
+  /**
+   * noiseFloor: 床のケイリング。frameMaxDb (フレーム内最大パワーの dB) から
+   * この値以上下がった床は frameMaxDb - maxDynamicRangeDb で切り上げる
+   * (= フレーム内で maxDynamicRangeDb を超えるダイナミックレンジの SNR を
+   * 与えない)。真基音同士のダイナミックレンジは実測でほぼ全て 26dB 以内に
+   * 収まる一方、床が局所的に極端に低く推定された領域 (実音が疎な高音域など)
+   * では弱いアーティファクトでも SNR が過大評価されやすい。Infinity で無効
+   */
+  maxDynamicRangeDb?: number;
+  /**
+   * eligible だが採択閾値未満の候補を provisional 標本として残す下限比率
+   * (フレーム内最大サリエンスに対する比、0〜1)
+   */
+  provisionalMinRatio?: number;
   /** 無音とみなすフレーム RMS 閾値 */
   silenceRmsThreshold?: number;
   /** 1 フレームで採用する音の最大数 */
@@ -65,8 +93,23 @@ export const PITCH_PLEASE_DEFAULTS: Required<PitchPleaseNoteDetectorOptions> = {
   minMidiNote: 36, // C2
   maxMidiNote: 95, // B6
   frameSeconds: 0.25,
-  fundamentalThreshold: 0.15,
+  // 0.20 は noiseFloor 校正スイープの結果 (docs/CHORD_DETECTION.md 参照)。
+  // floorPercentile/floorWindowSemitones と合わせて選定した
+  fundamentalThreshold: 0.2,
   salienceThreshold: 0.3,
+  normalizationMode: "noiseFloor",
+  // floorPercentile 0.5 (中央値) ・floorWindowSemitones 6 は、Hann 窓 +
+  // 減算系列 12f 拡張後の TUS/YCY 評価スイープで TUS が最良だった組
+  floorPercentile: 0.5,
+  floorWindowSemitones: 6,
+  headroomDb: 40,
+  // 45 は batch を legacy (durationAmplitude) 集約に戻した組み合わせでの
+  // 評価スイープの結果 (docs/CHORD_DETECTION.md 参照)。medianSalience 集約と
+  // 組み合わせると -12dB でゲートの不均衡脆弱性を再導入したが、床正規化で
+  // フレーム採択自体が安定した結果、legacy 集約 (フレーム単位の二値採択の
+  // 数え上げ) と組み合わせると原音・減衰の全条件で純増した
+  maxDynamicRangeDb: 45,
+  provisionalMinRatio: 0.05,
   silenceRmsThreshold: 0.01,
   maxNotesPerFrame: 6,
   harmonicRichSubtract: 0.9,
@@ -87,14 +130,17 @@ const DETUNE_COVER_CENTS = 45;
 
 /**
  * 周波数ごとのデチューン探索オフセットを返す。
- * frameSeconds の矩形窓 DFT の実効捕捉半幅 ≈ 1/(2·frameSeconds) Hz を
- * セントに換算し、それより粗い刻みで DETUNE_COVER_CENTS まで並べる
+ * 矩形窓 DFT の実効捕捉半幅 ≈ 1/(2·frameSeconds) Hz をセントに換算し、
+ * それより粗い刻みで DETUNE_COVER_CENTS まで並べる。
+ * useHannCapture (noiseFloor モード): Hann 窓はメインローブ幅が矩形窓の
+ * ほぼ2倍になるため、捕捉半幅を 1/frameSeconds に広げる
  */
 function detuneOffsetsForFreq(
   freqHz: number,
-  frameSeconds: number
+  frameSeconds: number,
+  useHannCapture = false
 ): number[] {
-  const captureHz = 1 / (2 * frameSeconds);
+  const captureHz = useHannCapture ? 1 / frameSeconds : 1 / (2 * frameSeconds);
   const halfWidthCents = 1200 * Math.log2(1 + captureHz / freqHz);
   if (halfWidthCents >= DETUNE_COVER_CENTS) {
     return [0];
@@ -121,6 +167,18 @@ const HARMONIC_SEMITONE_OFFSETS = [0, 12, 19, 24, 28, 31];
 const SALIENCE_WEIGHTS = [1.0, 0.6, 0.45, 0.35, 0.3, 0.25];
 
 /**
+ * noiseFloor モードの倍音減算専用オフセット (1f, 2f〜12f)。
+ * サリエンス計算 (HARMONIC_SEMITONE_OFFSETS, 6項) は変更しないが、
+ * noiseFloor は床基準の SNR で正規化するため、強い音の 7f 以上の
+ * 実在倍音 (Hann 窓でもメインローブは残る) が床から 20〜30dB 級で
+ * 露出し、幽霊音として誤検出されうる。減算だけ 12f まで拡張して
+ * これを除去する (11f=41.51 半音は 41・42 の両方をカバー)
+ */
+const SUBTRACT_SEMITONE_OFFSETS = [
+  0, 12, 19, 24, 28, 31, 34, 36, 38, 40, 41, 42, 43,
+];
+
+/**
  * 減算の使い分け (harmonicRichSubtract / harmonicPureSubtract オプション):
  * - 倍音が立っている音 (実楽器の複合音) は倍音位置のエネルギーを
  *   ほぼすべてその音由来とみなして強く引く
@@ -144,9 +202,11 @@ const DESCEND_SEMITONE_OFFSETS = [12, 19];
 /**
  * サブオクターブ降下の対象に要求する基音ビンの正規化振幅の下限。
  * 通常の採用閾値 (fundamentalThreshold) よりやや高くし、
- * ノイズ床程度の基音ビンしか持たない位置へ降下しないようにする
+ * ノイズ床程度の基音ビンしか持たない位置へ降下しないようにする。
+ * noiseFloor モードは床から 12dB (0.30) を要求し、frameMax は従来の 0.15
  */
 const DESCEND_FUNDAMENTAL_MIN = 0.15;
+const DESCEND_FUNDAMENTAL_MIN_NOISE_FLOOR = 0.3;
 
 /**
  * この MIDI ノート未満の候補は倍音サポート (2f または 3f) を必須にする。
@@ -158,21 +218,39 @@ export const LOW_NOTE_SUPPORT_MAX_MIDI = 55; // G3 未満
 export const LOW_NOTE_SUPPORT_MIN = 0.15;
 
 /**
- * provisional 標本の採用閾値・上限個数。
+ * provisional 標本の上限個数。
  * 採択閾値 (fundamentalThreshold/salienceThreshold) には届かなかったが
  * 候補として存在した音を、chordToneEstimation.ts の medianSalience 集約に
- * 連続サリエンスの標本として渡すための緩い足切り
+ * 連続サリエンスの標本として渡すための緩い足切り。
+ * 採用下限比率は provisionalMinRatio オプション (既定 0.05) で調整する
  */
-const PROVISIONAL_MIN_RATIO = 0.05;
 const PROVISIONAL_MAX_COUNT = 8;
 
 /**
+ * 純正五度の2音 (根音+完全5度上) が録音系の非線形性で生む差音 (根音の
+ * 1オクターブ下の狭帯域幽霊音) の抑制比。原音/-6dB/-12dB の 3 条件 ×
+ * batch/streaming × TUS/YCY のスイープで選定 (docs/CHORD_DETECTION.md 参照)。
+ * pitchplease の batch・streaming 両経路に同じ値を使う
+ * (PITCH_PLEASE_ESTIMATION_OPTIONS と streamingChordTracker.ts の
+ * STREAMING_CHORD_ESTIMATION_DEFAULTS)
+ */
+export const PITCH_PLEASE_SUB_OCTAVE_SUPPRESSION_RATIO = 0.4;
+
+/**
  * pitchplease 推奨の集約オプション。
- * 二値採択の数え上げ (durationAmplitude) は閾値境界の採択の揺れに弱いため、
- * pitchplease は連続サリエンスの時間中央値集約 (medianSalience) を既定にする
+ *
+ * scoreMode は明示せず CHORD_TONE_ESTIMATION_DEFAULTS の既定
+ * ("durationAmplitude"、二値採択の数え上げ) に委ねる。段階3以前は
+ * 閾値境界での採択の揺れに頑健な medianSalience (連続サリエンスの時間中央値)
+ * を既定にしていたが、noiseFloor 正規化 (Hann 窓 + 12f 減算拡張 +
+ * 最大比ケイリング) でフレーム単位の採択自体が安定した結果、
+ * durationAmplitude + maxDynamicRangeDb=45 の組が全評価条件で
+ * medianSalience 込みの組を上回った (docs/CHORD_DETECTION.md 参照)。
+ * medianSalience・provisional はオプション機能として引き続き利用できる
+ * (scoreMode: "medianSalience" を明示すれば有効)
  */
 export const PITCH_PLEASE_ESTIMATION_OPTIONS: ChordToneEstimationOptions = {
-  scoreMode: "medianSalience",
+  subOctaveSuppressionScoreRatio: PITCH_PLEASE_SUB_OCTAVE_SUPPRESSION_RATIO,
 };
 
 /** MIDI ノート番号 → 周波数 (Hz) */
@@ -203,6 +281,62 @@ function decimateByTwo(audio: Float32Array): Float32Array {
     out[i] = (audio[2 * i] + audio[2 * i + 1]) / 2;
   }
   return out;
+}
+
+function clamp01(x: number): number {
+  return x < 0 ? 0 : x > 1 ? 1 : x;
+}
+
+/**
+ * 昇順ソート済み配列の分位点 (線形補間)。
+ * sorted は非空であること
+ */
+function percentileOfSorted(sorted: number[], p: number): number {
+  const idx = p * (sorted.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  const frac = idx - lo;
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * frac;
+}
+
+/**
+ * 各ビンのノイズ床 (dB) を、MIDI 軸上 ±windowSemitones 以内の全計測ビンの
+ * 分位点として推定する。和音の実音ビンが窓内の少数派である限り、
+ * 少数の強いビンに床が引きずられない
+ */
+function computeFloorDb(
+  powerDb: number[],
+  windowSemitones: number,
+  percentile: number
+): number[] {
+  const n = powerDb.length;
+  const floor = new Array<number>(n);
+  for (let i = 0; i < n; i++) {
+    const lo = Math.max(0, i - windowSemitones);
+    const hi = Math.min(n - 1, i + windowSemitones);
+    const window = powerDb.slice(lo, hi + 1).sort((a, b) => a - b);
+    floor[i] = percentileOfSorted(window, percentile);
+  }
+  return floor;
+}
+
+/**
+ * Hann 窓の係数配列を返す (長さ n)。noiseFloor モードで測定前のフレームに
+ * 掛け、矩形窓の緩やかなサイドローブ減衰 (-6dB/oct) を Hann の急峻な減衰
+ * (-18dB/oct) に置き換えることで、強い音の遠くの倍音位置にスペクトル漏れが
+ * 「床から浮いた孤立ビン」として残るのを防ぐ
+ */
+function computeHannWindow(n: number): Float32Array {
+  const window = new Float32Array(n);
+  if (n <= 1) {
+    window.fill(1);
+    return window;
+  }
+  for (let i = 0; i < n; i++) {
+    window[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (n - 1)));
+  }
+  return window;
 }
 
 /**
@@ -236,6 +370,8 @@ export class PitchPleaseNoteDetector implements NoteDetector {
    * (Nyquist 未満のみ)
    */
   private noteFrequencies: number[];
+  /** noiseFloor モード用に事前計算した Hann 窓係数 (frameMax モードでは null) */
+  private hannWindow: Float32Array | null;
 
   constructor(options: PitchPleaseNoteDetectorOptions = {}) {
     this.options = { ...PITCH_PLEASE_DEFAULTS, ...options };
@@ -266,18 +402,25 @@ export class PitchPleaseNoteDetector implements NoteDetector {
       }
       this.noteFrequencies.push(freq);
     }
+
+    // フレーム長ごとに 1 回だけ Hann 窓係数を事前計算する (noiseFloor のみ)
+    this.hannWindow =
+      this.options.normalizationMode === "noiseFloor"
+        ? computeHannWindow(Math.floor(this.options.frameSeconds * sampleRate))
+        : null;
   }
 
-  /**
-   * 各音名ビンをデチューン探索付きで測り、正規化振幅の配列を返す。
-   * 正規化の基準は候補範囲内の最大値
-   */
-  private measureAmplitudes(frame: Float32Array): number[] | null {
+  /** 各音名ビンをデチューン探索付きで測り、パワー配列を返す (index = noteFrequencies の index) */
+  private computePowers(frame: Float32Array, useHannCapture: boolean): number[] {
     const { frameSeconds } = this.options;
     const sampleRate = this.analysisSampleRate;
-    const powers = this.noteFrequencies.map((baseFreq) => {
+    return this.noteFrequencies.map((baseFreq) => {
       let best = 0;
-      for (const cents of detuneOffsetsForFreq(baseFreq, frameSeconds)) {
+      for (const cents of detuneOffsetsForFreq(
+        baseFreq,
+        frameSeconds,
+        useHannCapture
+      )) {
         const freq = baseFreq * Math.pow(2, cents / 1200);
         if (freq >= sampleRate / 2) continue;
         const p = goertzelPower(frame, freq, sampleRate);
@@ -285,13 +428,65 @@ export class PitchPleaseNoteDetector implements NoteDetector {
       }
       return best;
     });
+  }
 
+  /** frame に Hann 窓を掛けた新しい配列を返す */
+  private applyHannWindow(frame: Float32Array): Float32Array {
+    const window = this.hannWindow!;
+    const n = Math.min(frame.length, window.length);
+    const out = new Float32Array(frame.length);
+    for (let i = 0; i < n; i++) {
+      out[i] = frame[i] * window[i];
+    }
+    return out;
+  }
+
+  /**
+   * 各音名ビンを測り、正規化振幅の配列を返す。
+   * frameMax モード: 矩形窓のまま Goertzel し、正規化の基準は候補範囲内の
+   * 最大値 (旧実装とビット同一)。
+   * noiseFloor モード (既定): Hann 窓を掛けてから Goertzel し (遠くの倍音の
+   * スペクトル漏れを抑える)、各ビンの dB パワーを MIDI 軸上近傍ビンの
+   * 分位点から推定したノイズ床からの SNR として 0〜1 に正規化する
+   * (詳細は computeFloorDb 参照)。大音量奏者がいても弱い奏者の基音の
+   * 相対的な強さが揺れない
+   */
+  private measureAmplitudes(frame: Float32Array): number[] | null {
+    const {
+      normalizationMode,
+      floorPercentile,
+      floorWindowSemitones,
+      headroomDb,
+      maxDynamicRangeDb,
+    } = this.options;
+
+    if (normalizationMode === "frameMax") {
+      const powers = this.computePowers(frame, false);
+      const maxPower = Math.max(...powers.slice(0, this.candidateCount));
+      if (maxPower <= 0) {
+        return null;
+      }
+      // power は振幅の2乗なので振幅スケールに戻して正規化する
+      return powers.map((p) => Math.sqrt(p / maxPower));
+    }
+
+    // noiseFloor モード: Hann 窓を掛けてから測り、dB 化してノイズ床基準の SNR で正規化する
+    const windowed = this.applyHannWindow(frame);
+    const powers = this.computePowers(windowed, true);
     const maxPower = Math.max(...powers.slice(0, this.candidateCount));
     if (maxPower <= 0) {
       return null;
     }
-    // power は振幅の2乗なので振幅スケールに戻して正規化する
-    return powers.map((p) => Math.sqrt(p / maxPower));
+    const eps = maxPower * 1e-12; // log(0) 回避
+    const powerDb = powers.map((p) => 10 * Math.log10(p + eps));
+    const floorDb = computeFloorDb(powerDb, floorWindowSemitones, floorPercentile);
+    // 床のケイリング: フレーム内最大パワーから maxDynamicRangeDb 以上下がった
+    // 床は frameMaxDb - maxDynamicRangeDb まで切り上げる (詳細は
+    // maxDynamicRangeDb オプションのコメント参照)。Infinity (既定) なら無効
+    const frameMaxDb = 10 * Math.log10(maxPower);
+    const ceilingDb = frameMaxDb - maxDynamicRangeDb;
+    const cappedFloorDb = floorDb.map((db) => Math.max(db, ceilingDb));
+    return powerDb.map((db, i) => clamp01((db - cappedFloorDb[i]) / headroomDb));
   }
 
   /**
@@ -309,7 +504,18 @@ export class PitchPleaseNoteDetector implements NoteDetector {
       harmonicRichSubtract,
       harmonicPureSubtract,
       subHarmonicDescendRatio,
+      normalizationMode,
+      provisionalMinRatio,
     } = this.options;
+    const isNoiseFloor = normalizationMode === "noiseFloor";
+    // noiseFloor は床基準の SNR で強い音の高次倍音 (7f〜12f) が露出しうるため
+    // 減算系列だけ拡張する (サリエンス計算は HARMONIC_SEMITONE_OFFSETS のまま)
+    const subtractOffsets = isNoiseFloor
+      ? SUBTRACT_SEMITONE_OFFSETS
+      : HARMONIC_SEMITONE_OFFSETS;
+    const descendFundamentalMin = isNoiseFloor
+      ? DESCEND_FUNDAMENTAL_MIN_NOISE_FLOOR
+      : DESCEND_FUNDAMENTAL_MIN;
 
     const amplitudes = this.measureAmplitudes(frame);
     if (!amplitudes) {
@@ -383,7 +589,7 @@ export class PitchPleaseNoteDetector implements NoteDetector {
         for (const offset of DESCEND_SEMITONE_OFFSETS) {
           const lower = best - offset;
           if (!isAcceptable(lower)) continue;
-          if (residualByMidi(lower) < DESCEND_FUNDAMENTAL_MIN) continue;
+          if (residualByMidi(lower) < descendFundamentalMin) continue;
           const lowerSalience = harmonicSalience(lower, residualByMidi);
           if (lowerSalience >= subHarmonicDescendRatio * bestSalience) {
             best = lower;
@@ -420,8 +626,8 @@ export class PitchPleaseNoteDetector implements NoteDetector {
           ? harmonicRichSubtract
           : harmonicPureSubtract;
       residual[baseIndex] = 0;
-      for (let k = 1; k < HARMONIC_SEMITONE_OFFSETS.length; k++) {
-        const j = baseIndex + HARMONIC_SEMITONE_OFFSETS[k];
+      for (let k = 1; k < subtractOffsets.length; k++) {
+        const j = baseIndex + subtractOffsets[k];
         if (j < residual.length) {
           residual[j] *= 1 - subtractFactor;
         }
@@ -441,7 +647,7 @@ export class PitchPleaseNoteDetector implements NoteDetector {
           harmonicSalience(midiNote, residualByMidi) / initialMaxSalience
         ),
       }))
-      .filter(({ ratio }) => ratio >= PROVISIONAL_MIN_RATIO)
+      .filter(({ ratio }) => ratio >= provisionalMinRatio)
       .sort((a, b) => b.ratio - a.ratio)
       .slice(0, PROVISIONAL_MAX_COUNT)
       .map(({ midiNote, ratio }) => ({

@@ -48,7 +48,7 @@ const config: ChordEvalCliConfig = {
     }
     // undefined を返す (= createDetector 未指定) と chordEvalLib.ts が
     // 既定の PitchPleaseNoteDetector を生成し、pitchplease 推奨の
-    // estimationOptions (medianSalience) を自動的に下敷きにする
+    // estimationOptions (PITCH_PLEASE_ESTIMATION_OPTIONS) を自動的に下敷きにする
     return undefined;
   },
   supportsStreaming: () => true,

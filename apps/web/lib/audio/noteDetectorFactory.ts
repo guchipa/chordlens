@@ -57,14 +57,15 @@ export function supportsStreaming(algorithm: ChordDetectionAlgorithm): boolean {
 /**
  * アルゴリズムごとの推奨集約オプション (noteEventsToPitchList に渡す
  * ChordToneEstimationOptions)。バッチ的な一括解析 (MicInputButton や
- * useChordFollow のバッチ経路) 専用。pitchplease は連続サリエンスの時間中央値
- * 集約 (medianSalience)、basic-pitch は従来の合計発音時間×最大振幅集約
- * (durationAmplitude、既定値) を使う。
+ * useChordFollow のバッチ経路) 専用。pitchplease は PITCH_PLEASE_ESTIMATION_OPTIONS
+ * (床正規化下でのチューニング。既定は durationAmplitude + サブオクターブ
+ * 抑制)、basic-pitch は従来の合計発音時間×最大振幅集約 (durationAmplitude、
+ * 既定値) を使う。
  *
- * StreamingChordTracker (低レイテンシ追従) には適用しない: 倍音残差の出現は
- * 呼吸・強弱と同じ 1〜2 秒スケールで自己相関しており、短い集約窓では
- * medianSalience が機能しない (batch は複数呼吸サイクルを平均できるため機能する)。
- * streaming は常に legacy (durationAmplitude、既定値) のままにする
+ * StreamingChordTracker (低レイテンシ追従) には適用しない: pitchplease の
+ * streaming 既定値は StreamingChordTracker 自身の
+ * STREAMING_CHORD_ESTIMATION_DEFAULTS に委ねる (継続時間フィルタなど
+ * streaming 固有のちらつき対策が batch と異なるため)
  */
 export function recommendedEstimationOptions(
     algorithm: ChordDetectionAlgorithm

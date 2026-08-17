@@ -229,15 +229,16 @@ export function createEvalDetector(opts: EvalOptions): NoteDetector {
 /**
  * evaluateBatch に渡す estimationOptions を解決する。
  * createDetector 未指定 (= PitchPleaseNoteDetector の既定生成、pitchplease 既定)
- * のときは PITCH_PLEASE_ESTIMATION_OPTIONS (medianSalience) を下敷きにする
+ * のときは PITCH_PLEASE_ESTIMATION_OPTIONS を下敷きにする
  * (ユーザー指定の estimationOptions が優先)。basic-pitch など明示的に
  * createDetector を注入する場合は従来どおり opts.estimationOptions のみを使う。
  *
- * streaming (evaluateStreaming) には適用しない: 倍音残差の出現は呼吸・強弱と
- * 同じ 1〜2 秒スケールで自己相関しており、streaming の短い集約窓では
- * medianSalience が機能しない (batch は複数呼吸サイクルを平均できるため機能する)。
- * streaming は従来どおり legacy 集約 (durationAmplitude、
- * STREAMING_CHORD_ESTIMATION_DEFAULTS) のままにする
+ * batch・streaming とも既定は legacy 集約 (durationAmplitude、二値採択の
+ * 数え上げ)。段階3以前は batch のみ medianSalience (連続サリエンスの時間
+ * 中央値) を既定にしていたが、noiseFloor 正規化でフレーム単位の採択自体が
+ * 安定した結果、legacy 集約の方が全評価条件で上回った
+ * (docs/CHORD_DETECTION.md 参照)。medianSalience はオプション機能として
+ * estimationOptions で明示すれば利用できる
  */
 function resolveBatchEstimationOptions(
   opts: EvalOptions
@@ -261,8 +262,10 @@ export async function evaluateBatch(
 /**
  * ストリーミング経路: アプリでは確定した和音が次の確定まで表示され続けるため、
  * 「最も長く表示されていた和音」を採用する。
- * estimationOptions は opts.estimationOptions のみを使う (pitchplease でも
- * medianSalience を自動適用しない。理由は resolveBatchEstimationOptions 参照)
+ * estimationOptions は opts.estimationOptions のみを使う
+ * (PITCH_PLEASE_ESTIMATION_OPTIONS を自動的には下敷きにしない。pitchplease の
+ * streaming 既定値は StreamingChordTracker の STREAMING_CHORD_ESTIMATION_DEFAULTS
+ * に委ねる。理由は resolveBatchEstimationOptions 参照)
  */
 export async function evaluateStreaming(
   audio: Float32Array,

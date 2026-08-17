@@ -41,6 +41,18 @@ export interface ChordToneEstimationOptions {
    */
   harmonicSuppressionScoreRatio?: number;
   /**
+   * サブオクターブの差音 (combination tone) 幽霊音に対するスコア比の下限
+   * (0〜1)。ある音 m の 12 半音上 (m+12) が検出リストにあり、m のスコアが
+   * (m+12 のスコア) × この比率未満なら m を除外する。
+   * 純正五度の2音 (根音 + 完全5度上) は録音系の非線形性により根音の
+   * 1オクターブ下の狭帯域差音を生むことがあり、この差音は倍音系列
+   * (差音自身の 1f/2f/3f...) を丸ごと持つため harmonicSuppressionScoreRatio
+   * (系列の下方抑制) をすり抜ける。差音は一次音より 20dB 以上弱いことを
+   * 利用して除去する。真のオクターブ重ね (2 音が実際に同時に鳴っている) は
+   * スコアが拮抗するため残る。0 で無効 (既定)
+   */
+  subOctaveSuppressionScoreRatio?: number;
+  /**
    * フレーム間集約の方式。
    * - "durationAmplitude" (既定): 合計発音時間 × 最大振幅 (二値採択の数え上げ)。
    *   basic-pitch 互換のため既定値として維持する
@@ -63,6 +75,7 @@ export const CHORD_TONE_ESTIMATION_DEFAULTS: Required<ChordToneEstimationOptions
     // 0.5 は実データの座標降下法探索の結果 (docs/CHORD_DETECTION.md §5)。
     // 調整用 (TUS)・検証用 (YCY) の両方で batch の誤検出が減った
     harmonicSuppressionScoreRatio: 0.5,
+    subOctaveSuppressionScoreRatio: 0,
     scoreMode: "durationAmplitude",
     salienceQuantile: 0.5,
     minMedianSalience: 0.1,
@@ -213,6 +226,26 @@ function suppressWeakHarmonicDuplicates(
 }
 
 /**
+ * 差音 (combination tone) 由来のサブオクターブ幽霊音を除去する。
+ * suppressWeakHarmonicDuplicates (下方向: m の系列を m-12/-19 と比較) と
+ * 対称の、上方向 (m+12) 参照の抑制。詳細は
+ * subOctaveSuppressionScoreRatio のコメント参照
+ */
+function suppressSubOctaveGhosts(
+  notes: AggregatedNote[],
+  scoreRatio: number
+): AggregatedNote[] {
+  if (scoreRatio <= 0) {
+    return notes;
+  }
+  const scoreByMidi = new Map(notes.map((n) => [n.midiNote, n.score]));
+  return notes.filter((note) => {
+    const upperScore = scoreByMidi.get(note.midiNote + 12);
+    return upperScore === undefined || note.score >= upperScore * scoreRatio;
+  });
+}
+
+/**
  * 隣接半音のペアはスコアの高い方に解決する。
  * デチューンした音 (格子の中間の音程) はフレームによって上下どちらの
  * 半音に量子化されるかが揺れ、集約すると両方が残ってしまう。
@@ -274,32 +307,38 @@ export function noteEventsToPitchList(
 
   const aggregated =
     opts.scoreMode === "medianSalience"
-      ? suppressWeakHarmonicDuplicates(
-          resolveAdjacentSemitones(
-            aggregateNoteEventsByMedianSalience(
-              events,
-              opts.salienceQuantile
-            ).filter(
-              (note) =>
-                note.score >= opts.minMedianSalience && inOctaveRange(note)
-            )
+      ? suppressSubOctaveGhosts(
+          suppressWeakHarmonicDuplicates(
+            resolveAdjacentSemitones(
+              aggregateNoteEventsByMedianSalience(
+                events,
+                opts.salienceQuantile
+              ).filter(
+                (note) =>
+                  note.score >= opts.minMedianSalience && inOctaveRange(note)
+              )
+            ),
+            opts.harmonicSuppressionScoreRatio
           ),
-          opts.harmonicSuppressionScoreRatio
+          opts.subOctaveSuppressionScoreRatio
         )
-      : suppressWeakHarmonicDuplicates(
-          resolveAdjacentSemitones(
-            // durationAmplitude (legacy) は provisional (採択閾値未満の候補標本)
-            // を集約前に除外する。provisional は medianSalience 専用の標本であり、
-            // legacy の二値採択に混ぜると閾値未満の音が発音時間としてカウントされ
-            // てしまう (streaming の短い集約窓で特に汚染が大きい)
-            aggregateNoteEvents(events.filter((e) => !e.provisional)).filter(
-              (note) =>
-                note.totalDurationSeconds >= opts.minTotalDurationSeconds &&
-                note.maxAmplitude >= opts.minAmplitude &&
-                inOctaveRange(note)
-            )
+      : suppressSubOctaveGhosts(
+          suppressWeakHarmonicDuplicates(
+            resolveAdjacentSemitones(
+              // durationAmplitude (legacy) は provisional (採択閾値未満の候補標本)
+              // を集約前に除外する。provisional は medianSalience 専用の標本であり、
+              // legacy の二値採択に混ぜると閾値未満の音が発音時間としてカウントされ
+              // てしまう (streaming の短い集約窓で特に汚染が大きい)
+              aggregateNoteEvents(events.filter((e) => !e.provisional)).filter(
+                (note) =>
+                  note.totalDurationSeconds >= opts.minTotalDurationSeconds &&
+                  note.maxAmplitude >= opts.minAmplitude &&
+                  inOctaveRange(note)
+              )
+            ),
+            opts.harmonicSuppressionScoreRatio
           ),
-          opts.harmonicSuppressionScoreRatio
+          opts.subOctaveSuppressionScoreRatio
         );
 
   if (aggregated.length === 0) {

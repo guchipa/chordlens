@@ -255,6 +255,53 @@ describe("chordToneEstimation", () => {
       expect(result.map((p) => `${p.pitchName}${p.octaveNum}`)).toContain("C4");
     });
 
+    it("subOctaveSuppressionScoreRatio: 弱いサブオクターブ (差音疑い、score比0.2) を除外する", () => {
+      // C4 (score=1.8) の1オクターブ下 C3 が弱いスコア (score=0.3、比 1/6) で
+      // 検出された想定 (完全5度の差音を模す)
+      const events = [note(48, 2.0, 0.15), note(60, 2.0, 0.9)];
+
+      const result = noteEventsToPitchList(events, {
+        relativeScoreThreshold: 0,
+        harmonicSuppressionScoreRatio: 0,
+        subOctaveSuppressionScoreRatio: 0.3,
+      });
+
+      expect(result.map((p) => `${p.pitchName}${p.octaveNum}`)).toEqual([
+        "C4",
+      ]);
+    });
+
+    it("subOctaveSuppressionScoreRatio: 拮抗するオクターブ重ね (score比0.8) は残す", () => {
+      // C3 (score=1.44) と C4 (score=1.8、比 0.8) が実際に同時に鳴っている想定
+      const events = [note(48, 1.6, 0.9), note(60, 2.0, 0.9)];
+
+      const result = noteEventsToPitchList(events, {
+        relativeScoreThreshold: 0,
+        harmonicSuppressionScoreRatio: 0,
+        subOctaveSuppressionScoreRatio: 0.5,
+      });
+
+      expect(result.map((p) => `${p.pitchName}${p.octaveNum}`)).toEqual([
+        "C3",
+        "C4",
+      ]);
+    });
+
+    it("subOctaveSuppressionScoreRatio: 0 で無効にできる", () => {
+      const events = [note(48, 2.0, 0.15), note(60, 2.0, 0.9)];
+
+      const result = noteEventsToPitchList(events, {
+        relativeScoreThreshold: 0,
+        harmonicSuppressionScoreRatio: 0,
+        subOctaveSuppressionScoreRatio: 0,
+      });
+
+      expect(result.map((p) => `${p.pitchName}${p.octaveNum}`)).toEqual([
+        "C3",
+        "C4",
+      ]);
+    });
+
     describe("scoreMode: medianSalience", () => {
       /** frames の各フレームで note を鳴らすイベント列を作る (frames は 0.25 秒刻みの index) */
       function framedNotes(
