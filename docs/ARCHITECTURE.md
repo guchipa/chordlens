@@ -133,7 +133,9 @@ chordlens/
 │       ├── scripts/             # オフライン解析 CLI (analyze-audio-file) と
 │       │                        # 構成音検出の実データ評価 (evaluate-chord-detection)。
 │       │                        # 評価の共通ロジックは lib/chordEvalLib・lib/chordEvalCli に置き、
-│       │                        # apps/web 側の CLI からも再利用する
+│       │                        # apps/web 側の CLI からも再利用する。
+│       │                        # lib/spectralAttenuation.ts はレベル不均衡
+│       │                        # augmentation (--attenuate) 用のスペクトル減衰
 │       ├── __tests__/           # コアロジックのユニットテスト（Node 環境）
 │       └── tsconfig.json        # DOM lib なし = ブラウザ API 依存を禁止
 │

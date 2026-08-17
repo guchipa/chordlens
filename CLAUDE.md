@@ -56,7 +56,8 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
 - ピッチ推定は 3 アルゴリズム: FFT ピーク (デフォルト) / SWIPE' / 位相ボコーダ
 - 構成音の自動検出は 2 アルゴリズム: basic-pitch (`@spotify/basic-pitch`, TFJS, A4=440 固定,
   3 秒録音のバッチ方式) / pitchplease (倍音和サリエンス + 貪欲減算, Goertzel ベースの core 実装,
-  A4 設定に追従, AudioWorklet + `StreamingChordTracker` によるストリーミング方式で低レイテンシ)。
+  A4 設定に追従, ノイズ床基準の dB SNR で音名ビンを正規化 (noiseFloor 既定),
+  AudioWorklet + `StreamingChordTracker` によるストリーミング方式で低レイテンシ)。
   いずれも `NoteDetector` adapter 経由で音名特定のみに使い、純正律偏差の計測には使わない。
   アルゴリズム詳細は `docs/CHORD_DETECTION.md`、追加手順は
   `apps/web/lib/audio/noteDetectorFactory.ts` のコメント参照
@@ -66,6 +67,7 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
   basic-pitch は TFJS 実装が apps/web 側にあるため CLI が 2 つに分かれている)
   (正解ラベルはファイル名末尾 `_C4-Eb4-G4` 形式・先頭が根音。アンサンブル実験の
   録音は根音奏者の有無が混在するため `--root-optional` で根音を任意採点にする)
+  レベル不均衡 (1 人だけ弱い/欠けた演奏) への耐性も `--attenuate 6` / `--attenuate 12` で確認する
 - A4 デフォルトは **442Hz** (`packages/core/src/constants.ts`)
 - 数値解析コードを変更したら必ず `packages/core/__tests__/audio_analysis/` のテストを実行
 

@@ -121,21 +121,41 @@ s[n] = x[n] + coeff·s[n-1] - s[n-2]
 ```
 
 素朴な cos/sin 内積と数学的に等価 (検証: `goertzel.test.ts`) で、
-サンプルごとの三角関数評価が不要です。
+サンプルごとの三角関数評価が不要です。既定 (noiseFloor モード) では
+Goertzel の前にフレームへ Hann 窓を掛けます (後述)。
 
 **デチューン探索**: 各音名ビンは格子周波数 ±45 セントを複数オフセットで測り
-最大値を採ります (`detuneOffsetsForFreq`)。刻みは DFT メインローブ幅
-(≈ 1/(2·frameSeconds) Hz をセント換算) に合わせます:
+最大値を採ります (`detuneOffsetsForFreq`)。刻みは DFT メインローブ半幅
+(矩形窓 ≈ 1/(2·frameSeconds) Hz、Hann 窓はメインローブが約 2 倍広いため
+≈ 1/frameSeconds Hz) をセント換算した値に合わせます:
 
-| 周波数帯 | ローブ半幅 | オフセット |
+| 周波数帯 (矩形窓 = frameMax 基準) | ローブ半幅 | オフセット |
 |---|---|---|
 | 〜77Hz (低音域) | ±45セント以上 | 0 のみ (広く探すと**隣の半音の実音を拾ってしまう**) |
 | 中音域 | 15〜45セント | 0, ±ローブ幅刻み |
 | 高音域 | 〜15セント | 15 セント刻みで ±45 まで |
 
+既定の noiseFloor モードは Hann 窓でメインローブが約 2 倍広いため、
+上表の帯域境界もそれぞれ高域側にシフトする (0 のみを使う低音域が広がる)。
+
 測定グリッドは候補範囲の**上へ 31 半音 (最高候補音の 6 倍音相当)** まで拡張し
 (Nyquist 未満のみ)、高音域の候補でもサリエンスが計算できるようにします。
-正規化は候補範囲内の最大パワーを基準にした振幅スケール `√(P/maxP)` です。
+
+**正規化 (`normalizationMode`)**: 2 方式があり既定は **noiseFloor**:
+
+- **noiseFloor (既定)**: フレームに Hann 窓を掛けてから測る (矩形窓の
+  緩やかなサイドローブ減衰 -6dB/oct を Hann の -18dB/oct に置き換え、強い音の
+  遠くの倍音位置がスペクトル漏れで「床から浮いた孤立ビン」になるのを防ぐ)。
+  各ビンを dB 化し、MIDI 軸上 ±`floorWindowSemitones` (6) 半音窓の分位点
+  (`floorPercentile` 0.5 = 中央値) をそのビンのノイズ床とし、床からの SNR を
+  `headroomDb` (40dB) で 0〜1 に正規化する:
+  `amplitude = clamp((P_dB − floor_dB) / headroomDb, 0, 1)`。
+  さらに床のケイリング (`maxDynamicRangeDb` 45dB): フレーム内最大パワーから
+  45dB を超えて低い床は `frameMaxDb - 45dB` まで切り上げる (実音が疎な高音域で
+  床が過小推定され、アーティファクトの SNR が過大評価されるのを防ぐ)。
+  大音量奏者がいても他奏者の基音の相対的な強さが埋もれない
+- **frameMax (旧実装)**: 矩形窓のまま測り、候補範囲内の最大パワーを基準にした
+  振幅スケール `√(P/maxP)` で正規化する。比較実験用に残す
 
 **フレーム長 0.25 秒の根拠**: メインローブ幅 ≈ 4Hz に対し、最低候補 C2 (~65Hz)
 付近の半音間隔は ~4Hz。これ以上短いと低音域の隣接半音が分離できません。
@@ -165,12 +185,17 @@ salience(m) = Σ_k w_k · residual[m + offset_k],   w = SALIENCE_WEIGHTS
 **貪欲ループ** (最大 `maxNotesPerFrame` 音):
 
 1. 残差からサリエンスを再計算し、最大の候補を選ぶ
-2. **サブオクターブ降下**: オクターブ下 (または 12 度下) の候補のサリエンスが
-   `subHarmonicDescendRatio` 倍以上なら低い方を採用する。
-   倍音位置 (2f) は自身の系列 {2f, 4f, 6f} を高い重みで拾うため、真の基音と
-   サリエンスが拮抗することがあり、その場合は基音側に倒す
+2. **サブオクターブ降下**: オクターブ下 (または 12 度下) の候補について、
+   その基音ビンが `DESCEND_FUNDAMENTAL_MIN` (noiseFloor: 0.30 / frameMax: 0.15、
+   通常の採用閾値よりやや高い) 以上、かつサリエンスが `subHarmonicDescendRatio`
+   倍以上なら低い方を採用する。倍音位置 (2f) は自身の系列 {2f, 4f, 6f} を
+   高い重みで拾うため、真の基音とサリエンスが拮抗することがあり、
+   その場合は基音側に倒す
 3. 採用。イベント振幅 = 正規化サリエンス (フレーム内最大 = 1)
-4. **倍音減算**: 採用音の倍音位置の残差を減算する
+4. **倍音減算**: 採用音の倍音位置の残差を減算する。減算対象の倍音次数は
+   サリエンス計算 (1f〜6f) と独立で、noiseFloor モードは 1f〜12f まで拡張する
+   (床基準 SNR では強い音の 7 次以上の実在倍音が Hann 窓越しでも床から浮き、
+   幽霊音として誤検出されうるため。frameMax モードは 1f〜6f のまま)
    - 倍音が 1 本以上立っている音 → `harmonicRichSubtract` (90%) 減算
    - 倍音がまったくない純音 → `harmonicPureSubtract` (30%) のみ
      (倍音位置のエネルギーが別の実音である可能性を残す)
@@ -184,12 +209,19 @@ salience(m) = Σ_k w_k · residual[m + offset_k],   w = SALIENCE_WEIGHTS
 |---|---|---|
 | `minMidiNote` / `maxMidiNote` | 36 (C2) / 95 (B6) | 候補範囲 (下限はハム対策) |
 | `frameSeconds` | 0.25 | フレーム長 (低音分離の下限) |
-| `fundamentalThreshold` | 0.15 | 候補の基音ビンに要求する正規化振幅 |
+| `normalizationMode` | noiseFloor (既定) / frameMax (比較用) | 音名ビンの正規化方式 |
+| `floorPercentile` | 0.5 | noiseFloor: 床推定の分位点 (中央値) |
+| `floorWindowSemitones` | 6 | noiseFloor: 床推定の MIDI 軸近傍窓幅 (半音、片側) |
+| `headroomDb` | 40 | noiseFloor: 振幅 1.0 に相当する床からの SNR (dB) |
+| `maxDynamicRangeDb` | 45 | noiseFloor: 床のケイリング (frameMaxDb からこれ以上下がった床を切り上げ) |
+| `fundamentalThreshold` | 0.20 | 候補の基音ビンに要求する正規化振幅 (noiseFloor では床から 8dB 上相当) |
 | `salienceThreshold` | 0.3 | 採用を打ち切るサリエンス比 |
 | `harmonicRichSubtract` / `harmonicPureSubtract` | 0.9 / 0.3 | 倍音位置の減算率 |
 | `subHarmonicDescendRatio` | 0.85 | サブオクターブ降下の拮抗判定 |
+| `DESCEND_FUNDAMENTAL_MIN` (定数) | noiseFloor: 0.30 / frameMax: 0.15 | サブオクターブ降下の対象に要求する基音ビンの下限 |
 | `maxNotesPerFrame` | 6 | 1 フレームの最大採用数 |
-| `SALIENCE_WEIGHTS` (定数) | [1, 0.6, 0.45, 0.35, 0.3, 0.25] | 倍音重み (1f〜6f) |
+| `SALIENCE_WEIGHTS` (定数) | [1, 0.6, 0.45, 0.35, 0.3, 0.25] | 倍音重み (1f〜6f、サリエンス計算用) |
+| `SUBTRACT_SEMITONE_OFFSETS` (定数) | noiseFloor: 1f〜12f / frameMax: 1f〜6f | 倍音減算の対象次数 |
 | `DETUNE_COVER_CENTS` (定数) | 45 | デチューン探索のカバー幅 |
 | `LOW_NOTE_SUPPORT_MAX_MIDI` (定数) | 55 (G3) | 低音ゲートの適用上限 |
 
@@ -203,6 +235,16 @@ salience(m) = Σ_k w_k · residual[m + offset_k],   w = SALIENCE_WEIGHTS
   「実音の重ね」か「第 2 倍音」かはスペクトルから区別できない
 - **短 2 度が同時に鳴る和音は検出できない** (§3 の隣接半音解決)
 - **C2 未満の音・倍音を全く持たない低音の純音は検出しない** (低音ゲート)
+- **最大奏者より 45dB (`maxDynamicRangeDb`) 以上弱い音は検出できない**。
+  noiseFloor 正規化の床ケイリングによる仕様上の上限
+
+**noiseFloor 正規化が単体では成立しない理由**: frameMax 正規化 (フレーム内
+最大パワー基準) は、信号比例で生じるアーティファクト (窓のサイドローブ・
+相互変調積・高次倍音) を暗黙に抑制する副作用を兼ねていた。noiseFloor
+正規化 (ノイズ床基準の SNR) はこの暗黙の抑制を外すため、単独ではアーティ
+ファクトが露出して誤検出が急増する (§5.5 のアブレーション参照)。Hann 窓・
+倍音減算 1f〜12f 拡張・床の最大比ケイリングの 3 点セットで初めて frameMax
+相当以上の精度に到達する。
 
 ---
 
@@ -216,8 +258,9 @@ graph LR
     EV["DetectedNoteEvent[]"] --> AGG["MIDI別に集約<br/>スコア計算"]
     AGG --> F1["基礎フィルタ<br/>発音時間・振幅・オクターブ範囲"]
     F1 --> F2["隣接半音解決<br/>強い方に統一"]
-    F2 --> F3["倍音スコアフィルタ<br/>-12/-19の音の35%未満を除去"]
-    F3 --> SEL["相対スコア選別<br/>上位 maxNotes 音"]
+    F2 --> F3["倍音スコアフィルタ<br/>-12/-19の音の50%未満を除去"]
+    F3 --> F4["差音幽霊音抑制<br/>+12の音の40%未満を除去"]
+    F4 --> SEL["相対スコア選別<br/>上位 maxNotes 音"]
     SEL --> ROOT["ルート推定<br/>コード照合 or 最低音"]
 ```
 
@@ -226,8 +269,21 @@ graph LR
 - **倍音スコアフィルタ** (`suppressWeakHarmonicDuplicates`): フレーム段をすり抜けて
   一部フレームだけに出た倍音を刈る。X のオクターブ下 (X-12) または 12 度下 (X-19)
   が存在し `score(X) < score(下の音) × harmonicSuppressionScoreRatio` なら X を除去
+- **差音幽霊音抑制** (`suppressSubOctaveGhosts`, `subOctaveSuppressionScoreRatio`):
+  純正五度の 2 音 (根音 + 完全 5 度上) が録音系の非線形性で生む差音
+  (根音の 1 オクターブ下の幽霊音) を除去する対称フィルタ。音 X の 12 半音上
+  (X+12) が検出リストにあり `score(X) < score(X+12) × subOctaveSuppressionScoreRatio`
+  なら X を除去する。コアの既定は 0 (無効) だが、pitchplease 推奨オプション
+  (`PITCH_PLEASE_ESTIMATION_OPTIONS` / `STREAMING_CHORD_ESTIMATION_DEFAULTS`) は
+  batch・streaming とも 0.4 を使う
 - **ルート推定**: `estimateRoot` (コード定義との完全一致照合) で推定し、
   確定しなければ最低音をルートにする
+
+**集約方式 (`scoreMode`)**: 既定は `durationAmplitude` (二値採択の合計発音時間×
+最大振幅、上表の方式)。`medianSalience` (連続サリエンス + provisional 標本の
+時間中央値、閾値境界の採択揺れに頑健) はオプションとして残る。一時期
+batch の既定にしていたが、noiseFloor 正規化でフレーム単位の採択が安定した
+結果不要となり撤回した (経緯は §5.5)。
 
 | パラメータ | バッチ (3秒録音) | ストリーミング (1秒窓) | 意味 |
 |---|---|---|---|
@@ -236,6 +292,7 @@ graph LR
 | `relativeScoreThreshold` | 0.15 | 0.15 | 最有力音に対するスコア比の下限 |
 | `maxNotes` | 6 | 6 | 採用する構成音の最大数 |
 | `harmonicSuppressionScoreRatio` | 0.5 | 0.5 | 倍音スコアフィルタ |
+| `subOctaveSuppressionScoreRatio` | 0.4 (pitchplease推奨) | 0.4 (pitchplease推奨) | 差音幽霊音抑制 (コア既定は 0 = 無効) |
 
 ストリーミング用の上書きは `STREAMING_CHORD_ESTIMATION_DEFAULTS`
 (`streamingChordTracker.ts`)。
@@ -263,6 +320,13 @@ minTotalDuration (2フレーム)  + 0.25 秒
 和音の**変更**時は、旧和音のイベントがウィンドウ (1 秒) から抜けるまでの時間が
 加わり、確定まで約 1 秒です。
 
+### 無音判定
+
+`poll()` が返す `StreamingChordUpdate.silent` は、直近フレームの検出イベントが
+1 つもないか、あっても**全て provisional (採択閾値未満の候補標本)** のときに
+true になる。provisional は medianSalience 集約用の緩い標本 (§3) であり、
+確定検出が 1 つもないという意味では従来の「イベント数 0」と同じ扱いにする。
+
 ---
 
 ## 5. 実データ評価とチューニング
@@ -278,7 +342,24 @@ pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-opti
 # アルゴリズムを指定して比較する (basic-pitch を含む。web CLI)
 pnpm --filter @chordlens/web eval:chords <録音ディレクトリ> \
   --algorithm basicpitch --root-optional [--verbose]
+
+# レベル不均衡 (1人だけ弱い/欠けた演奏) への耐性を評価する
+pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-optional --attenuate 6
+pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-optional --attenuate 12
 ```
+
+**追加オプション**:
+
+- **`--attenuate <dB>`**: レベル不均衡 augmentation。正解音を 1 音ずつ、
+  その倍音帯域 (1f〜6f、±45c フルゲイン/±60c まで raised-cosine 遷移) だけを
+  全ファイル 1 回の FFT でノッチ減衰した変異体を作って評価する
+  (`scripts/lib/spectralAttenuation.ts`)。他の正解音の同帯域は保護され
+  減衰されない。ファイル数 × 正解音数ぶんの変異体が採点されるため、
+  61 ファイルの評価では n=122 になる (根音任意採点で根音を除いた場合)
+- **`--window-seconds <秒>`**: streaming 経路の `StreamingChordTracker` の
+  `windowSeconds` を上書きする (省略時は既定の 1.0 秒)
+- 会場別 (ファイル名の会場セグメント、例 TUS/YCY) の F1 内訳が自動的に
+  出力に付く
 
 **2 つの CLI がある理由**: basic-pitch は TFJS 実装が `apps/web` 側にあり、
 core からは参照できない (依存方向の制約)。そのため core の CLI は pitchplease 専用で、
@@ -359,7 +440,71 @@ basic-pitch はストリーミング非対応のため batch のみ。
 既定を pitchplease にしているのは、この F1 差に加えて反映レイテンシ (~0.6 秒 vs
 3.5 秒以上) と A4 設定への追従があるため。
 
-### 5.5. 評価データの注意
+> **注**: 上表の pitchplease の数値は noiseFloor 正規化導入前
+> (frameMax 正規化 + 集約は harmonicSuppressionScoreRatio 調整後の legacy) の
+> もの。導入後の再評価は §5.5 (basic-pitch 側は未再評価で、この表の数値のまま)。
+> 「弱い基音の情報はスペクトルに存在していて正規化・閾値設計が捨てているだけ」
+> という上の観察が、§5.5 の noiseFloor 正規化 (弱い奏者の基音を掘り起こす設計)
+> の直接の動機になった。
+
+### 5.5. 床正規化と不均衡耐性の調整記録 (2026-08, 61 ファイル)
+
+§5.3・§5.4 のチューニングの後、2 点を追加で見直した:
+(1) `--attenuate` augmentation でレベル不均衡 (1 人だけ弱い/欠けた演奏) への
+耐性を評価基盤に加える、(2) frameMax 正規化 (フレーム内最大パワー基準) を
+noiseFloor 正規化 (ノイズ床基準の dB SNR、§2.2) に置き換える。
+
+**採否**:
+
+- **採用 (1) レベル不均衡 augmentation**: `--attenuate` を評価 CLI に追加。
+  1 音ずつ倍音帯域を減衰させた変異体で回帰評価できるようにした
+- **採用 (2) noiseFloor 正規化**: Hann 窓 + 倍音減算 12f 拡張 + 床の最大比
+  ケイリング (45dB) + `fundamentalThreshold` 0.20 のセット。個別には成立せず、
+  セットで初めて成立する (下記アブレーション参照)
+- **採用 (3) サブオクターブ抑制** (`subOctaveSuppressionScoreRatio` 0.4):
+  純正五度の差音由来の根音 -1oct 幽霊音を集約段で除去する (§3)
+- **一時採用 → 撤回: 中央値集約** (batch, `scoreMode: "medianSalience"`):
+  frameMax 時代の採択揺れへの対症療法だった。noiseFloor 正規化でフレーム
+  単位の採択自体が安定すると不要になり、legacy 集約 (durationAmplitude) の
+  方が全評価条件で上回った (batch F1 0.930 vs 0.964)。オプション機能として
+  実装は残す (§3)
+
+**棄却したアプローチ**:
+
+- streaming への中央値集約: 倍音残差の閾値割れが呼吸スケール (1〜2 秒) で
+  自己相関し、`windowSeconds` 1.0〜2.5 秒の中央値では分離できない
+  (全窓で悪化した)
+- 素の noiseFloor 正規化 (矩形窓・倍音減算 6f のまま): 7f 以上の実在倍音と
+  サイドローブが露出し、batch F1 が 0.637 まで崩壊した
+- 床とフレーム内最大比の二重ゲート: ゴーストと真の基音の最大比分布が
+  重なることを実測で確認し、分離条件として成立しなかった
+- 集約段での閾値の引き上げ: YCY のゴースト誤検出 4/6 は毎フレーム確定
+  検出されており、集約段のフィルタでは原理的に止められない
+
+**評価結果 (61 ファイル、`--root-optional`。-6dB/-12dB は正解音ごとの
+変異体で n=122)**:
+
+| 条件 | 経路 | F1 | P | R | missing | extra(oct) | TUS F1 | YCY F1 |
+|---|---|---|---|---|---|---|---|---|
+| 原音 | batch | 0.964 | 0.938 | 0.992 | 1 | 8(7) | 0.960 | 0.969 |
+| 原音 | streaming | 0.972 | 0.953 | 0.992 | 1 | 6(4) | 0.973 | 0.970 |
+| -6dB | batch | 0.941 | 0.905 | 0.980 | 5 | 25(19) | 0.928 | 0.959 |
+| -6dB | streaming | 0.954 | 0.933 | 0.975 | 6 | 17(11) | 0.952 | 0.954 |
+| -12dB | batch | 0.924 | 0.884 | 0.967 | 8 | 31(23) | 0.906 | 0.949 |
+| -12dB | streaming | 0.923 | 0.912 | 0.934 | 16 | 22(14) | 0.918 | 0.928 |
+
+改善前 baseline (frameMax 正規化、§5.4 時点の設定): 原音 batch F1 0.926 /
+streaming 0.933、-6dB 0.843/0.825、-12dB 0.760/0.733。exact (原音, 61ファイル)
+は batch 49→54、streaming 51→55 に改善。
+
+**教訓 (frameMax 正規化が兼ねていた暗黙の役割)**: frameMax 正規化は、信号
+比例で生じるアーティファクト (窓のサイドローブ・相互変調積・高次倍音) を
+暗黙に抑制する副作用を兼ねていた。noiseFloor 正規化への移行はこの暗黙の
+抑制を外すため、Hann 窓・倍音減算 12f 拡張・床の最大比ケイリングとの
+セットで初めて成立する。ケイリング 45dB は「最大奏者より 45dB 以上弱い音は
+検出できない」という仕様上のトレードオフ (§2.6)。
+
+### 5.6. 評価データの注意
 
 - 録音には正解ラベルの音が入っていないもの (奏者の欠落・レベル過小) がある。
   タイムライン解析 (フレームごとの上位ビン表示) で確認済み。
