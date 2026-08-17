@@ -62,6 +62,8 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
   `apps/web/lib/audio/noteDetectorFactory.ts` のコメント参照
 - 構成音検出を変更したら実録音で回帰評価する:
   `pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-optional`
+  (basic-pitch を含む比較は `pnpm --filter @chordlens/web eval:chords <dir> --algorithm basicpitch --root-optional`。
+  basic-pitch は TFJS 実装が apps/web 側にあるため CLI が 2 つに分かれている)
   (正解ラベルはファイル名末尾 `_C4-Eb4-G4` 形式・先頭が根音。アンサンブル実験の
   録音は根音奏者の有無が混在するため `--root-optional` で根音を任意採点にする)
 - A4 デフォルトは **442Hz** (`packages/core/src/constants.ts`)

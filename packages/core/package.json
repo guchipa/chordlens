@@ -6,6 +6,7 @@
   "description": "ChordLens のプラットフォーム非依存コアロジック（音声解析・プリセット・ログ CSV）。Web / モバイルの両方から利用する。",
   "exports": {
     ".": "./src/index.ts",
+    "./scripts/*": "./scripts/*.ts",
     "./*": "./src/*.ts"
   },
   "scripts": {

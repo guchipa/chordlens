@@ -131,7 +131,9 @@ chordlens/
 │       │   ├── types.ts         # 型定義
 │       │   └── index.ts         # エントリーポイント
 │       ├── scripts/             # オフライン解析 CLI (analyze-audio-file) と
-│       │                        # 構成音検出の実データ評価 (evaluate-chord-detection)
+│       │                        # 構成音検出の実データ評価 (evaluate-chord-detection)。
+│       │                        # 評価の共通ロジックは lib/chordEvalLib・lib/chordEvalCli に置き、
+│       │                        # apps/web 側の CLI からも再利用する
 │       ├── __tests__/           # コアロジックのユニットテスト（Node 環境）
 │       └── tsconfig.json        # DOM lib なし = ブラウザ API 依存を禁止
 │
@@ -156,6 +158,9 @@ chordlens/
 │       │   └── utils/exportLog.ts  # CSV ダウンロード（Web バインディング）
 │       ├── functions/           # Cloudflare Pages Functions (client-log API)
 │       ├── public/              # 静的ファイル
+│       ├── scripts/             # Node で動くオフライン CLI。ブラウザ依存の検出器
+│       │                        # (basic-pitch) を含む構成音検出の実データ評価
+│       │                        # (tsconfig.scripts.json 側で型検査する)
 │       └── __tests__/           # コンポーネント・Web 依存ロジックのテスト (jsdom)
 │
 └── docs/                         # ドキュメント
@@ -240,7 +245,7 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
 `ChordFollowToggle` の Select で切り替える。処理経路はアルゴリズムにより異なる
 （詳細は [CHORD_DETECTION.md](./CHORD_DETECTION.md)）。
 
-**ストリーミング経路 (pitchplease)**:
+**ストリーミング経路 (pitchplease、既定)**:
 
 1. **PCM キャプチャ** → `StreamingPcmCapture` (apps/web) が AudioWorklet
    (`public/pcm-capture-processor.js`) で生 PCM をチャンク単位に連続取得
@@ -253,6 +258,10 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
    体感レイテンシは 1 秒未満
 
 **バッチ経路 (basicpitch)**:
+
+> 既定は pitchplease。basicpitch は設定で明示的に選んだ場合のみ使われる。
+> 選択値は localStorage に永続化されるため、既定値の変更は既存ユーザーには適用されない。
+
 
 1. **音量ゲート** → `SoundLevelMonitor` が入力の RMS を監視し、
    閾値 (`SOUND_RMS_THRESHOLD`) を超えるまで待機（無音時は推論しない）

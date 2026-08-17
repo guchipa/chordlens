@@ -272,8 +272,24 @@ minTotalDuration (2フレーム)  + 0.25 秒
 アルゴリズムの変更は必ず実録音で回帰評価します:
 
 ```bash
+# pitchplease (core CLI)
 pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-optional [--verbose]
+
+# アルゴリズムを指定して比較する (basic-pitch を含む。web CLI)
+pnpm --filter @chordlens/web eval:chords <録音ディレクトリ> \
+  --algorithm basicpitch --root-optional [--verbose]
 ```
+
+**2 つの CLI がある理由**: basic-pitch は TFJS 実装が `apps/web` 側にあり、
+core からは参照できない (依存方向の制約)。そのため core の CLI は pitchplease 専用で、
+両アルゴリズムの比較は web 側の CLI から `NoteDetector` を注入して行う。
+採点ロジック・出力形式は共通 (`packages/core/scripts/lib/chordEvalCli.ts`) で、
+どちらから実行しても同じ基準で比較できる。
+
+web CLI は**アプリと同じ `BasicPitchNoteDetector` をそのまま使う**。差分はモデルの
+取得元だけで (ブラウザ: `/models/basic-pitch/model.json` を fetch / Node:
+`@spotify/basic-pitch` 同梱のモデルを fs で読み `tf.io.IOHandler` として渡す。
+`apps/web/scripts/lib/basicPitchNodeModel.ts`)、推論と後処理の設定は同一である。
 
 - 正解ラベルはファイル名末尾のブロック (例: `..._Cm_C4-Eb4-G4.webm`、先頭が根音)
 - **`--root-optional`**: 根音を「任意の音」として採点する (検出しても extra に
@@ -281,7 +297,10 @@ pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-opti
   ファイルによって異なる**ため、このデータでは必須
 - batch (ファイル全体を一括解析) と streaming (アプリと同じ追従経路、
   最も長く表示されていた確定値) の両方を、exact / F1 (ノート単位の
-  precision・recall) / missing / extra / root=最低音率で採点する
+  precision・recall) / missing / extra / root=最低音率で採点する。
+  streaming 非対応のアルゴリズム (basic-pitch) は batch のみ採点される
+- 音声のデコードレートは検出器の `requiredSampleRate` に従う
+  (pitchplease は `--sample-rate` の指定値、basic-pitch は 22050 固定)
 - 共通ロジックは `scripts/lib/chordEvalLib.ts` (パラメータ探索からも利用)
 - 録音は被験者データのためコミットしない (`test-data/` は gitignore 済み)
 
@@ -311,7 +330,36 @@ pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-opti
 参考: サリエンス方式導入前の旧・比率閾値方式は誤検出が batch で 96 個あった
 (採点方式が異なるため直接比較は不可だが、桁が違う)。
 
-### 5.4. 評価データの注意
+### 5.4. アルゴリズム比較の実測 (2026-08, 61 ファイル)
+
+両アルゴリズムを同一データ・同一採点で比較した結果 (根音任意採点、batch 経路)。
+basic-pitch はストリーミング非対応のため batch のみ。
+
+| | exact | F1 | P | R | missing | extra (うちオクターブ違い) |
+|---|---|---|---|---|---|---|
+| **pitchplease** | **49/61 (80%)** | **0.926** | 0.881 | 0.975 | 3 | 16 (10) |
+| basic-pitch | 45/61 (74%) | 0.920 | 0.858 | 0.992 | 1 | 20 (18) |
+
+楽器別 exact:
+
+| | ASax | Cl | Fl | Hr | Tb | Tp |
+|---|---|---|---|---|---|---|
+| pitchplease | 6/6 | 10/12 | 6/6 | **5/12** | 11/12 | 10/12 |
+| basic-pitch | 6/6 | 11/12 | 4/6 | **8/12** | **6/12** | 9/12 |
+
+一致率は 両方 OK 39 / pitchplease のみ OK 10 / basic-pitch のみ OK 6 / 両方 NG 6。
+**両者は別の場所で失敗している**:
+
+- basic-pitch の誤検出は 20 件中 18 件がオクターブ違いで、Tb が 6/12 まで落ちる
+- basic-pitch だけが正解した 6 件のうち 4 件が TUS_Hr_A。これは pitchplease が
+  「最弱の正解音の基音レベルがフレーム最大比 0.15 未満」で全滅するファイル群であり、
+  **弱い基音の情報はスペクトルに存在していて、pitchplease の正規化・閾値設計が
+  捨てているだけ**であることを示す (原理的限界ではない)
+
+既定を pitchplease にしているのは、この F1 差に加えて反映レイテンシ (~0.6 秒 vs
+3.5 秒以上) と A4 設定への追従があるため。
+
+### 5.5. 評価データの注意
 
 - 録音には正解ラベルの音が入っていないもの (奏者の欠落・レベル過小) がある。
   タイムライン解析 (フレームごとの上位ビン表示) で確認済み。
@@ -330,4 +378,6 @@ pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-opti
 3. `noteDetectorFactory.ts` の switch に生成処理を追加
 4. フレーム単位の解析が軽量なら `supportsStreaming()` に追加
    (StreamingChordTracker 経由の低レイテンシ経路に乗る)
-5. `eval:chords --root-optional` で実データ回帰評価を行う
+5. `eval:chords --root-optional` で実データ回帰評価を行う。
+   ブラウザ依存の実装なら `apps/web/scripts/evaluate-chord-detection.ts` の
+   `resolveDetector` に分岐を足す (core 実装なら core の CLI に足す)

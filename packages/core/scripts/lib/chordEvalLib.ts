@@ -15,6 +15,7 @@ import {
   PitchPleaseNoteDetector,
   type PitchPleaseNoteDetectorOptions,
 } from "../../src/audio_analysis/pitchPleaseNoteDetection";
+import type { NoteDetector } from "../../src/adapters/noteDetection";
 import {
   noteEventsToPitchList,
   type ChordToneEstimationOptions,
@@ -183,12 +184,45 @@ export function judge(
   };
 }
 
-export interface EvalOptions {
+/**
+ * 評価対象の NoteDetector を生成する関数。
+ * アルゴリズムを差し替えるために注入する。core からは参照できない
+ * ブラウザ依存の実装 (basic-pitch) は apps/web 側の CLI から注入される
+ */
+export type EvalDetectorFactory = (context: {
   sampleRate: number;
   a4Freq: number;
+}) => NoteDetector;
+
+export interface EvalOptions {
+  /** 音声のデコード / 解析に使うサンプルレート (Hz) */
+  sampleRate: number;
+  a4Freq: number;
+  /** NoteDetector の生成関数。省略時は PitchPleaseNoteDetector */
+  createDetector?: EvalDetectorFactory;
+  /** createDetector 未指定時に PitchPleaseNoteDetector へ渡す上書き */
   detectorOptions?: Partial<PitchPleaseNoteDetectorOptions>;
   estimationOptions?: ChordToneEstimationOptions;
   trackerOptions?: Partial<StreamingChordTrackerOptions>;
+}
+
+/**
+ * EvalOptions から NoteDetector を生成する。
+ * 実際に音声をデコードすべきサンプルレートは、生成した detector の
+ * requiredSampleRate から取得すること (basic-pitch は 22050 固定)
+ */
+export function createEvalDetector(opts: EvalOptions): NoteDetector {
+  if (opts.createDetector) {
+    return opts.createDetector({
+      sampleRate: opts.sampleRate,
+      a4Freq: opts.a4Freq,
+    });
+  }
+  return new PitchPleaseNoteDetector({
+    a4Freq: opts.a4Freq,
+    sampleRate: opts.sampleRate,
+    ...opts.detectorOptions,
+  });
 }
 
 /** バッチ経路: ファイル全体を一括解析 */
@@ -196,11 +230,7 @@ export async function evaluateBatch(
   audio: Float32Array,
   opts: EvalOptions
 ): Promise<Pitch[]> {
-  const detector = new PitchPleaseNoteDetector({
-    a4Freq: opts.a4Freq,
-    sampleRate: opts.sampleRate,
-    ...opts.detectorOptions,
-  });
+  const detector = createEvalDetector(opts);
   const events = await detector.detectNotes(audio);
   return noteEventsToPitchList(events, opts.estimationOptions);
 }
@@ -213,11 +243,7 @@ export async function evaluateStreaming(
   audio: Float32Array,
   opts: EvalOptions
 ): Promise<{ pitchList: Pitch[]; confirmations: number }> {
-  const detector = new PitchPleaseNoteDetector({
-    a4Freq: opts.a4Freq,
-    sampleRate: opts.sampleRate,
-    ...opts.detectorOptions,
-  });
+  const detector = createEvalDetector(opts);
   const tracker = new StreamingChordTracker({
     detector,
     sampleRate: opts.sampleRate,
