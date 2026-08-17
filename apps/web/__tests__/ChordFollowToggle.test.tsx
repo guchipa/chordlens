@@ -7,6 +7,10 @@ import {
     chordFollowStatusAtom,
     chordFollowErrorAtom,
 } from "@/lib/store/chordDetectionAtoms";
+import {
+    CHORD_DETECTION_ALGORITHM_DESCRIPTIONS,
+    CHORD_DETECTION_ALGORITHM_LABELS,
+} from "@chordlens/core/constants";
 
 describe("ChordFollowToggle", () => {
     const renderWithStore = (setupStore?: (store: ReturnType<typeof createStore>) => void) => {
@@ -53,10 +57,13 @@ describe("ChordFollowToggle", () => {
             store.set(chordDetectionAlgorithmAtom, "pitchplease");
         });
 
+        // ラベル文言そのものではなく定数と一致することを確認する
         expect(screen.getByText("検出アルゴリズム")).toBeInTheDocument();
-        expect(screen.getByText("PitchPlease")).toBeInTheDocument();
         expect(
-            screen.getByText(/音名ごとの周波数相関で構成音を推定します/)
+            screen.getByText(CHORD_DETECTION_ALGORITHM_LABELS.pitchplease)
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(CHORD_DETECTION_ALGORITHM_DESCRIPTIONS.pitchplease)
         ).toBeInTheDocument();
     });
 

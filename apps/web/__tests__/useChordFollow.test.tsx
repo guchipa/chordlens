@@ -11,6 +11,10 @@ import {
     chordFollowErrorAtom,
 } from "@/lib/store/chordDetectionAtoms";
 import type { DetectedNoteEvent } from "@chordlens/core/adapters/noteDetection";
+import {
+    CHORD_DETECTION_ALGORITHM_DEFAULT,
+    type ChordDetectionAlgorithm,
+} from "@chordlens/core/constants";
 
 // 録音・basic-pitch 推論・音量ゲートをモックする
 const mockRecordMonoAudio = vi.fn();
@@ -68,8 +72,14 @@ function note(midiNote: number): DetectedNoteEvent {
 }
 
 describe("useChordFollow", () => {
-    const setup = () => {
+    /**
+     * 検出アルゴリズムは明示的に指定する。
+     * どちらの経路 (バッチ / ストリーミング) を検証しているかを、
+     * アプリの既定値 (CHORD_DETECTION_ALGORITHM_DEFAULT) に依存させないため
+     */
+    const setup = (algorithm: ChordDetectionAlgorithm = "basicpitch") => {
         const store = createStore();
+        store.set(chordDetectionAlgorithmAtom, algorithm);
         const wrapper = ({ children }: { children: ReactNode }) => (
             <Provider store={store}>{children}</Provider>
         );
@@ -83,6 +93,36 @@ describe("useChordFollow", () => {
         mockRecordMonoAudio.mockResolvedValue(new Float32Array(22050));
         mockWaitForSound.mockResolvedValue(true);
         mockDetectNotes.mockResolvedValue([]);
+    });
+
+    it("既定のアルゴリズムではストリーミング経路に乗る", async () => {
+        // 既定は pitchplease。バッチ経路 (録音 + 音量ゲート) は使わない
+        const store = createStore();
+        const wrapper = ({ children }: { children: ReactNode }) => (
+            <Provider store={store}>{children}</Provider>
+        );
+        renderHook(() => useChordFollow({ followIntervalMs: 10 }), { wrapper });
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, true);
+        });
+
+        await waitFor(() => {
+            expect(mockCaptureCreate).toHaveBeenCalled();
+        });
+        expect(mockCreateNoteDetector).toHaveBeenCalledWith(
+            CHORD_DETECTION_ALGORITHM_DEFAULT,
+            expect.anything()
+        );
+        expect(mockRecordMonoAudio).not.toHaveBeenCalled();
+        expect(mockWaitForSound).not.toHaveBeenCalled();
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, false);
+        });
+        await waitFor(() => {
+            expect(store.get(chordFollowStatusAtom)).toBe("idle");
+        });
     });
 
     it("追従 ON で検出した和音 (C-E-G) を pitchList に反映し、OFF で停止する", async () => {
@@ -102,7 +142,7 @@ describe("useChordFollow", () => {
         expect(store.get(pitchListAtom).find((p) => p.isRoot)?.pitchName).toBe(
             "C"
         );
-        // デフォルトのアルゴリズム (basicpitch) と A4 設定で検出器を生成する
+        // 指定したアルゴリズム (basicpitch) と A4 設定で検出器を生成する
         expect(mockCreateNoteDetector).toHaveBeenCalledWith("basicpitch", {
             a4Freq: 442,
         });
@@ -175,6 +215,7 @@ describe("useChordFollow", () => {
     it("解析が実行されていない間 (active=false) はトグル ON でも推定しない", async () => {
         mockDetectNotes.mockResolvedValue([note(60), note(64), note(67)]);
         const store = createStore();
+        store.set(chordDetectionAlgorithmAtom, "basicpitch");
         const wrapper = ({ children }: { children: ReactNode }) => (
             <Provider store={store}>{children}</Provider>
         );
@@ -235,10 +276,9 @@ describe("useChordFollow", () => {
                 frameNote(64),
                 frameNote(67),
             ]);
-            const store = setup();
+            const store = setup("pitchplease");
 
             act(() => {
-                store.set(chordDetectionAlgorithmAtom, "pitchplease");
                 store.set(chordFollowEnabledAtom, true);
             });
 
@@ -280,11 +320,10 @@ describe("useChordFollow", () => {
 
         it("無音フレームでは listening 表示のまま pitchList を保持する", async () => {
             mockDetectNotes.mockResolvedValue([]);
-            const store = setup();
+            const store = setup("pitchplease");
             const initial = store.get(pitchListAtom);
 
             act(() => {
-                store.set(chordDetectionAlgorithmAtom, "pitchplease");
                 store.set(chordFollowEnabledAtom, true);
             });
 

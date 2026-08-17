@@ -35,7 +35,7 @@ graph LR
 
 検出アルゴリズムは選択式で、処理経路が異なります。
 
-| | **pitchplease** (本ドキュメントの主題) | **basic-pitch** |
+| | **pitchplease** (既定・本ドキュメントの主題) | **basic-pitch** |
 |---|---|---|
 | 実装 | `packages/core/src/audio_analysis/pitchPleaseNoteDetection.ts` | `apps/web/lib/audio/basicPitchNoteDetector.ts` |
 | 方式 | 倍音和サリエンス + 貪欲減算 (Goertzel ベース) | TensorFlow.js モデル推論 |

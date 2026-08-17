@@ -264,26 +264,34 @@ export const PITCH_ALGORITHM_DESCRIPTIONS: Record<PitchAlgorithm, string> = {
 /**
  * 構成音検出 (和音認識) アルゴリズムの定義
  */
-export const CHORD_DETECTION_ALGORITHMS = ["basicpitch", "pitchplease"] as const;
+// 配列の順序が設定 UI の選択肢の並び順になる (既定を先頭に置く)
+export const CHORD_DETECTION_ALGORITHMS = ["pitchplease", "basicpitch"] as const;
 export type ChordDetectionAlgorithm =
   (typeof CHORD_DETECTION_ALGORITHMS)[number];
+/**
+ * 既定のアルゴリズム。
+ * pitchplease はストリーミング解析で反映レイテンシが ~0.6 秒 (basic-pitch は
+ * 3 秒録音のバッチ方式で 3.5 秒以上)、かつ A4 設定に追従する。実録音 61 件の
+ * 評価でも batch F1 で上回る (docs/CHORD_DETECTION.md §5.4)
+ */
 export const CHORD_DETECTION_ALGORITHM_DEFAULT: ChordDetectionAlgorithm =
-  "basicpitch";
+  "pitchplease";
 
 export const CHORD_DETECTION_ALGORITHM_LABELS: Record<
   ChordDetectionAlgorithm,
   string
 > = {
-  basicpitch: "Basic Pitch (標準)",
-  pitchplease: "PitchPlease",
+  pitchplease: "PitchPlease (標準)",
+  basicpitch: "Basic Pitch",
 };
 
 export const CHORD_DETECTION_ALGORITHM_DESCRIPTIONS: Record<
   ChordDetectionAlgorithm,
   string
 > = {
+  pitchplease:
+    "音名ごとの周波数相関で構成音を推定します (A4 設定に追従・低レイテンシ)",
   basicpitch: "ニューラルネットでノートイベントを推定します (A4=440Hz 基準)",
-  pitchplease: "音名ごとの周波数相関で構成音を推定します (A4 設定に追従)",
 };
 
 /**

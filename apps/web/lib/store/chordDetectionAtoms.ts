@@ -1,5 +1,8 @@
 /**
- * Jotai Atoms - 構成音自動追従 (basic-pitch)
+ * Jotai Atoms - 構成音自動追従
+ *
+ * 検出アルゴリズムは選択式 (既定: pitchplease)。選択値は localStorage に
+ * 永続化されるため、既定値を変えても既存ユーザーの選択は維持される。
  *
  * トグル UI は SettingsDrawer 内 (閉じるとアンマウントされる) に置くため、
  * 追従ループ本体は App 直下の useChordFollow が常駐して回す。
