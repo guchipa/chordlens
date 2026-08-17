@@ -27,6 +27,7 @@ import type {
   DetectedNoteEvent,
   NoteDetector,
 } from "../adapters/noteDetection";
+import type { ChordToneEstimationOptions } from "./chordToneEstimation";
 
 export interface PitchPleaseNoteDetectorOptions {
   /** A4 の基準周波数 (Hz)。候補音の周波数生成に使う */
@@ -156,6 +157,24 @@ export const LOW_NOTE_SUPPORT_MAX_MIDI = 55; // G3 未満
 /** 低音候補に要求する倍音サポートの正規化振幅の下限 */
 export const LOW_NOTE_SUPPORT_MIN = 0.15;
 
+/**
+ * provisional 標本の採用閾値・上限個数。
+ * 採択閾値 (fundamentalThreshold/salienceThreshold) には届かなかったが
+ * 候補として存在した音を、chordToneEstimation.ts の medianSalience 集約に
+ * 連続サリエンスの標本として渡すための緩い足切り
+ */
+const PROVISIONAL_MIN_RATIO = 0.05;
+const PROVISIONAL_MAX_COUNT = 8;
+
+/**
+ * pitchplease 推奨の集約オプション。
+ * 二値採択の数え上げ (durationAmplitude) は閾値境界の採択の揺れに弱いため、
+ * pitchplease は連続サリエンスの時間中央値集約 (medianSalience) を既定にする
+ */
+export const PITCH_PLEASE_ESTIMATION_OPTIONS: ChordToneEstimationOptions = {
+  scoreMode: "medianSalience",
+};
+
 /** MIDI ノート番号 → 周波数 (Hz) */
 function midiNoteToFreq(midiNote: number, a4Freq: number): number {
   return a4Freq * Math.pow(2, (midiNote - 69) / 12);
@@ -281,7 +300,7 @@ export class PitchPleaseNoteDetector implements NoteDetector {
    */
   private detectFrameNotes(
     frame: Float32Array
-  ): { midiNote: number; amplitude: number }[] {
+  ): { midiNote: number; amplitude: number; provisional?: boolean }[] {
     const {
       minMidiNote,
       fundamentalThreshold,
@@ -409,7 +428,29 @@ export class PitchPleaseNoteDetector implements NoteDetector {
       }
     }
 
-    return accepted;
+    // 貪欲減算で採用されなかった候補を、連続サリエンスの標本 (provisional)
+    // として残す。採択閾値のブレで一部フレームだけ通る/通らない音を、
+    // 集約段の medianSalience が「サンプルの一部」として拾えるようにする
+    // (確定検出ではないため amplitude 以外の意味は持たせない)
+    const provisional = eligible
+      .filter((midiNote) => !excluded.has(midiNote))
+      .map((midiNote) => ({
+        midiNote,
+        ratio: Math.min(
+          1,
+          harmonicSalience(midiNote, residualByMidi) / initialMaxSalience
+        ),
+      }))
+      .filter(({ ratio }) => ratio >= PROVISIONAL_MIN_RATIO)
+      .sort((a, b) => b.ratio - a.ratio)
+      .slice(0, PROVISIONAL_MAX_COUNT)
+      .map(({ midiNote, ratio }) => ({
+        midiNote,
+        amplitude: ratio,
+        provisional: true as const,
+      }));
+
+    return [...accepted, ...provisional];
   }
 
   detectNotes(monoAudio: Float32Array): Promise<DetectedNoteEvent[]> {
@@ -442,6 +483,7 @@ export class PitchPleaseNoteDetector implements NoteDetector {
           startTimeSeconds,
           durationSeconds: frameSeconds,
           amplitude: note.amplitude,
+          ...(note.provisional && { provisional: true }),
         });
       }
     }

@@ -35,8 +35,13 @@ export interface ChordEvalCliConfig {
   usage: string;
   /** --algorithm の既定値 */
   defaultAlgorithm: string;
-  /** 指定アルゴリズムの NoteDetector 生成関数を返す。未知の名前なら throw する */
-  resolveDetector: (algorithm: string) => EvalDetectorFactory;
+  /**
+   * 指定アルゴリズムの NoteDetector 生成関数を返す。未知の名前なら throw する。
+   * undefined を返すと createEvalDetector が既定の PitchPleaseNoteDetector を
+   * 生成する (= createDetector 未指定扱い。pitchplease 推奨の estimationOptions
+   * が自動的に下敷きになる。chordEvalLib.ts の resolveEstimationOptions 参照)
+   */
+  resolveDetector: (algorithm: string) => EvalDetectorFactory | undefined;
   /**
    * ストリーミング経路 (StreamingChordTracker) を評価できるアルゴリズムか。
    * false の場合は batch のみ評価する
@@ -53,6 +58,8 @@ interface ParsedArgs {
   verbose: boolean;
   /** 指定時: レベル不均衡 augmentation (1 音ずつ減衰した変異体) で評価する dB 値 */
   attenuateDb?: number;
+  /** 指定時: streaming 経路の StreamingChordTracker windowSeconds を上書きする */
+  windowSeconds?: number;
 }
 
 function parseArgs(
@@ -70,6 +77,7 @@ function parseArgs(
   let rootOptional = false;
   let verbose = false;
   let attenuateDb: number | undefined;
+  let windowSeconds: number | undefined;
   const inputs: string[] = [];
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -85,6 +93,8 @@ function parseArgs(
       verbose = true;
     } else if (a === "--attenuate") {
       attenuateDb = parseFloat(args[++i]);
+    } else if (a === "--window-seconds") {
+      windowSeconds = parseFloat(args[++i]);
     } else {
       inputs.push(a);
     }
@@ -95,6 +105,7 @@ function parseArgs(
     a4Freq,
     algorithm,
     rootOptional,
+    windowSeconds,
     verbose,
     attenuateDb,
   };
@@ -182,6 +193,7 @@ export async function runChordEval(
     rootOptional,
     verbose,
     attenuateDb,
+    windowSeconds,
   } = parseArgs(argv, config);
   const files = collectAudioFiles(inputs);
   if (files.length === 0) {
@@ -198,6 +210,9 @@ export async function runChordEval(
     sampleRate: probe.requiredSampleRate,
     a4Freq,
     createDetector,
+    ...(windowSeconds !== undefined && {
+      trackerOptions: { windowSeconds },
+    }),
   };
 
   console.log(

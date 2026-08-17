@@ -23,7 +23,6 @@ import {
     runChordEvalMain,
     type ChordEvalCliConfig,
 } from "@chordlens/core/scripts/lib/chordEvalCli";
-import { PitchPleaseNoteDetector } from "@chordlens/core/audio_analysis/pitchPleaseNoteDetection";
 
 import { BasicPitchNoteDetector } from "../lib/audio/basicPitchNoteDetector";
 import { loadBasicPitchModelForNode } from "./lib/basicPitchNodeModel";
@@ -37,8 +36,10 @@ const config: ChordEvalCliConfig = {
     resolveDetector: (algorithm) => {
         switch (algorithm) {
             case "pitchplease":
-                return ({ sampleRate, a4Freq }) =>
-                    new PitchPleaseNoteDetector({ sampleRate, a4Freq });
+                // undefined (= createDetector 未指定) を返すと chordEvalLib.ts が
+                // 既定の PitchPleaseNoteDetector を生成し、pitchplease 推奨の
+                // estimationOptions (medianSalience) を自動的に下敷きにする
+                return undefined;
             case "basicpitch": {
                 // モデルのロードとインスタンスはファイル間で使い回す
                 // (detectNotes は状態を持たない)

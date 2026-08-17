@@ -13,7 +13,11 @@
 
 import type { ChordDetectionAlgorithm } from "@chordlens/core/constants";
 import type { NoteDetector } from "@chordlens/core/adapters/noteDetection";
-import { PitchPleaseNoteDetector } from "@chordlens/core/audio_analysis/pitchPleaseNoteDetection";
+import {
+    PitchPleaseNoteDetector,
+    PITCH_PLEASE_ESTIMATION_OPTIONS,
+} from "@chordlens/core/audio_analysis/pitchPleaseNoteDetection";
+import type { ChordToneEstimationOptions } from "@chordlens/core/audio_analysis/chordToneEstimation";
 import { BasicPitchNoteDetector } from "./basicPitchNoteDetector";
 
 export interface NoteDetectorFactoryOptions {
@@ -48,4 +52,27 @@ export function createNoteDetector(
  */
 export function supportsStreaming(algorithm: ChordDetectionAlgorithm): boolean {
     return algorithm === "pitchplease";
+}
+
+/**
+ * アルゴリズムごとの推奨集約オプション (noteEventsToPitchList に渡す
+ * ChordToneEstimationOptions)。バッチ的な一括解析 (MicInputButton や
+ * useChordFollow のバッチ経路) 専用。pitchplease は連続サリエンスの時間中央値
+ * 集約 (medianSalience)、basic-pitch は従来の合計発音時間×最大振幅集約
+ * (durationAmplitude、既定値) を使う。
+ *
+ * StreamingChordTracker (低レイテンシ追従) には適用しない: 倍音残差の出現は
+ * 呼吸・強弱と同じ 1〜2 秒スケールで自己相関しており、短い集約窓では
+ * medianSalience が機能しない (batch は複数呼吸サイクルを平均できるため機能する)。
+ * streaming は常に legacy (durationAmplitude、既定値) のままにする
+ */
+export function recommendedEstimationOptions(
+    algorithm: ChordDetectionAlgorithm
+): ChordToneEstimationOptions {
+    switch (algorithm) {
+        case "pitchplease":
+            return PITCH_PLEASE_ESTIMATION_OPTIONS;
+        case "basicpitch":
+            return {};
+    }
 }

@@ -20,6 +20,11 @@ export interface DetectedNoteEvent {
   durationSeconds: number;
   /** 音量・信頼度 (0〜1) */
   amplitude: number;
+  /**
+   * フレームの採択閾値に届かなかった候補の連続サリエンス標本。
+   * scoreMode "medianSalience" の集約でのみ使い、確定検出として扱わない
+   */
+  provisional?: boolean;
 }
 
 export interface NoteDetector {

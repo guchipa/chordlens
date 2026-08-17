@@ -29,7 +29,6 @@
  *     [--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--attenuate <dB>] [--verbose]
  */
 
-import { PitchPleaseNoteDetector } from "../src/audio_analysis/pitchPleaseNoteDetection";
 import {
   runChordEvalMain,
   type ChordEvalCliConfig,
@@ -47,8 +46,10 @@ const config: ChordEvalCliConfig = {
           "basic-pitch の評価は apps/web の eval:chords を使うこと"
       );
     }
-    return ({ sampleRate, a4Freq }) =>
-      new PitchPleaseNoteDetector({ sampleRate, a4Freq });
+    // undefined を返す (= createDetector 未指定) と chordEvalLib.ts が
+    // 既定の PitchPleaseNoteDetector を生成し、pitchplease 推奨の
+    // estimationOptions (medianSalience) を自動的に下敷きにする
+    return undefined;
   },
   supportsStreaming: () => true,
 };

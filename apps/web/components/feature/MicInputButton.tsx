@@ -11,7 +11,10 @@ import {
 } from "@/components/ui/hover-card";
 import { noteEventsToPitchList } from "@chordlens/core/audio_analysis/chordToneEstimation";
 import type { Pitch } from "@chordlens/core/types";
-import { createNoteDetector } from "@/lib/audio/noteDetectorFactory";
+import {
+    createNoteDetector,
+    recommendedEstimationOptions,
+} from "@/lib/audio/noteDetectorFactory";
 import { recordMonoAudio } from "@/lib/audio/recordMonoAudio";
 import { a4FreqAtom, chordDetectionAlgorithmAtom } from "@/lib/store";
 
@@ -60,7 +63,10 @@ export function MicInputButton({
 
             setStatus("processing");
             const noteEvents = await detector.detectNotes(monoAudio);
-            const [pitch] = noteEventsToPitchList(noteEvents, { maxNotes: 1 });
+            const [pitch] = noteEventsToPitchList(noteEvents, {
+                ...recommendedEstimationOptions(algorithm),
+                maxNotes: 1,
+            });
 
             if (pitch) {
                 onDetect({ ...pitch, isRoot: false });

@@ -53,9 +53,11 @@ describe("pitchPleaseNoteDetection", () => {
       const audio = synthesize([{ freq: 442, amp: 0.5 }], 1.0);
 
       const events = await detector.detectNotes(audio);
+      // provisional (採択閾値未満の弱い候補標本) は確定検出ではないため除く
+      const confirmed = events.filter((e) => !e.provisional);
 
-      expect(events.length).toBeGreaterThan(0);
-      expect(events.every((e) => e.midiNote === 69)).toBe(true);
+      expect(confirmed.length).toBeGreaterThan(0);
+      expect(confirmed.every((e) => e.midiNote === 69)).toBe(true);
     });
 
     it("A4 基準周波数の設定 (440Hz) に追従する", async () => {
@@ -133,8 +135,10 @@ describe("pitchPleaseNoteDetection", () => {
       );
 
       const events = await detector.detectNotes(audio);
-
-      const detectedMidi = new Set(events.map((e) => e.midiNote));
+      // provisional (確定検出ではない) を除いた確定検出のみを見る
+      const detectedMidi = new Set(
+        events.filter((e) => !e.provisional).map((e) => e.midiNote)
+      );
       expect(detectedMidi.has(48)).toBe(true);
       expect(detectedMidi.has(60)).toBe(false);
     });
@@ -219,9 +223,10 @@ describe("pitchPleaseNoteDetection", () => {
       }
 
       const events = await detector.detectNotes(audio);
+      const confirmed = events.filter((e) => !e.provisional);
 
-      expect(events.length).toBeGreaterThan(0);
-      expect(events.every((e) => e.midiNote === 69)).toBe(true);
+      expect(confirmed.length).toBeGreaterThan(0);
+      expect(confirmed.every((e) => e.midiNote === 69)).toBe(true);
     });
 
     it("イベントの時刻・長さがフレームに対応する", async () => {
@@ -232,14 +237,42 @@ describe("pitchPleaseNoteDetection", () => {
       const audio = synthesize([{ freq: 442, amp: 0.5 }], 1.0);
 
       const events = await detector.detectNotes(audio);
+      // provisional は確定検出とは別枠の標本のためタイミング検証の対象外
+      const confirmed = events.filter((e) => !e.provisional);
 
       // 1 秒 / 0.25 秒 = 4 フレームぶん検出される
-      expect(events).toHaveLength(4);
-      events.forEach((event, i) => {
+      expect(confirmed).toHaveLength(4);
+      confirmed.forEach((event, i) => {
         // フレーム長はサンプル数に丸められるため近似比較
         expect(event.startTimeSeconds).toBeCloseTo(i * 0.25, 3);
         expect(event.durationSeconds).toBe(0.25);
       });
+    });
+
+    it("採択閾値未満の弱い音を provisional として報告する", async () => {
+      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const c4 = midiToFreq(60);
+      const a5 = midiToFreq(81); // C4 の倍音系列 (72,79,84,88,91) と重ならない
+      const audio = synthesize(
+        [
+          { freq: c4, amp: 0.5 }, // 強い音: 確定検出される
+          { freq: a5, amp: 0.05 }, // 弱い音: 採択閾値未満で provisional になる
+        ],
+        1.0
+      );
+
+      const events = await detector.detectNotes(audio);
+
+      const confirmed = events.filter((e) => e.midiNote === 60);
+      const provisional = events.filter((e) => e.midiNote === 81);
+
+      expect(confirmed.length).toBeGreaterThan(0);
+      expect(confirmed.every((e) => !e.provisional)).toBe(true);
+      expect(provisional.length).toBeGreaterThan(0);
+      expect(provisional.every((e) => e.provisional === true)).toBe(true);
+      expect(
+        provisional.every((e) => e.amplitude > 0 && e.amplitude < 1)
+      ).toBe(true);
     });
   });
 

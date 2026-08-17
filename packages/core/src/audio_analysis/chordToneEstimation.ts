@@ -17,9 +17,16 @@ import type { Pitch } from "../types";
 import { estimateRoot } from "./rootEstimation";
 
 export interface ChordToneEstimationOptions {
-  /** 集約後の合計発音時間がこの値未満の音を除外する (秒) */
+  /**
+   * 集約後の合計発音時間がこの値未満の音を除外する (秒)。
+   * scoreMode "medianSalience" では適用しない (中央値が窓の過半で
+   * 鳴っていることを暗黙に要求するため、別途の発音時間フィルタは不要)
+   */
   minTotalDurationSeconds?: number;
-  /** 最大振幅がこの値未満の音を除外する (0〜1) */
+  /**
+   * 最大振幅がこの値未満の音を除外する (0〜1)。
+   * scoreMode "medianSalience" では適用しない (minTotalDurationSeconds と同様)
+   */
   minAmplitude?: number;
   /** 最有力音に対するスコア比がこの値未満の音を除外する (0〜1) */
   relativeScoreThreshold?: number;
@@ -33,6 +40,18 @@ export interface ChordToneEstimationOptions {
    * 0 で無効
    */
   harmonicSuppressionScoreRatio?: number;
+  /**
+   * フレーム間集約の方式。
+   * - "durationAmplitude" (既定): 合計発音時間 × 最大振幅 (二値採択の数え上げ)。
+   *   basic-pitch 互換のため既定値として維持する
+   * - "medianSalience": 連続サリエンス (provisional イベント含む) の時間中央値。
+   *   閾値境界での採択の揺れに頑健 (pitchplease 推奨)
+   */
+  scoreMode?: "durationAmplitude" | "medianSalience";
+  /** scoreMode "medianSalience" で使う分位点 (0〜1、線形補間) */
+  salienceQuantile?: number;
+  /** scoreMode "medianSalience" でこの値未満のスコアの音を除外する (0〜1) */
+  minMedianSalience?: number;
 }
 
 export const CHORD_TONE_ESTIMATION_DEFAULTS: Required<ChordToneEstimationOptions> =
@@ -44,6 +63,9 @@ export const CHORD_TONE_ESTIMATION_DEFAULTS: Required<ChordToneEstimationOptions
     // 0.5 は実データの座標降下法探索の結果 (docs/CHORD_DETECTION.md §5)。
     // 調整用 (TUS)・検証用 (YCY) の両方で batch の誤検出が減った
     harmonicSuppressionScoreRatio: 0.5,
+    scoreMode: "durationAmplitude",
+    salienceQuantile: 0.5,
+    minMedianSalience: 0.1,
   };
 
 /** 集約段の倍音フィルタで参照する下方の半音オフセット (2f: -12, 3f: -19) */
@@ -101,6 +123,73 @@ function aggregateNoteEvents(events: DetectedNoteEvent[]): AggregatedNote[] {
       score: totalDurationSeconds * maxAmplitude,
     })
   );
+}
+
+/** ノート開始時刻をミリ秒丸めで一意キー化する (フレーム境界の浮動小数誤差を吸収) */
+function frameKey(startTimeSeconds: number): number {
+  return Math.round(startTimeSeconds * 1000);
+}
+
+/** 分位点を線形補間で求める (values は空でないこと) */
+function quantile(values: number[], q: number): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  if (sorted.length === 1) return sorted[0];
+  const pos = q * (sorted.length - 1);
+  const lower = Math.floor(pos);
+  const upper = Math.ceil(pos);
+  if (lower === upper) return sorted[lower];
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (pos - lower);
+}
+
+/**
+ * ノートイベントを MIDI ノート番号ごとに集約し、連続サリエンスの時間中央値
+ * (分位点 salienceQuantile) をスコアとする (scoreMode: "medianSalience")。
+ *
+ * provisional イベント (採択閾値未満の候補標本) も含めて標本とする。
+ * アクティブフレーム (いずれかの MIDI が鳴ったフレーム) の集合を基準に、
+ * 各 MIDI について「鳴っていないフレームは振幅 0」として埋めたベクトルの
+ * 分位点をとる。二値採択の数え上げと異なり、閾値境界での採択の揺れに
+ * 頑健である一方、ゼロ埋めにより「アクティブフレームの過半で鳴っている」
+ * ことを暗黙に要求する
+ */
+function aggregateNoteEventsByMedianSalience(
+  events: DetectedNoteEvent[],
+  salienceQuantile: number
+): AggregatedNote[] {
+  const activeFrames = new Set<number>();
+  for (const event of events) {
+    activeFrames.add(frameKey(event.startTimeSeconds));
+  }
+  const frameList = [...activeFrames];
+  if (frameList.length === 0) {
+    return [];
+  }
+
+  const byMidi = new Map<number, Map<number, number>>();
+  for (const event of events) {
+    const midiNote = Math.round(event.midiNote);
+    const key = frameKey(event.startTimeSeconds);
+    let frames = byMidi.get(midiNote);
+    if (!frames) {
+      frames = new Map();
+      byMidi.set(midiNote, frames);
+    }
+    frames.set(key, Math.max(frames.get(key) ?? 0, event.amplitude));
+  }
+
+  const result: AggregatedNote[] = [];
+  for (const [midiNote, frames] of byMidi) {
+    const vector = frameList.map((key) => frames.get(key) ?? 0);
+    const score = quantile(vector, salienceQuantile);
+    result.push({
+      midiNote,
+      // durationAmplitude モード専用のフィールドなので中央値集約では使わない
+      totalDurationSeconds: 0,
+      maxAmplitude: score,
+      score,
+    });
+  }
+  return result;
 }
 
 /**
@@ -178,21 +267,40 @@ export function noteEventsToPitchList(
 
   const minOctave = Math.min(...OCTAVE_NUM_LIST);
   const maxOctave = Math.max(...OCTAVE_NUM_LIST);
+  const inOctaveRange = (note: AggregatedNote) => {
+    const { octaveNum } = midiNoteToPitch(note.midiNote);
+    return octaveNum >= minOctave && octaveNum <= maxOctave;
+  };
 
-  const aggregated = suppressWeakHarmonicDuplicates(
-    resolveAdjacentSemitones(
-      aggregateNoteEvents(events).filter((note) => {
-        const { octaveNum } = midiNoteToPitch(note.midiNote);
-        return (
-          note.totalDurationSeconds >= opts.minTotalDurationSeconds &&
-          note.maxAmplitude >= opts.minAmplitude &&
-          octaveNum >= minOctave &&
-          octaveNum <= maxOctave
+  const aggregated =
+    opts.scoreMode === "medianSalience"
+      ? suppressWeakHarmonicDuplicates(
+          resolveAdjacentSemitones(
+            aggregateNoteEventsByMedianSalience(
+              events,
+              opts.salienceQuantile
+            ).filter(
+              (note) =>
+                note.score >= opts.minMedianSalience && inOctaveRange(note)
+            )
+          ),
+          opts.harmonicSuppressionScoreRatio
+        )
+      : suppressWeakHarmonicDuplicates(
+          resolveAdjacentSemitones(
+            // durationAmplitude (legacy) は provisional (採択閾値未満の候補標本)
+            // を集約前に除外する。provisional は medianSalience 専用の標本であり、
+            // legacy の二値採択に混ぜると閾値未満の音が発音時間としてカウントされ
+            // てしまう (streaming の短い集約窓で特に汚染が大きい)
+            aggregateNoteEvents(events.filter((e) => !e.provisional)).filter(
+              (note) =>
+                note.totalDurationSeconds >= opts.minTotalDurationSeconds &&
+                note.maxAmplitude >= opts.minAmplitude &&
+                inOctaveRange(note)
+            )
+          ),
+          opts.harmonicSuppressionScoreRatio
         );
-      })
-    ),
-    opts.harmonicSuppressionScoreRatio
-  );
 
   if (aggregated.length === 0) {
     return [];

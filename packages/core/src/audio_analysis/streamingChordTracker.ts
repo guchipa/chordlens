@@ -130,7 +130,12 @@ export class StreamingChordTracker {
         this.consumed += this.frameBuffer.length;
 
         const frameEvents = await this.detector.detectNotes(this.frameBuffer);
-        this.lastFrameSilent = frameEvents.length === 0;
+        // provisional (採択閾値未満の候補標本) のみ、または空のフレームは
+        // 無音扱いにする。確定検出が 1 つもないという点では従来 (length===0)
+        // と同じ意味であり、medianSalience の標本収集はこの判定に影響しない
+        this.lastFrameSilent = frameEvents.every((e) =>
+          Boolean(e.provisional)
+        );
         for (const event of frameEvents) {
           this.events.push({
             ...event,

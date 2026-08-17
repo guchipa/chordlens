@@ -34,6 +34,8 @@ vi.mock("@/lib/audio/noteDetectorFactory", () => ({
         };
     },
     supportsStreaming: (algorithm: string) => algorithm === "pitchplease",
+    recommendedEstimationOptions: (algorithm: string) =>
+        algorithm === "pitchplease" ? { scoreMode: "medianSalience" } : {},
 }));
 
 // AudioWorklet ベースの PCM キャプチャをモックする (jsdom に実装がない)

@@ -163,6 +163,35 @@ describe("StreamingChordTracker", () => {
     expect(changedDuringSilence).toBe(false);
   });
 
+  it("provisional のみのフレームは無音 (silent: true) 扱いになる", async () => {
+    /** provisional イベントだけを返すフェイク detector */
+    class ProvisionalOnlyDetector implements NoteDetector {
+      readonly requiredSampleRate = SAMPLE_RATE;
+      detectNotes(): Promise<DetectedNoteEvent[]> {
+        return Promise.resolve([
+          {
+            midiNote: 60,
+            startTimeSeconds: 0,
+            durationSeconds: FRAME_SECONDS,
+            amplitude: 0.2,
+            provisional: true,
+          },
+        ]);
+      }
+    }
+    const tracker = new StreamingChordTracker({
+      detector: new ProvisionalOnlyDetector(),
+      sampleRate: SAMPLE_RATE,
+      frameSeconds: FRAME_SECONDS,
+    });
+
+    tracker.push(new Float32Array(FRAME_LENGTH));
+    const { silent, changed } = await tracker.poll();
+
+    expect(silent).toBe(true);
+    expect(changed).toBeNull();
+  });
+
   it("フレーム長未満のチャンクを跨いで蓄積できる", async () => {
     const cMajor = [60, 64, 67];
     const tracker = createTracker([cMajor, cMajor, cMajor]);

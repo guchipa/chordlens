@@ -13,6 +13,7 @@ import ffmpegPath from "ffmpeg-static";
 
 import {
   PitchPleaseNoteDetector,
+  PITCH_PLEASE_ESTIMATION_OPTIONS,
   type PitchPleaseNoteDetectorOptions,
 } from "../../src/audio_analysis/pitchPleaseNoteDetection";
 import type { NoteDetector } from "../../src/adapters/noteDetection";
@@ -225,6 +226,28 @@ export function createEvalDetector(opts: EvalOptions): NoteDetector {
   });
 }
 
+/**
+ * evaluateBatch に渡す estimationOptions を解決する。
+ * createDetector 未指定 (= PitchPleaseNoteDetector の既定生成、pitchplease 既定)
+ * のときは PITCH_PLEASE_ESTIMATION_OPTIONS (medianSalience) を下敷きにする
+ * (ユーザー指定の estimationOptions が優先)。basic-pitch など明示的に
+ * createDetector を注入する場合は従来どおり opts.estimationOptions のみを使う。
+ *
+ * streaming (evaluateStreaming) には適用しない: 倍音残差の出現は呼吸・強弱と
+ * 同じ 1〜2 秒スケールで自己相関しており、streaming の短い集約窓では
+ * medianSalience が機能しない (batch は複数呼吸サイクルを平均できるため機能する)。
+ * streaming は従来どおり legacy 集約 (durationAmplitude、
+ * STREAMING_CHORD_ESTIMATION_DEFAULTS) のままにする
+ */
+function resolveBatchEstimationOptions(
+  opts: EvalOptions
+): ChordToneEstimationOptions | undefined {
+  if (opts.createDetector) {
+    return opts.estimationOptions;
+  }
+  return { ...PITCH_PLEASE_ESTIMATION_OPTIONS, ...opts.estimationOptions };
+}
+
 /** バッチ経路: ファイル全体を一括解析 */
 export async function evaluateBatch(
   audio: Float32Array,
@@ -232,12 +255,14 @@ export async function evaluateBatch(
 ): Promise<Pitch[]> {
   const detector = createEvalDetector(opts);
   const events = await detector.detectNotes(audio);
-  return noteEventsToPitchList(events, opts.estimationOptions);
+  return noteEventsToPitchList(events, resolveBatchEstimationOptions(opts));
 }
 
 /**
  * ストリーミング経路: アプリでは確定した和音が次の確定まで表示され続けるため、
- * 「最も長く表示されていた和音」を採用する
+ * 「最も長く表示されていた和音」を採用する。
+ * estimationOptions は opts.estimationOptions のみを使う (pitchplease でも
+ * medianSalience を自動適用しない。理由は resolveBatchEstimationOptions 参照)
  */
 export async function evaluateStreaming(
   audio: Float32Array,

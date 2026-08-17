@@ -36,6 +36,7 @@ import {
 import {
     createNoteDetector,
     supportsStreaming,
+    recommendedEstimationOptions,
 } from "@/lib/audio/noteDetectorFactory";
 import { recordMonoAudio } from "@/lib/audio/recordMonoAudio";
 import { StreamingPcmCapture } from "@/lib/audio/pcmCapture";
@@ -148,6 +149,12 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
                         a4Freq,
                         sampleRate: capture.sampleRate,
                     });
+                    // streaming は legacy (durationAmplitude) のまま:
+                    // 倍音残差の出現は呼吸・強弱と同じ 1〜2 秒スケールで自己相関し、
+                    // 短い集約窓では medianSalience が機能しない (batch は複数呼吸
+                    // サイクルを平均できるため機能する)。estimationOptions は
+                    // 上書きせず StreamingChordTracker の既定 (STREAMING_CHORD_
+                    // ESTIMATION_DEFAULTS) に委ねる
                     tracker = new StreamingChordTracker({
                         detector,
                         sampleRate: capture.sampleRate,
@@ -185,7 +192,10 @@ export function useChordFollow(options: UseChordFollowOptions = {}): void {
 
                     setStatus("processing");
                     const noteEvents = await detector.detectNotes(monoAudio);
-                    const pitchList = noteEventsToPitchList(noteEvents);
+                    const pitchList = noteEventsToPitchList(
+                        noteEvents,
+                        recommendedEstimationOptions(algorithm)
+                    );
 
                     // 何も検出できなかった場合は現在のリストを保持する
                     if (pitchList.length > 0) {

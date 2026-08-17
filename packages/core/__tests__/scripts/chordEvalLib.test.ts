@@ -56,11 +56,13 @@ describe("createEvalDetector", () => {
         0.3 * Math.sin((2 * Math.PI * 884 * i) / 22050);
     }
     const events = await detector.detectNotes(audio);
+    // provisional (採択閾値未満の候補標本) は maxNotesPerFrame の対象外なので除く
+    const confirmed = events.filter((e) => !e.provisional);
     const byFrame = new Map<number, number>();
-    for (const e of events) {
+    for (const e of confirmed) {
       byFrame.set(e.startTimeSeconds, (byFrame.get(e.startTimeSeconds) ?? 0) + 1);
     }
-    expect(events.length).toBeGreaterThan(0);
+    expect(confirmed.length).toBeGreaterThan(0);
     expect(Math.max(...byFrame.values())).toBe(1);
   });
 
