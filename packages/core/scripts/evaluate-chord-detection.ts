@@ -20,9 +20,13 @@
  * 評価できない。両アルゴリズムの比較は apps/web の同名 CLI を使うこと:
  *   pnpm --filter @chordlens/web eval:chords <dir> --algorithm basicpitch
  *
+ * --attenuate <dB>: レベル不均衡 augmentation。採点対象の正解音を 1 音ずつ、
+ * 指定 dB だけスペクトル減衰させた変異体を作って評価する (n は変異体数になる)。
+ * 実装は ./lib/spectralAttenuation.ts
+ *
  * 使い方:
  *   pnpm --filter @chordlens/core eval:chords <dir-or-files...>
- *     [--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--verbose]
+ *     [--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--attenuate <dB>] [--verbose]
  */
 
 import { PitchPleaseNoteDetector } from "../src/audio_analysis/pitchPleaseNoteDetection";
@@ -34,7 +38,7 @@ import {
 const config: ChordEvalCliConfig = {
   usage:
     "Usage: pnpm --filter @chordlens/core eval:chords <dir-or-files...> " +
-    "[--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--verbose]",
+    "[--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--attenuate <dB>] [--verbose]",
   defaultAlgorithm: "pitchplease",
   resolveDetector: (algorithm) => {
     if (algorithm !== "pitchplease") {
