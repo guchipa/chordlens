@@ -1,8 +1,8 @@
 import {
-  PitchPleaseNoteDetector,
-  PITCH_PLEASE_DEFAULTS,
+  HarmonicNoteDetector,
+  NOTE_DETECTION_DEFAULTS,
   harmonicSalience,
-} from "../../src/audio_analysis/pitchPleaseNoteDetection";
+} from "../../src/audio_analysis/noteDetection";
 import { noteEventsToPitchList } from "../../src/audio_analysis/chordToneEstimation";
 
 const SAMPLE_RATE = 22050;
@@ -58,10 +58,10 @@ function addNoise(buffer: Float32Array, amp: number, seed = 1): Float32Array {
   return out;
 }
 
-describe("pitchPleaseNoteDetection", () => {
-  describe("PitchPleaseNoteDetector", () => {
+describe("noteDetection", () => {
+  describe("HarmonicNoteDetector", () => {
     it("Cメジャーコード(C4-E4-G4)の正弦波合成から3音を検出する", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const audio = synthesize(
         [
           { freq: midiToFreq(60), amp: 0.3 }, // C4
@@ -80,7 +80,7 @@ describe("pitchPleaseNoteDetection", () => {
     });
 
     it("単音(A4)を検出する", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       // 背景雑音なしの純音単体は矩形窓 Goertzel のスペクトル漏れ自体が
       // 孤立ビンとして noiseFloor の床から浮くため、実録音相当のごく弱い
       // 背景雑音を足す (addNoise のコメント参照)
@@ -95,7 +95,7 @@ describe("pitchPleaseNoteDetection", () => {
     });
 
     it("A4 基準周波数の設定 (440Hz) に追従する", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: 440 });
+      const detector = new HarmonicNoteDetector({ a4Freq: 440 });
       const audio = addNoise(synthesize([{ freq: 440, amp: 0.5 }], 1.0), 0.03);
 
       const events = await detector.detectNotes(audio);
@@ -107,7 +107,7 @@ describe("pitchPleaseNoteDetection", () => {
     });
 
     it("無音からは何も検出しない", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const audio = new Float32Array(SAMPLE_RATE); // 1秒の無音
 
       const events = await detector.detectNotes(audio);
@@ -121,7 +121,7 @@ describe("pitchPleaseNoteDetection", () => {
       // 背景雑音を含まない合成音の倍音位置がスペクトル漏れで床から浮きやすく
       // (段階3の既知の限界。docs/CHORD_DETECTION.md 参照)、この観点の検証には
       // 旧来の frameMax 正規化を明示して切り分ける
-      const detector = new PitchPleaseNoteDetector({
+      const detector = new HarmonicNoteDetector({
         a4Freq: A4_FREQ,
         normalizationMode: "frameMax",
       });
@@ -145,7 +145,7 @@ describe("pitchPleaseNoteDetection", () => {
 
     it("強い第2倍音 (基音の70%) でも 3f の証拠があればオクターブ上を抑制する", async () => {
       // 倍音減算ロジックの検証のため frameMax を明示 (理由は上のテスト参照)
-      const detector = new PitchPleaseNoteDetector({
+      const detector = new HarmonicNoteDetector({
         a4Freq: A4_FREQ,
         normalizationMode: "frameMax",
       });
@@ -172,7 +172,7 @@ describe("pitchPleaseNoteDetection", () => {
       // 2f 位置のエネルギーは「実音の重ね」か「第2倍音」かをスペクトルから
       // 区別できない。実録音の評価 (eval:chords) で倍音の誤検出が支配的
       // だったため、倍音側に解釈して低い方の音のみを報告する仕様とする
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const c3 = midiToFreq(48);
       const audio = synthesize(
         [
@@ -196,7 +196,7 @@ describe("pitchPleaseNoteDetection", () => {
       // フレーム段のリッチネス証拠 (F5 の 3f は候補範囲外の拡張グリッド) で
       // 大半を抑制し、位相の揺らぎですり抜けた単発フレームは集約段の
       // 倍音スコアフィルタが刈る (2 段の防御をエンドツーエンドで検証)
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const bright = (midi: number, gain: number) =>
         [1.0, 0.9, 0.55, 0.25].map((amp, k) => ({
           freq: midiToFreq(midi) * (k + 1),
@@ -223,7 +223,7 @@ describe("pitchPleaseNoteDetection", () => {
       // 実測で B1/D2 の低域ジャンクが出たケースの再現。
       // ハムは半音格子上に 2f サポートを持たないため低音ゲートで除去される。
       // 低音ゲートの検証が主眼のため frameMax を明示 (理由は上のテスト群参照)
-      const detector = new PitchPleaseNoteDetector({
+      const detector = new HarmonicNoteDetector({
         a4Freq: A4_FREQ,
         normalizationMode: "frameMax",
       });
@@ -246,7 +246,7 @@ describe("pitchPleaseNoteDetection", () => {
     });
 
     it("低音の実音 (倍音サポートあり) は低音ゲートを通過する", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const e2 = midiToFreq(40); // E2 ≈ 82.7Hz (コントラバス等)
       const audio = synthesize(
         [
@@ -264,7 +264,7 @@ describe("pitchPleaseNoteDetection", () => {
 
     it("sampleRate 48000 (AudioContext ネイティブレート) でも検出できる", async () => {
       const sampleRate = 48000;
-      const detector = new PitchPleaseNoteDetector({
+      const detector = new HarmonicNoteDetector({
         a4Freq: A4_FREQ,
         sampleRate,
       });
@@ -283,7 +283,7 @@ describe("pitchPleaseNoteDetection", () => {
     });
 
     it("イベントの時刻・長さがフレームに対応する", async () => {
-      const detector = new PitchPleaseNoteDetector({
+      const detector = new HarmonicNoteDetector({
         a4Freq: A4_FREQ,
         frameSeconds: 0.25,
       });
@@ -309,7 +309,7 @@ describe("pitchPleaseNoteDetection", () => {
       // むしろ確定検出になる (段階3が改善しようとした挙動そのもの)。
       // このテストの主眼 (採択閾値未満の音を provisional として残す) の検証は
       // frameMax を明示して継続する
-      const detector = new PitchPleaseNoteDetector({
+      const detector = new HarmonicNoteDetector({
         a4Freq: A4_FREQ,
         normalizationMode: "frameMax",
       });
@@ -364,7 +364,7 @@ describe("pitchPleaseNoteDetection", () => {
 
   describe("実楽器を模した倍音構成", () => {
     it("基音が弱く倍音が強い音 (金管の低音) も基音として検出する", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const d4 = midiToFreq(62);
       // 実測したトランペットの特徴: 基音 < 倍音。背景雑音なしの合成音は
       // 強い倍音に隣接する矩形窓/Hann 窓の残存サイドローブが孤立ビンとして
@@ -393,7 +393,7 @@ describe("pitchPleaseNoteDetection", () => {
     });
 
     it("偶数倍音が弱い音 (クラリネット型) の第3倍音を検出しない", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const f4 = midiToFreq(65);
       // 円筒管楽器: 奇数倍音のみ。背景雑音なしの合成音は強い倍音に隣接する
       // サイドローブが孤立ビンとして床から浮くため、ごく弱い背景雑音を足す
@@ -418,7 +418,7 @@ describe("pitchPleaseNoteDetection", () => {
     });
 
     it("平均律格子から 30 セントずれた音も検出する (デチューン耐性)", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const f4Sharp30 = midiToFreq(65) * Math.pow(2, 30 / 1200);
       const audio = addNoise(
         synthesize(
@@ -462,7 +462,7 @@ describe("pitchPleaseNoteDetection", () => {
      * detectFrameNotes 以降の複雑な採択ロジックを経由させたくないため
      */
     function measureAmplitudes(
-      detector: PitchPleaseNoteDetector,
+      detector: HarmonicNoteDetector,
       frame: Float32Array
     ): number[] | null {
       return (
@@ -497,17 +497,17 @@ describe("pitchPleaseNoteDetection", () => {
         return addNoise(audio, 1e-4, 3);
       };
 
-      const noiseFloorDetector = new PitchPleaseNoteDetector({
+      const noiseFloorDetector = new HarmonicNoteDetector({
         a4Freq: A4_FREQ,
       });
-      const frameMaxDetector = new PitchPleaseNoteDetector({
+      const frameMaxDetector = new HarmonicNoteDetector({
         a4Freq: A4_FREQ,
         normalizationMode: "frameMax",
       });
 
       const loudFrame = buildFrame(0.5);
       const quietFrame = buildFrame(0.05);
-      const threshold = PITCH_PLEASE_DEFAULTS.fundamentalThreshold;
+      const threshold = NOTE_DETECTION_DEFAULTS.fundamentalThreshold;
 
       const nfLoud = measureAmplitudes(noiseFloorDetector, loudFrame);
       const nfQuiet = measureAmplitudes(noiseFloorDetector, quietFrame);
@@ -532,7 +532,7 @@ describe("pitchPleaseNoteDetection", () => {
       // であり、床推定の不具合ではない)。実運用ではこの外れ値が
       // detectFrameNotes の採択閾値 (fundamentalThreshold) を超えないことが
       // 実質的な安全条件であり、それを直接検証する
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const frameLength = Math.floor(FRAME_SECONDS * SAMPLE_RATE);
       const frame = seededNoise(frameLength, 1e-4, 5);
 
@@ -540,12 +540,12 @@ describe("pitchPleaseNoteDetection", () => {
 
       expect(amplitudes).not.toBeNull();
       expect(Math.max(...amplitudes!)).toBeLessThan(
-        PITCH_PLEASE_DEFAULTS.fundamentalThreshold
+        NOTE_DETECTION_DEFAULTS.fundamentalThreshold
       );
     });
 
     it("detectFrameNotes 統合: 強:弱 = 20dB 差の2音を両方検出する", async () => {
-      const detector = new PitchPleaseNoteDetector({ a4Freq: A4_FREQ });
+      const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       const strongMidi = 60; // C4
       const weakMidi = 81; // A5 (C4 の倍音系列と重ならない)
       const audio = synthesize(

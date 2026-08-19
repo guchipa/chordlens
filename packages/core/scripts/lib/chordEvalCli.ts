@@ -1,7 +1,7 @@
 /**
  * chordEvalCli - 構成音推定の評価 CLI の実装 (引数解析・評価ループ・レポート出力)
  *
- * 評価対象はアプリと同じ PitchPleaseNoteDetector (構成音検出の唯一の実装)。
+ * 評価対象はアプリと同じ HarmonicNoteDetector (構成音検出の唯一の実装)。
  * 音声デコード・採点・集計などの共通ロジックは chordEvalLib.ts が持つ。
  */
 
@@ -168,8 +168,8 @@ export async function runChordEval(
     throw new Error("No audio files found");
   }
 
-  // createDetector 未指定 = 既定の PitchPleaseNoteDetector。
-  // pitchplease 推奨の estimationOptions が自動的に下敷きになる
+  // createDetector 未指定 = 既定の HarmonicNoteDetector。
+  // 検出器に合わせた estimationOptions が自動的に下敷きになる
   // (chordEvalLib.ts の resolveEstimationOptions 参照)
   const evalOptions: EvalOptions = {
     sampleRate,

@@ -104,7 +104,7 @@ chordlens/                    # プロジェクトルート (monorepo)
 │   │   │   ├── justAnalyze.ts          # スペクトル解析・評価
 │   │   │   ├── rootEstimation.ts       # 根音推定アルゴリズム
 │   │   │   ├── chordToneEstimation.ts  # 構成音推定
-│   │   │   ├── pitchPleaseNoteDetection.ts # pitchplease 構成音検出
+│   │   │   ├── noteDetection.ts # 構成音検出 (倍音和サリエンス + 貪欲減算)
 │   │   │   ├── swipePitchEstimation.ts # SWIPE' ピッチ推定
 │   │   │   └── phaseVocoderEstimation.ts # 位相ボコーダ法
 │   │   ├── adapters/        # プラットフォーム抽象 (storage / audio)

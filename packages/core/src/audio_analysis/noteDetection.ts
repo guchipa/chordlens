@@ -1,24 +1,47 @@
 /**
- * PitchPleaseNoteDetector - 倍音和サリエンスによる NoteDetector 実装
+ * HarmonicNoteDetector - 構成音検出 (NoteDetector) の実装
  *
- * pitchplease (https://www.npmjs.com/package/pitchplease) の「音名別の
- * 単一周波数 DFT」という発想を出発点に、実楽器の多音検出へ拡張した実装。
- * 相関計算は Goertzel アルゴリズム (goertzel.ts) で行う。
+ * 吹奏楽器アンサンブルの実録音から、鳴っている音の音名 (MIDI ノート番号) を
+ * フレーム単位で推定する。一般の多重ピッチ推定と違い、この用途では
+ * 次の 2 点が効いてくる:
  *
- * 実録音 (吹奏楽器のアンサンブル) で成立させるための 3 つの仕組み:
+ * - 出力は「音名の集合」だけでよい。正確な基本周波数は不要 (純正律の
+ *   偏差計測は evaluateSpectrum 系が別に担当する)
+ * - 探索対象は半音格子上の高々 72 音に限られる。全帯域の FFT ではなく
+ *   音名ごとの単一周波数 DFT (Goertzel、goertzel.ts) で必要な点だけを測る
  *
- * 1. デチューン耐性: 奏者の音程は平均律格子から ±50 セント近くズレる
- *    (そもそも本アプリはそのズレを可視化するチューナーである)。
- *    各音名ビンは ±40 セントの複数オフセットで測り最大値を採る。
- * 2. 倍音和サリエンス: 金管の第2倍音・クラリネットの第3倍音は基音より
- *    強いことがあり、ビン単体の振幅比較では基音と倍音を区別できない。
- *    候補ごとに倍音系列 (1f〜6f) の重み付き和 (サリエンス) を計算し、
- *    系列全体で音の実在を判定する。
- * 3. 貪欲減算: サリエンス最大の音から順に採用し、採用した音の倍音位置の
- *    エネルギーを残差から差し引いてから次を探す。倍音位置の候補は
- *    減算後の残差では立たなくなるため、倍音の誤検出が構造的に消える。
+ * ## 処理の流れ (1 フレーム = 既定 0.25 秒)
  *
- * フレーム間の集約は chordToneEstimation.ts が担う。
+ * 1. **音名ビンの測定** (measureAmplitudes)
+ *    候補音 C2〜B6 とその倍音位置について、Goertzel でパワーを測る。
+ *    奏者の音程は平均律格子から ±50 セント近くズレる (そのズレを見せるのが
+ *    このアプリである) ため、各音名は ±45 セントを覆う複数のデチューン
+ *    オフセットで測り最大値を採る。
+ *    値はノイズ床基準の dB SNR に正規化する (§normalizationMode):
+ *    床は MIDI 軸の移動窓の分位点で推定し、「床から何 dB 突き出ているか」を
+ *    0〜1 に写す。フレーム内最大値で正規化すると閾値の意味が
+ *    「最も大きい奏者に対する相対レベル」になり、1 人だけ弱い演奏で
+ *    他の奏者の基音が閾値下に沈むため、床基準にしている。
+ *
+ * 2. **倍音和サリエンス** (harmonicSalience)
+ *    金管の第2倍音・クラリネットの第3倍音は基音より強いことがあり、
+ *    ビン単体の振幅比較では基音と倍音を区別できない。候補ごとに
+ *    倍音系列 (1f〜6f) の重み付き和 (サリエンス) を取り、系列全体で
+ *    音の実在を判定する。
+ *
+ * 3. **貪欲減算** (detectFrameNotes)
+ *    サリエンス最大の音から順に採用し、採用した音の倍音位置 (1f〜12f) の
+ *    エネルギーを残差から差し引いてから次を探す。倍音位置の候補は減算後の
+ *    残差では立たなくなるため、倍音の誤検出が構造的に消える。
+ *    採用直前には、オクターブ下・12度下のサリエンスが拮抗していれば
+ *    そちらを基音とみなして降りる (サブオクターブ降下)。
+ *
+ * フレーム間の集約 (どの音を構成音として確定するか) は
+ * chordToneEstimation.ts、ストリーミングのちらつき対策は
+ * streamingChordTracker.ts が担う。
+ *
+ * 各パラメータの既定値は吹奏楽器の実録音 61 ファイルでの評価に基づく。
+ * 導出の経緯とアブレーション結果は docs/CHORD_DETECTION.md を参照。
  */
 
 import { A4_FREQ } from "../constants";
@@ -29,7 +52,7 @@ import type {
 } from "../adapters/noteDetection";
 import type { ChordToneEstimationOptions } from "./chordToneEstimation";
 
-export interface PitchPleaseNoteDetectorOptions {
+export interface HarmonicNoteDetectorOptions {
   /** A4 の基準周波数 (Hz)。候補音の周波数生成に使う */
   a4Freq?: number;
   /** 入力バッファのサンプルレート (Hz) */
@@ -84,7 +107,7 @@ export interface PitchPleaseNoteDetectorOptions {
   subHarmonicDescendRatio?: number;
 }
 
-export const PITCH_PLEASE_DEFAULTS: Required<PitchPleaseNoteDetectorOptions> = {
+export const NOTE_DETECTION_DEFAULTS: Required<HarmonicNoteDetectorOptions> = {
   a4Freq: A4_FREQ,
   sampleRate: 22050,
   // C1 (32Hz) ではなく C2 (65Hz) を下限とする: 電源ハム (50/60Hz) が
@@ -230,14 +253,14 @@ const PROVISIONAL_MAX_COUNT = 8;
  * 純正五度の2音 (根音+完全5度上) が録音系の非線形性で生む差音 (根音の
  * 1オクターブ下の狭帯域幽霊音) の抑制比。原音/-6dB/-12dB の 3 条件 ×
  * batch/streaming × TUS/YCY のスイープで選定 (docs/CHORD_DETECTION.md 参照)。
- * pitchplease の batch・streaming 両経路に同じ値を使う
- * (PITCH_PLEASE_ESTIMATION_OPTIONS と streamingChordTracker.ts の
+ * batch・streaming の両経路に同じ値を使う
+ * (NOTE_DETECTION_ESTIMATION_OPTIONS と streamingChordTracker.ts の
  * STREAMING_CHORD_ESTIMATION_DEFAULTS)
  */
-export const PITCH_PLEASE_SUB_OCTAVE_SUPPRESSION_RATIO = 0.4;
+export const SUB_OCTAVE_SUPPRESSION_RATIO = 0.4;
 
 /**
- * pitchplease 推奨の集約オプション。
+ * この検出器に合わせた集約オプション (chordToneEstimation.ts に渡す)。
  *
  * scoreMode は明示せず CHORD_TONE_ESTIMATION_DEFAULTS の既定
  * ("durationAmplitude"、二値採択の数え上げ) に委ねる。段階3以前は
@@ -249,8 +272,8 @@ export const PITCH_PLEASE_SUB_OCTAVE_SUPPRESSION_RATIO = 0.4;
  * medianSalience・provisional はオプション機能として引き続き利用できる
  * (scoreMode: "medianSalience" を明示すれば有効)
  */
-export const PITCH_PLEASE_ESTIMATION_OPTIONS: ChordToneEstimationOptions = {
-  subOctaveSuppressionScoreRatio: PITCH_PLEASE_SUB_OCTAVE_SUPPRESSION_RATIO,
+export const NOTE_DETECTION_ESTIMATION_OPTIONS: ChordToneEstimationOptions = {
+  subOctaveSuppressionScoreRatio: SUB_OCTAVE_SUPPRESSION_RATIO,
 };
 
 /** MIDI ノート番号 → 周波数 (Hz) */
@@ -356,10 +379,10 @@ export function harmonicSalience(
   return salience;
 }
 
-export class PitchPleaseNoteDetector implements NoteDetector {
+export class HarmonicNoteDetector implements NoteDetector {
   readonly requiredSampleRate: number;
 
-  private options: Required<PitchPleaseNoteDetectorOptions>;
+  private options: Required<HarmonicNoteDetectorOptions>;
   /** 実際に解析するサンプルレート (高レート入力はデシメーション後) */
   private analysisSampleRate: number;
   /** 候補音の数 (minMidiNote〜maxMidiNote) */
@@ -373,8 +396,8 @@ export class PitchPleaseNoteDetector implements NoteDetector {
   /** noiseFloor モード用に事前計算した Hann 窓係数 (frameMax モードでは null) */
   private hannWindow: Float32Array | null;
 
-  constructor(options: PitchPleaseNoteDetectorOptions = {}) {
-    this.options = { ...PITCH_PLEASE_DEFAULTS, ...options };
+  constructor(options: HarmonicNoteDetectorOptions = {}) {
+    this.options = { ...NOTE_DETECTION_DEFAULTS, ...options };
     this.requiredSampleRate = this.options.sampleRate;
     this.analysisSampleRate =
       this.options.sampleRate >= DECIMATION_MIN_SAMPLE_RATE

@@ -27,22 +27,25 @@ graph LR
 
 | 段 | 担当モジュール | 責務 | 主な誤検出対策 |
 |---|---|---|---|
-| ① フレーム解析 | `pitchPleaseNoteDetection.ts` (core) | 1フレームの音名判定 | 倍音和サリエンス + 貪欲減算 (§2) |
+| ① フレーム解析 | `audio_analysis/noteDetection.ts` (core) | 1フレームの音名判定 | 倍音和サリエンス + 貪欲減算 (§2) |
 | ② 時間集約 | `chordToneEstimation.ts` (core) | スコアで構成音を選別・ルート推定 | 倍音スコアフィルタ・隣接半音解決 (§3) |
 | ③ ヒステリシス | `streamingChordTracker.ts` (core) | ちらつき防止・確定判定 | 2サイクル一致 (§4) |
 
 ### 1.2. 処理経路
 
-構成音検出は pitchplease (`PitchPleaseNoteDetector`) のみで、選択設定はありません。
+検出器は `HarmonicNoteDetector`
+(`packages/core/src/audio_analysis/noteDetection.ts`) の 1 実装のみで、
+アルゴリズムの選択設定はありません。マイク入力の使われ方は 2 通りです。
 
-| | **pitchplease** |
-|---|---|
-| 実装 | `packages/core/src/audio_analysis/pitchPleaseNoteDetection.ts` |
-| 方式 | 倍音和サリエンス + 貪欲減算 (Goertzel ベース) |
-| 音声取得 | AudioWorklet で生 PCM を連続取得 (ストリーミング) |
-| 反映レイテンシ | 典型 ~0.6 秒 |
-| A4 基準設定 | 追従する |
-| プラットフォーム | 非依存 (core) |
+| | 自動追従 | 単音のマイク入力 |
+|---|---|---|
+| 入口 | `ChordFollowToggle` (設定ドロワー) | `MicInputButton` (音設定フォーム) |
+| 音声取得 | AudioWorklet で生 PCM を連続取得 | MediaRecorder で 1.5 秒録音 |
+| 処理 | ①→②→③ (ストリーミング) | ①→② (バッチ、1 回だけ) |
+| 出力 | 和音の構成音リスト全体 | 最有力の 1 音 |
+| レイテンシ | 典型 ~0.6 秒 | 録音時間 + 数十 ms |
+
+どちらも同じ検出器を使い、A4 の設定値 (既定 442Hz) に追従します。
 
 ```mermaid
 graph TD
@@ -56,7 +59,7 @@ graph TD
 
     subgraph Batch ["単音のマイク入力 (バッチ)"]
         MIC --> R["recordMonoAudio<br/>1.5秒録音 + デコード"]
-        R --> PP["PitchPleaseNoteDetector (core)<br/>①"]
+        R --> PP["HarmonicNoteDetector (core)<br/>①"]
         PP --> AGG["noteEventsToPitchList (②のみ)"]
     end
 
@@ -67,7 +70,7 @@ graph TD
 > **basic-pitch の削除**: かつては @spotify/basic-pitch (TensorFlow.js) を
 > 設定で選べました。TFJS 推論が重く 3 秒録音のバッチ方式でしか動かせないため、
 > 反映レイテンシが 3.5 秒以上となり、リアルタイム追従に求める 1 秒未満を
-> 構成上満たせません。精度でも pitchplease を下回っていた (§5.4) ため削除しました。
+> 構成上満たせません。精度でも下回っていた (§5.4) ため削除しました。
 
 キャプチャ (AudioWorklet) だけがブラウザ依存 (`apps/web/lib/audio/pcmCapture.ts`)、
 解析ロジックはすべてプラットフォーム非依存の core にあります。
@@ -90,8 +93,31 @@ graph TD
 
 ## 2. ① フレーム解析 (倍音和サリエンス + 貪欲減算)
 
-`PitchPleaseNoteDetector` は候補音 (MIDI 36〜95 = C2〜B6 の 60 音) の周波数だけを
-直接測る方式です (FFT の均一ビンではない)。1 フレームの処理は 4 步:
+### 2.0. なぜこの方式なのか
+
+多重ピッチ推定は一般には難しい問題ですが、この用途には 2 つの強い制約があり、
+それを使うと軽量な方式が組めます。
+
+1. **出力は音名の集合だけでよい**。正確な基本周波数は要りません
+   (純正律の偏差計測は [AUDIO_PIPELINE.md](./AUDIO_PIPELINE.md) の
+   `evaluateSpectrum` 系が別に担当する)。したがって周波数軸を連続的に
+   探索する必要がなく、半音格子上の高々 60 音を調べれば足ります。
+2. **リアルタイム (1 秒未満のレイテンシ) で回す必要がある**。ブラウザの
+   メインスレッドを塞げないので、1 フレームあたりの計算量に上限があります。
+
+そこで FFT の均一ビン (大半が音名格子から外れて無駄になる) ではなく、
+**必要な周波数だけを単一周波数 DFT で直接測る**方式を採ります。
+測る点は候補音 C2〜B6 の 60 音と、そのサリエンス計算に要る倍音位置だけです。
+単一周波数 DFT は Goertzel アルゴリズム (`goertzel.ts`) で、
+サンプルごとの三角関数評価なしに計算します。
+
+ただしこれだけでは実録音で成立しません。§1.3 の 3 つの現実
+(デチューン・基音より強い倍音・奏者間のレベル差) に対応するため、
+測定値の正規化 (§2.2)・倍音和サリエンス (§2.4)・貪欲減算 (§2.4) を重ねます。
+
+### 2.1. 1 フレームの処理
+
+`HarmonicNoteDetector` の 1 フレーム (既定 0.25 秒) の処理は 4 段です。
 
 ```mermaid
 graph TD
@@ -107,7 +133,7 @@ graph TD
     LOOP --> OUT["DetectedNoteEvent[]"]
 ```
 
-### 2.1. 無音ゲートとデシメーション
+**無音ゲートとデシメーション**
 
 - フレーム RMS < `silenceRmsThreshold` (0.01) なら解析しない
 - 32kHz 以上の入力は隣接ペア平均で 1/2 にデシメーションする。解析対象の
@@ -207,7 +233,7 @@ salience(m) = Σ_k w_k · residual[m + offset_k],   w = SALIENCE_WEIGHTS
 5. サリエンスが初期最大の `salienceThreshold` 倍を下回るか、基音ビンが
    `fundamentalThreshold` 未満になったら終了
 
-### 2.5. パラメータ一覧 (`PITCH_PLEASE_DEFAULTS`)
+### 2.5. パラメータ一覧 (`NOTE_DETECTION_DEFAULTS`)
 
 | パラメータ | 値 | 意味 |
 |---|---|---|
@@ -277,7 +303,7 @@ graph LR
   純正五度の 2 音 (根音 + 完全 5 度上) が録音系の非線形性で生む差音
   (根音の 1 オクターブ下の幽霊音) を除去する対称フィルタ。音 X の 12 半音上
   (X+12) が検出リストにあり `score(X) < score(X+12) × subOctaveSuppressionScoreRatio`
-  なら X を除去する。コアの既定は 0 (無効) だが、pitchplease 推奨オプション
+  なら X を除去する。コアの既定は 0 (無効) だが、検出器側の推奨オプション
   (`PITCH_PLEASE_ESTIMATION_OPTIONS` / `STREAMING_CHORD_ESTIMATION_DEFAULTS`) は
   batch・streaming とも 0.4 を使う
 - **ルート推定**: `estimateRoot` (コード定義との完全一致照合) で推定し、
@@ -296,7 +322,7 @@ batch の既定にしていたが、noiseFloor 正規化でフレーム単位の
 | `relativeScoreThreshold` | 0.15 | 0.15 | 最有力音に対するスコア比の下限 |
 | `maxNotes` | 6 | 6 | 採用する構成音の最大数 |
 | `harmonicSuppressionScoreRatio` | 0.5 | 0.5 | 倍音スコアフィルタ |
-| `subOctaveSuppressionScoreRatio` | 0.4 (pitchplease推奨) | 0.4 (pitchplease推奨) | 差音幽霊音抑制 (コア既定は 0 = 無効) |
+| `subOctaveSuppressionScoreRatio` | 0.4 (検出器推奨) | 0.4 (検出器推奨) | 差音幽霊音抑制 (コア既定は 0 = 無効) |
 
 ストリーミング用の上書きは `STREAMING_CHORD_ESTIMATION_DEFAULTS`
 (`streamingChordTracker.ts`)。
@@ -409,35 +435,35 @@ basic-pitch はストリーミング非対応のため batch のみ。
 
 | | exact | F1 | P | R | missing | extra (うちオクターブ違い) |
 |---|---|---|---|---|---|---|
-| **pitchplease** | **49/61 (80%)** | **0.926** | 0.881 | 0.975 | 3 | 16 (10) |
+| **本実装 (当時)** | **49/61 (80%)** | **0.926** | 0.881 | 0.975 | 3 | 16 (10) |
 | basic-pitch | 45/61 (74%) | 0.920 | 0.858 | 0.992 | 1 | 20 (18) |
 
 楽器別 exact:
 
 | | ASax | Cl | Fl | Hr | Tb | Tp |
 |---|---|---|---|---|---|---|
-| pitchplease | 6/6 | 10/12 | 6/6 | **5/12** | 11/12 | 10/12 |
+| 本実装 (当時) | 6/6 | 10/12 | 6/6 | **5/12** | 11/12 | 10/12 |
 | basic-pitch | 6/6 | 11/12 | 4/6 | **8/12** | **6/12** | 9/12 |
 
-一致率は 両方 OK 39 / pitchplease のみ OK 10 / basic-pitch のみ OK 6 / 両方 NG 6。
+一致率は 両方 OK 39 / 本実装のみ OK 10 / basic-pitch のみ OK 6 / 両方 NG 6。
 **両者は別の場所で失敗している**:
 
 - basic-pitch の誤検出は 20 件中 18 件がオクターブ違いで、Tb が 6/12 まで落ちる
-- basic-pitch だけが正解した 6 件のうち 4 件が TUS_Hr_A。これは pitchplease が
+- basic-pitch だけが正解した 6 件のうち 4 件が TUS_Hr_A。これは本実装が
   「最弱の正解音の基音レベルがフレーム最大比 0.15 未満」で全滅するファイル群であり、
-  **弱い基音の情報はスペクトルに存在していて、pitchplease の正規化・閾値設計が
+  **弱い基音の情報はスペクトルに存在していて、当時の正規化・閾値設計が
   捨てているだけ**であることを示す (原理的限界ではない)
 
-当時 pitchplease を既定にしたのは、この F1 差に加えて反映レイテンシ (~0.6 秒 vs
+当時この実装を既定にしたのは、この F1 差に加えて反映レイテンシ (~0.6 秒 vs
 3.5 秒以上) と A4 設定への追従があるため。
 
 **その後の削除 (2026-08)**: basic-pitch は TFJS 推論が重く 3 秒録音のバッチ方式
 でしか動かせないため、反映レイテンシ 3.5 秒以上が構成上の下限であり、
-リアルタイム追従の要件 (1 秒未満) を満たせない。§5.5 で pitchplease が全条件で
+リアルタイム追従の要件 (1 秒未満) を満たせない。§5.5 で本実装が全条件で
 さらに改善したことで精度面の存在意義もなくなったため、実装・設定・依存
 (@spotify/basic-pitch, @tensorflow/tfjs)・web 側の評価 CLI をすべて削除した。
 
-> **注**: 上表の pitchplease の数値は noiseFloor 正規化導入前
+> **注**: 上表の本実装の数値は noiseFloor 正規化導入前
 > (frameMax 正規化 + 集約は harmonicSuppressionScoreRatio 調整後の legacy) の
 > もの。導入後の再評価は §5.5 (basic-pitch 側は未再評価で、この表の数値のまま)。
 > 「弱い基音の情報はスペクトルに存在していて正規化・閾値設計が捨てているだけ」
@@ -513,11 +539,11 @@ streaming 0.933、-6dB 0.843/0.825、-12dB 0.760/0.733。exact (原音, 61ファ
 
 ## 6. 新しい検出アルゴリズムの追加手順
 
-現在は pitchplease の 1 実装のみで、選択のしくみ (定数・atom・設定 UI) は
+現在は `HarmonicNoteDetector` の 1 実装のみで、選択のしくみ (定数・atom・設定 UI) は
 持っていません。2 つ目を入れる場合の手順:
 
 1. `NoteDetector` (`core/adapters/noteDetection.ts`) の実装を用意する
-   - プラットフォーム非依存なら core に (例: `PitchPleaseNoteDetector`)
+   - プラットフォーム非依存なら core に (例: `HarmonicNoteDetector`)
    - ブラウザ依存なら `apps/web/lib/audio/` に置き、core から参照しない
 2. `apps/web/lib/audio/noteDetectorFactory.ts` に選択の分岐を足す。
    併せて集約オプション (`BATCH_ESTIMATION_OPTIONS` 相当) を実装ごとに分ける

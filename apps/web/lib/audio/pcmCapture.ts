@@ -8,7 +8,7 @@
  * 低レイテンシの逐次解析ができる。
  *
  * サンプルレートは AudioContext のネイティブレート (通常 44.1/48kHz)。
- * PitchPleaseNoteDetector は sampleRate オプションで任意レートに対応する
+ * HarmonicNoteDetector は sampleRate オプションで任意レートに対応する
  * ためリサンプルは行わない。
  */
 export class StreamingPcmCapture {

@@ -1,6 +1,6 @@
 import { goertzelPower } from "../../src/audio_analysis/goertzel";
 
-/** 素朴な単一周波数 DFT (pitchplease の calculateAmplitudes と同じ定義) */
+/** 素朴な単一周波数 DFT (goertzelPower の参照実装) */
 function naiveDftPower(
   samples: Float32Array,
   freqHz: number,

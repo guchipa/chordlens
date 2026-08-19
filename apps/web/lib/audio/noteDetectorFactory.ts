@@ -1,7 +1,7 @@
 /**
  * noteDetectorFactory - 構成音検出 (NoteDetector) の生成
  *
- * ChordLens の構成音検出は pitchplease (PitchPleaseNoteDetector) のみ。
+ * ChordLens の構成音検出は HarmonicNoteDetector (core) のみ。
  * 実装はプラットフォーム非依存なので core にあるが、A4 やサンプルレートなど
  * ブラウザ側の実行時パラメータを注入する差し替え点としてここに集約する。
  *
@@ -14,9 +14,9 @@
 
 import type { NoteDetector } from "@chordlens/core/adapters/noteDetection";
 import {
-    PitchPleaseNoteDetector,
-    PITCH_PLEASE_ESTIMATION_OPTIONS,
-} from "@chordlens/core/audio_analysis/pitchPleaseNoteDetection";
+    HarmonicNoteDetector,
+    NOTE_DETECTION_ESTIMATION_OPTIONS,
+} from "@chordlens/core/audio_analysis/noteDetection";
 import type { ChordToneEstimationOptions } from "@chordlens/core/audio_analysis/chordToneEstimation";
 
 export interface NoteDetectorFactoryOptions {
@@ -29,8 +29,8 @@ export interface NoteDetectorFactoryOptions {
 export function createNoteDetector(
     options: NoteDetectorFactoryOptions = {}
 ): NoteDetector {
-    // undefined を渡すと PITCH_PLEASE_DEFAULTS を上書きしてしまうため除外する
-    return new PitchPleaseNoteDetector({
+    // undefined を渡すと NOTE_DETECTION_DEFAULTS を上書きしてしまうため除外する
+    return new HarmonicNoteDetector({
         ...(options.a4Freq !== undefined && { a4Freq: options.a4Freq }),
         ...(options.sampleRate !== undefined && {
             sampleRate: options.sampleRate,
@@ -47,4 +47,4 @@ export function createNoteDetector(
  * STREAMING_CHORD_ESTIMATION_DEFAULTS に委ねる
  */
 export const BATCH_ESTIMATION_OPTIONS: ChordToneEstimationOptions =
-    PITCH_PLEASE_ESTIMATION_OPTIONS;
+    NOTE_DETECTION_ESTIMATION_OPTIONS;

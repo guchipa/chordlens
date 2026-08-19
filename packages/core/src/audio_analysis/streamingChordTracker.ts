@@ -32,8 +32,8 @@ import { Float32RingBuffer } from "./float32RingBuffer";
  * 2 フレーム以上 (0.25 < 0.4 <= 0.5) の継続を最低条件にする。
  *
  * subOctaveSuppressionScoreRatio: StreamingChordTracker は NoteDetector 非依存だが、
- * 実際に注入されるのは PitchPleaseNoteDetector のみ。
- * pitchPleaseNoteDetection.ts の PITCH_PLEASE_SUB_OCTAVE_SUPPRESSION_RATIO と
+ * 実際に注入されるのは HarmonicNoteDetector のみ。
+ * noteDetection.ts の SUB_OCTAVE_SUPPRESSION_RATIO と
  * 同値を batch・streaming 両経路に適用する (値の由来はそちらのコメント参照)
  */
 export const STREAMING_CHORD_ESTIMATION_DEFAULTS: ChordToneEstimationOptions = {

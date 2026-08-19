@@ -1,15 +1,15 @@
 /**
  * Goertzel アルゴリズム - 単一周波数の DFT パワーを効率的に求める
  *
- * pitchplease の calculateAmplitudes (サンプルごとに Math.cos/Math.sin を
- * 評価する素朴な内積) と数学的に同じ値を、三角関数 1 回 + サンプルごとの
- * 積和 1 回で計算する。48kHz × 候補 72 音のリアルタイム解析で
- * メインスレッドを塞がないための置き換え (実測で約 10 倍高速)。
+ * 素朴な単一周波数 DFT (サンプルごとに Math.cos/Math.sin を評価する内積) と
+ * 数学的に同じ値を、三角関数 1 回 + サンプルごとの積和 1 回で計算する。
+ * 48kHz × 候補 72 音のリアルタイム解析でメインスレッドを塞がないために使う
+ * (素朴な実装比で実測 約 10 倍高速)。
  */
 
 /**
- * samples に含まれる freqHz 成分の DFT パワー |X(f)|^2 を返す。
- * pitchplease の computeMagnitudes (re^2 + im^2) と同スケール
+ * samples に含まれる freqHz 成分の DFT パワー |X(f)|^2 を返す
+ * (実部・虚部の二乗和 re^2 + im^2 と同スケール)
  */
 export function goertzelPower(
   samples: Float32Array,

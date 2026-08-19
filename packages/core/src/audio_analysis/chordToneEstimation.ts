@@ -57,7 +57,7 @@ export interface ChordToneEstimationOptions {
    * - "durationAmplitude" (既定): 合計発音時間 × 最大振幅 (二値採択の数え上げ)。
    *   noiseFloor 正規化下ではこちらが全評価条件で上回る
    * - "medianSalience": 連続サリエンス (provisional イベント含む) の時間中央値。
-   *   閾値境界での採択の揺れに頑健 (pitchplease 推奨)
+   *   閾値境界での採択の揺れに頑健 (現在は既定では使わない)
    */
   scoreMode?: "durationAmplitude" | "medianSalience";
   /** scoreMode "medianSalience" で使う分位点 (0〜1、線形補間) */

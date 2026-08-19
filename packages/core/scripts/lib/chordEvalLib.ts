@@ -12,10 +12,10 @@ import { spawnSync } from "node:child_process";
 import ffmpegPath from "ffmpeg-static";
 
 import {
-  PitchPleaseNoteDetector,
-  PITCH_PLEASE_ESTIMATION_OPTIONS,
-  type PitchPleaseNoteDetectorOptions,
-} from "../../src/audio_analysis/pitchPleaseNoteDetection";
+  HarmonicNoteDetector,
+  NOTE_DETECTION_ESTIMATION_OPTIONS,
+  type HarmonicNoteDetectorOptions,
+} from "../../src/audio_analysis/noteDetection";
 import type { NoteDetector } from "../../src/adapters/noteDetection";
 import {
   noteEventsToPitchList,
@@ -187,7 +187,7 @@ export function judge(
 
 /**
  * 評価対象の NoteDetector を生成する関数。
- * 既定 (PitchPleaseNoteDetector) 以外の検出器を評価したい実験用の注入口
+ * 既定 (HarmonicNoteDetector) 以外の検出器を評価したい実験用の注入口
  */
 export type EvalDetectorFactory = (context: {
   sampleRate: number;
@@ -198,10 +198,10 @@ export interface EvalOptions {
   /** 音声のデコード / 解析に使うサンプルレート (Hz) */
   sampleRate: number;
   a4Freq: number;
-  /** NoteDetector の生成関数。省略時は PitchPleaseNoteDetector */
+  /** NoteDetector の生成関数。省略時は HarmonicNoteDetector */
   createDetector?: EvalDetectorFactory;
-  /** createDetector 未指定時に PitchPleaseNoteDetector へ渡す上書き */
-  detectorOptions?: Partial<PitchPleaseNoteDetectorOptions>;
+  /** createDetector 未指定時に HarmonicNoteDetector へ渡す上書き */
+  detectorOptions?: Partial<HarmonicNoteDetectorOptions>;
   estimationOptions?: ChordToneEstimationOptions;
   trackerOptions?: Partial<StreamingChordTrackerOptions>;
 }
@@ -218,7 +218,7 @@ export function createEvalDetector(opts: EvalOptions): NoteDetector {
       a4Freq: opts.a4Freq,
     });
   }
-  return new PitchPleaseNoteDetector({
+  return new HarmonicNoteDetector({
     a4Freq: opts.a4Freq,
     sampleRate: opts.sampleRate,
     ...opts.detectorOptions,
@@ -227,8 +227,8 @@ export function createEvalDetector(opts: EvalOptions): NoteDetector {
 
 /**
  * evaluateBatch に渡す estimationOptions を解決する。
- * createDetector 未指定 (= PitchPleaseNoteDetector の既定生成) のときは
- * PITCH_PLEASE_ESTIMATION_OPTIONS を下敷きにする (ユーザー指定の
+ * createDetector 未指定 (= HarmonicNoteDetector の既定生成) のときは
+ * NOTE_DETECTION_ESTIMATION_OPTIONS を下敷きにする (ユーザー指定の
  * estimationOptions が優先)。別の検出器を注入する場合は集約の前提が変わるため
  * opts.estimationOptions のみを使う。
  *
@@ -245,7 +245,7 @@ function resolveBatchEstimationOptions(
   if (opts.createDetector) {
     return opts.estimationOptions;
   }
-  return { ...PITCH_PLEASE_ESTIMATION_OPTIONS, ...opts.estimationOptions };
+  return { ...NOTE_DETECTION_ESTIMATION_OPTIONS, ...opts.estimationOptions };
 }
 
 /** バッチ経路: ファイル全体を一括解析 */
@@ -262,8 +262,8 @@ export async function evaluateBatch(
  * ストリーミング経路: アプリでは確定した和音が次の確定まで表示され続けるため、
  * 「最も長く表示されていた和音」を採用する。
  * estimationOptions は opts.estimationOptions のみを使う
- * (PITCH_PLEASE_ESTIMATION_OPTIONS を自動的には下敷きにしない。pitchplease の
- * streaming 既定値は StreamingChordTracker の STREAMING_CHORD_ESTIMATION_DEFAULTS
+ * (NOTE_DETECTION_ESTIMATION_OPTIONS を自動的には下敷きにしない。streaming の
+ * 既定値は StreamingChordTracker の STREAMING_CHORD_ESTIMATION_DEFAULTS
  * に委ねる。理由は resolveBatchEstimationOptions 参照)
  */
 export async function evaluateStreaming(

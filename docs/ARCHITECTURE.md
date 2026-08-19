@@ -112,7 +112,7 @@ chordlens/
 │       │   │   ├── calcJustFreq.ts         # 純正律周波数計算
 │       │   │   ├── rootEstimation.ts       # 根音推定
 │       │   │   ├── chordToneEstimation.ts  # 構成音推定（ノートイベント→Pitch[] 変換）
-│       │   │   ├── pitchPleaseNoteDetection.ts # 倍音和サリエンスによる構成音検出（NoteDetector 実装）
+│       │   │   ├── noteDetection.ts       # 構成音検出の実装（倍音和サリエンス + 貪欲減算）
 │       │   │   ├── goertzel.ts             # Goertzel アルゴリズム（単一周波数 DFT）
 │       │   │   ├── streamingChordTracker.ts # PCM ストリームからの逐次和音推定
 │       │   │   ├── float32RingBuffer.ts    # PCM 用リングバッファ
@@ -123,7 +123,7 @@ chordlens/
 │       │   ├── adapters/        # プラットフォーム抽象インターフェース
 │       │   │   ├── storage.ts              # KeyValueStorage（localStorage 等の抽象）
 │       │   │   ├── audio.ts                # SpectrumSource（音声入力の抽象）
-│       │   │   └── noteDetection.ts        # NoteDetector（構成音検出の抽象）
+│       │   │   └── noteDetection.ts        # NoteDetector（構成音検出の抽象・実装は audio_analysis 側）
 │       │   ├── presets/         # プリセット管理コア（ストレージ注入式）
 │       │   ├── logging/         # ログ CSV 変換
 │       │   ├── utils/           # emaHold（EMA + ホールド平滑化）
@@ -241,7 +241,7 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
 ドロワーを閉じても追従は継続する）。ループが動くのは
 **トグル ON かつチューナーの解析実行中 (isProcessing)** のみで、
 解析を停止すると追従も止まる。
-構成音検出は pitchplease (`PitchPleaseNoteDetector`) のみで、選択設定は持たない
+構成音検出は `HarmonicNoteDetector` (core) のみで、選択設定は持たない
 （詳細は [CHORD_DETECTION.md](./CHORD_DETECTION.md)）。
 
 **ストリーミング経路**:
@@ -250,7 +250,7 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
    (`public/pcm-capture-processor.js`) で生 PCM をチャンク単位に連続取得
    （AudioContext のネイティブレートのまま、リサンプルなし）
 2. **逐次解析** → core の `StreamingChordTracker` がリングバッファに蓄積し、
-   0.25 秒フレームが揃うごとに `PitchPleaseNoteDetector` (core、倍音和サリエンス +
+   0.25 秒フレームが揃うごとに `HarmonicNoteDetector` (core、倍音和サリエンス +
    貪欲減算、A4 設定に追従) で解析。直近 1 秒のスライディングウィンドウを
    `noteEventsToPitchList()` で集約し、2 サイクル一致のヒステリシスで確定
 3. **反映** → 確定した `Pitch[]` を `applyDetectedPitchListAtom` が即時更新。
@@ -259,7 +259,7 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
 **単音のマイク入力 (バッチ)**:
 
 `MicInputButton`（PitchSettingForm 内）はクリック時に `recordMonoAudio()` で
-1.5 秒録音し、同じ `PitchPleaseNoteDetector` で解析して最有力の 1 音を追加する。
+1.5 秒録音し、同じ `HarmonicNoteDetector` で解析して最有力の 1 音を追加する。
 集約オプションは `noteDetectorFactory` の `BATCH_ESTIMATION_OPTIONS`
 （ストリーミングはちらつき対策が異なるため別設定）。
 
@@ -349,7 +349,7 @@ graph TD
 | **getJustFrequencies** | 構成音から純正律周波数を計算 |
 | **estimateRoot** | 和音の根音を自動推定 |
 | **noteEventsToPitchList** | 検出ノートイベントを構成音リスト (Pitch[]) に変換 |
-| **PitchPleaseNoteDetector** | 倍音和サリエンス + 貪欲減算による構成音検出 (NoteDetector 実装、core) |
+| **HarmonicNoteDetector** | 倍音和サリエンス + 貪欲減算による構成音検出 (NoteDetector 実装、core) |
 | **StreamingChordTracker** | PCM ストリームからの逐次和音推定 (ヒステリシス付き、core) |
 | **quadraticInterpolation** | パラボラ補間でサブビン精度の周波数推定 |
 

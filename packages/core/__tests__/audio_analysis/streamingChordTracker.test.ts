@@ -1,5 +1,5 @@
 import { StreamingChordTracker } from "../../src/audio_analysis/streamingChordTracker";
-import { PitchPleaseNoteDetector } from "../../src/audio_analysis/pitchPleaseNoteDetection";
+import { HarmonicNoteDetector } from "../../src/audio_analysis/noteDetection";
 import type {
   DetectedNoteEvent,
   NoteDetector,
@@ -224,13 +224,13 @@ describe("StreamingChordTracker", () => {
     expect(changes.every((c) => c === null)).toBe(true);
   });
 
-  it("実際の PitchPleaseNoteDetector と組み合わせて C メジャーを確定する", async () => {
+  it("実際の HarmonicNoteDetector と組み合わせて C メジャーを確定する", async () => {
     const a4Freq = 442;
     // このテストの主眼は StreamingChordTracker の追従・確定ロジックであり、
     // 正規化方式そのものではない。noiseFloor 既定値では背景雑音を含まない
     // 合成音の矩形窓スペクトル漏れが孤立ビンとして床から浮きやすいため
-    // (pitchPleaseNoteDetection.test.ts と同じ既知の限界)、frameMax を明示する
-    const detector = new PitchPleaseNoteDetector({
+    // (noteDetection.test.ts と同じ既知の限界)、frameMax を明示する
+    const detector = new HarmonicNoteDetector({
       a4Freq,
       sampleRate: SAMPLE_RATE,
       normalizationMode: "frameMax",

@@ -11,7 +11,7 @@ import {
   evaluateBatch,
   type EvalOptions,
 } from "../../scripts/lib/chordEvalLib";
-import { PitchPleaseNoteDetector } from "../../src/audio_analysis/pitchPleaseNoteDetection";
+import { HarmonicNoteDetector } from "../../src/audio_analysis/noteDetection";
 import type {
   DetectedNoteEvent,
   NoteDetector,
@@ -36,9 +36,9 @@ class StubNoteDetector implements NoteDetector {
 }
 
 describe("createEvalDetector", () => {
-  it("createDetector 未指定なら PitchPleaseNoteDetector を生成する", () => {
+  it("createDetector 未指定なら HarmonicNoteDetector を生成する", () => {
     const detector = createEvalDetector({ sampleRate: 44100, a4Freq: 442 });
-    expect(detector).toBeInstanceOf(PitchPleaseNoteDetector);
+    expect(detector).toBeInstanceOf(HarmonicNoteDetector);
     expect(detector.requiredSampleRate).toBe(44100);
   });
 

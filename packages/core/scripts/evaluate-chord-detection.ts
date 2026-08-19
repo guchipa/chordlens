@@ -1,7 +1,7 @@
 /**
  * evaluate-chord-detection
  *
- * 録音データのディレクトリを走査し、構成音推定 (PitchPleaseNoteDetector) の
+ * 録音データのディレクトリを走査し、構成音推定 (HarmonicNoteDetector) の
  * 精度をファイル名の正解ラベルと突き合わせて評価する。
  *
  * 正解ラベルはファイル名末尾のアンダースコア区切りブロック:

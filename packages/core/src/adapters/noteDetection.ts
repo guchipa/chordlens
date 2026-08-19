@@ -5,7 +5,7 @@
  * 推定結果は audio_analysis/chordToneEstimation.ts の noteEventsToPitchList で
  * チューナーの構成音リスト (Pitch[]) に変換する。
  *
- * 実装は PitchPleaseNoteDetector (audio_analysis/pitchPleaseNoteDetection.ts)
+ * 実装は HarmonicNoteDetector (audio_analysis/noteDetection.ts)
  * のみ。プラットフォーム非依存なので Web / React Native で共通に使える。
  * この抽象は将来ネイティブ専用の検出器 (TFLite など) を差し込む余地として残す
  */
