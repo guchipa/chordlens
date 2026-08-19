@@ -31,39 +31,43 @@ graph LR
 | ② 時間集約 | `chordToneEstimation.ts` (core) | スコアで構成音を選別・ルート推定 | 倍音スコアフィルタ・隣接半音解決 (§3) |
 | ③ ヒステリシス | `streamingChordTracker.ts` (core) | ちらつき防止・確定判定 | 2サイクル一致 (§4) |
 
-### 1.2. 2 つのアルゴリズムと処理経路
+### 1.2. 処理経路
 
-検出アルゴリズムは選択式で、処理経路が異なります。
+構成音検出は pitchplease (`PitchPleaseNoteDetector`) のみで、選択設定はありません。
 
-| | **pitchplease** (既定・本ドキュメントの主題) | **basic-pitch** |
-|---|---|---|
-| 実装 | `packages/core/src/audio_analysis/pitchPleaseNoteDetection.ts` | `apps/web/lib/audio/basicPitchNoteDetector.ts` |
-| 方式 | 倍音和サリエンス + 貪欲減算 (Goertzel ベース) | TensorFlow.js モデル推論 |
-| 音声取得 | AudioWorklet で生 PCM を連続取得 (ストリーミング) | MediaRecorder で 3 秒録音 (バッチ) |
-| 反映レイテンシ | 典型 ~0.6 秒 | 3.5 秒以上 |
-| A4 基準設定 | 追従する | 440Hz 固定 |
-| プラットフォーム | 非依存 (core) | ブラウザ依存 (TFJS) |
+| | **pitchplease** |
+|---|---|
+| 実装 | `packages/core/src/audio_analysis/pitchPleaseNoteDetection.ts` |
+| 方式 | 倍音和サリエンス + 貪欲減算 (Goertzel ベース) |
+| 音声取得 | AudioWorklet で生 PCM を連続取得 (ストリーミング) |
+| 反映レイテンシ | 典型 ~0.6 秒 |
+| A4 基準設定 | 追従する |
+| プラットフォーム | 非依存 (core) |
 
 ```mermaid
 graph TD
     MIC[マイク MediaStream]
 
-    subgraph Streaming ["ストリーミング経路 (pitchplease)"]
+    subgraph Streaming ["自動追従 (ストリーミング)"]
         MIC --> W["AudioWorkletNode<br/>pcm-capture-processor.js"]
         W -->|"~2048サンプルのチャンク"| PC["StreamingPcmCapture (web)"]
         PC -->|push| T["StreamingChordTracker (core)<br/>リングバッファ + ①②③"]
     end
 
-    subgraph Batch ["バッチ経路 (basic-pitch)"]
-        MIC --> G["SoundLevelMonitor<br/>音量ゲート"]
-        G --> R["recordMonoAudio<br/>3秒録音 + デコード"]
-        R --> BP["BasicPitchNoteDetector<br/>TFJS 推論"]
-        BP --> AGG["noteEventsToPitchList (②のみ)"]
+    subgraph Batch ["単音のマイク入力 (バッチ)"]
+        MIC --> R["recordMonoAudio<br/>1.5秒録音 + デコード"]
+        R --> PP["PitchPleaseNoteDetector (core)<br/>①"]
+        PP --> AGG["noteEventsToPitchList (②のみ)"]
     end
 
     T --> APPLY[pitchListAtom へ反映]
     AGG --> APPLY
 ```
+
+> **basic-pitch の削除**: かつては @spotify/basic-pitch (TensorFlow.js) を
+> 設定で選べました。TFJS 推論が重く 3 秒録音のバッチ方式でしか動かせないため、
+> 反映レイテンシが 3.5 秒以上となり、リアルタイム追従に求める 1 秒未満を
+> 構成上満たせません。精度でも pitchplease を下回っていた (§5.4) ため削除しました。
 
 キャプチャ (AudioWorklet) だけがブラウザ依存 (`apps/web/lib/audio/pcmCapture.ts`)、
 解析ロジックはすべてプラットフォーム非依存の core にあります。
@@ -336,12 +340,7 @@ true になる。provisional は medianSalience 集約用の緩い標本 (§3) �
 アルゴリズムの変更は必ず実録音で回帰評価します:
 
 ```bash
-# pitchplease (core CLI)
 pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-optional [--verbose]
-
-# アルゴリズムを指定して比較する (basic-pitch を含む。web CLI)
-pnpm --filter @chordlens/web eval:chords <録音ディレクトリ> \
-  --algorithm basicpitch --root-optional [--verbose]
 
 # レベル不均衡 (1人だけ弱い/欠けた演奏) への耐性を評価する
 pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-optional --attenuate 6
@@ -361,28 +360,17 @@ pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-opti
 - 会場別 (ファイル名の会場セグメント、例 TUS/YCY) の F1 内訳が自動的に
   出力に付く
 
-**2 つの CLI がある理由**: basic-pitch は TFJS 実装が `apps/web` 側にあり、
-core からは参照できない (依存方向の制約)。そのため core の CLI は pitchplease 専用で、
-両アルゴリズムの比較は web 側の CLI から `NoteDetector` を注入して行う。
-採点ロジック・出力形式は共通 (`packages/core/scripts/lib/chordEvalCli.ts`) で、
-どちらから実行しても同じ基準で比較できる。
-
-web CLI は**アプリと同じ `BasicPitchNoteDetector` をそのまま使う**。差分はモデルの
-取得元だけで (ブラウザ: `/models/basic-pitch/model.json` を fetch / Node:
-`@spotify/basic-pitch` 同梱のモデルを fs で読み `tf.io.IOHandler` として渡す。
-`apps/web/scripts/lib/basicPitchNodeModel.ts`)、推論と後処理の設定は同一である。
-
 - 正解ラベルはファイル名末尾のブロック (例: `..._Cm_C4-Eb4-G4.webm`、先頭が根音)
 - **`--root-optional`**: 根音を「任意の音」として採点する (検出しても extra に
   せず、欠けても missing にしない)。アンサンブル実験の録音は**根音奏者の有無が
   ファイルによって異なる**ため、このデータでは必須
 - batch (ファイル全体を一括解析) と streaming (アプリと同じ追従経路、
   最も長く表示されていた確定値) の両方を、exact / F1 (ノート単位の
-  precision・recall) / missing / extra / root=最低音率で採点する。
-  streaming 非対応のアルゴリズム (basic-pitch) は batch のみ採点される
-- 音声のデコードレートは検出器の `requiredSampleRate` に従う
-  (pitchplease は `--sample-rate` の指定値、basic-pitch は 22050 固定)
-- 共通ロジックは `scripts/lib/chordEvalLib.ts` (パラメータ探索からも利用)
+  precision・recall) / missing / extra / root=最低音率で採点する
+- 音声のデコードレートは `--sample-rate` の指定値 (既定 48000)
+- 実装は `scripts/lib/chordEvalCli.ts` (引数解析・評価ループ・レポート) と
+  `scripts/lib/chordEvalLib.ts` (デコード・採点・集計。パラメータ探索からも利用)。
+  別の検出器を比較したい場合は `EvalOptions.createDetector` で注入する
 - 録音は被験者データのためコミットしない (`test-data/` は gitignore 済み)
 
 ### 5.2. パラメータの調整方法
@@ -411,9 +399,12 @@ web CLI は**アプリと同じ `BasicPitchNoteDetector` をそのまま使う**
 参考: サリエンス方式導入前の旧・比率閾値方式は誤検出が batch で 96 個あった
 (採点方式が異なるため直接比較は不可だが、桁が違う)。
 
-### 5.4. アルゴリズム比較の実測 (2026-08, 61 ファイル)
+### 5.4. basic-pitch との比較の実測 (2026-08, 61 ファイル) — 削除の根拠
 
-両アルゴリズムを同一データ・同一採点で比較した結果 (根音任意採点、batch 経路)。
+> **この比較の結論として basic-pitch は削除済み**。以下は削除の判断根拠として
+> 残す記録であり、現在のコードに basic-pitch 経路は存在しない。
+
+当時の 2 アルゴリズムを同一データ・同一採点で比較した結果 (根音任意採点、batch 経路)。
 basic-pitch はストリーミング非対応のため batch のみ。
 
 | | exact | F1 | P | R | missing | extra (うちオクターブ違い) |
@@ -437,8 +428,14 @@ basic-pitch はストリーミング非対応のため batch のみ。
   **弱い基音の情報はスペクトルに存在していて、pitchplease の正規化・閾値設計が
   捨てているだけ**であることを示す (原理的限界ではない)
 
-既定を pitchplease にしているのは、この F1 差に加えて反映レイテンシ (~0.6 秒 vs
+当時 pitchplease を既定にしたのは、この F1 差に加えて反映レイテンシ (~0.6 秒 vs
 3.5 秒以上) と A4 設定への追従があるため。
+
+**その後の削除 (2026-08)**: basic-pitch は TFJS 推論が重く 3 秒録音のバッチ方式
+でしか動かせないため、反映レイテンシ 3.5 秒以上が構成上の下限であり、
+リアルタイム追従の要件 (1 秒未満) を満たせない。§5.5 で pitchplease が全条件で
+さらに改善したことで精度面の存在意義もなくなったため、実装・設定・依存
+(@spotify/basic-pitch, @tensorflow/tfjs)・web 側の評価 CLI をすべて削除した。
 
 > **注**: 上表の pitchplease の数値は noiseFloor 正規化導入前
 > (frameMax 正規化 + 集約は harmonicSuppressionScoreRatio 調整後の legacy) の
@@ -516,13 +513,19 @@ streaming 0.933、-6dB 0.843/0.825、-12dB 0.760/0.733。exact (原音, 61ファ
 
 ## 6. 新しい検出アルゴリズムの追加手順
 
-1. core の `CHORD_DETECTION_ALGORITHMS` (`constants.ts`) に名前とラベルを追加
-2. `NoteDetector` (`core/adapters/noteDetection.ts`) の実装を用意
+現在は pitchplease の 1 実装のみで、選択のしくみ (定数・atom・設定 UI) は
+持っていません。2 つ目を入れる場合の手順:
+
+1. `NoteDetector` (`core/adapters/noteDetection.ts`) の実装を用意する
    - プラットフォーム非依存なら core に (例: `PitchPleaseNoteDetector`)
-   - ブラウザ依存なら `apps/web/lib/audio/` に (例: `BasicPitchNoteDetector`)
-3. `noteDetectorFactory.ts` の switch に生成処理を追加
-4. フレーム単位の解析が軽量なら `supportsStreaming()` に追加
-   (StreamingChordTracker 経由の低レイテンシ経路に乗る)
-5. `eval:chords --root-optional` で実データ回帰評価を行う。
-   ブラウザ依存の実装なら `apps/web/scripts/evaluate-chord-detection.ts` の
-   `resolveDetector` に分岐を足す (core 実装なら core の CLI に足す)
+   - ブラウザ依存なら `apps/web/lib/audio/` に置き、core から参照しない
+2. `apps/web/lib/audio/noteDetectorFactory.ts` に選択の分岐を足す。
+   併せて集約オプション (`BATCH_ESTIMATION_OPTIONS` 相当) を実装ごとに分ける
+3. ユーザーに選ばせるなら core の定数・`chordDetectionAtoms` の永続化 atom・
+   `ChordFollowToggle` の Select を復活させる (削除前の実装は git 履歴を参照)
+4. ストリーミング経路に載せられるのは**フレーム単位の解析が軽い実装だけ**。
+   重い推論ならバッチ専用となり、反映レイテンシが 1 秒を大きく超える点に注意
+   (basic-pitch を削除した理由。§5.4)
+5. `eval:chords --root-optional` で実データ回帰評価を行う。既定以外の検出器は
+   `EvalOptions.createDetector` で注入する。レベル不均衡耐性 (`--attenuate 6`
+   / `--attenuate 12`) も併せて確認する

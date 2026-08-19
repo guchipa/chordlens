@@ -55,7 +55,7 @@ export interface ChordToneEstimationOptions {
   /**
    * フレーム間集約の方式。
    * - "durationAmplitude" (既定): 合計発音時間 × 最大振幅 (二値採択の数え上げ)。
-   *   basic-pitch 互換のため既定値として維持する
+   *   noiseFloor 正規化下ではこちらが全評価条件で上回る
    * - "medianSalience": 連続サリエンス (provisional イベント含む) の時間中央値。
    *   閾値境界での採択の揺れに頑健 (pitchplease 推奨)
    */

@@ -187,8 +187,7 @@ export function judge(
 
 /**
  * 評価対象の NoteDetector を生成する関数。
- * アルゴリズムを差し替えるために注入する。core からは参照できない
- * ブラウザ依存の実装 (basic-pitch) は apps/web 側の CLI から注入される
+ * 既定 (PitchPleaseNoteDetector) 以外の検出器を評価したい実験用の注入口
  */
 export type EvalDetectorFactory = (context: {
   sampleRate: number;
@@ -210,7 +209,7 @@ export interface EvalOptions {
 /**
  * EvalOptions から NoteDetector を生成する。
  * 実際に音声をデコードすべきサンプルレートは、生成した detector の
- * requiredSampleRate から取得すること (basic-pitch は 22050 固定)
+ * requiredSampleRate から取得すること (固定レートを要求する実装があるため)
  */
 export function createEvalDetector(opts: EvalOptions): NoteDetector {
   if (opts.createDetector) {
@@ -228,10 +227,10 @@ export function createEvalDetector(opts: EvalOptions): NoteDetector {
 
 /**
  * evaluateBatch に渡す estimationOptions を解決する。
- * createDetector 未指定 (= PitchPleaseNoteDetector の既定生成、pitchplease 既定)
- * のときは PITCH_PLEASE_ESTIMATION_OPTIONS を下敷きにする
- * (ユーザー指定の estimationOptions が優先)。basic-pitch など明示的に
- * createDetector を注入する場合は従来どおり opts.estimationOptions のみを使う。
+ * createDetector 未指定 (= PitchPleaseNoteDetector の既定生成) のときは
+ * PITCH_PLEASE_ESTIMATION_OPTIONS を下敷きにする (ユーザー指定の
+ * estimationOptions が優先)。別の検出器を注入する場合は集約の前提が変わるため
+ * opts.estimationOptions のみを使う。
  *
  * batch・streaming とも既定は legacy 集約 (durationAmplitude、二値採択の
  * 数え上げ)。段階3以前は batch のみ medianSalience (連続サリエンスの時間

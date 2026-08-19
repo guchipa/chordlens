@@ -13,10 +13,10 @@ import { noteEventsToPitchList } from "@chordlens/core/audio_analysis/chordToneE
 import type { Pitch } from "@chordlens/core/types";
 import {
     createNoteDetector,
-    recommendedEstimationOptions,
+    BATCH_ESTIMATION_OPTIONS,
 } from "@/lib/audio/noteDetectorFactory";
 import { recordMonoAudio } from "@/lib/audio/recordMonoAudio";
-import { a4FreqAtom, chordDetectionAlgorithmAtom } from "@/lib/store";
+import { a4FreqAtom } from "@/lib/store";
 
 interface MicInputButtonProps {
     /** 検出完了時のコールバック (最有力の 1 音) */
@@ -32,7 +32,7 @@ type DetectionStatus = "idle" | "recording" | "processing";
 /**
  * マイク入力ボタン (単音)
  *
- * クリックで短時間録音し、basic-pitch で推定した最有力の 1 音を
+ * クリックで短時間録音し、構成音検出で推定した最有力の 1 音を
  * 即座にコールバックへ渡す。
  * 録音中は赤色のパルスアニメーション、処理中はスピナーを表示。
  */
@@ -43,7 +43,6 @@ export function MicInputButton({
 }: MicInputButtonProps) {
     const [status, setStatus] = useState<DetectionStatus>("idle");
     const [message, setMessage] = useState<string | null>(null);
-    const algorithm = useAtomValue(chordDetectionAlgorithmAtom);
     const a4Freq = useAtomValue(a4FreqAtom);
 
     const handleClick = useCallback(async () => {
@@ -53,7 +52,7 @@ export function MicInputButton({
         setMessage(null);
 
         try {
-            const detector = createNoteDetector(algorithm, { a4Freq });
+            const detector = createNoteDetector({ a4Freq });
 
             setStatus("recording");
             const monoAudio = await recordMonoAudio({
@@ -64,7 +63,7 @@ export function MicInputButton({
             setStatus("processing");
             const noteEvents = await detector.detectNotes(monoAudio);
             const [pitch] = noteEventsToPitchList(noteEvents, {
-                ...recommendedEstimationOptions(algorithm),
+                ...BATCH_ESTIMATION_OPTIONS,
                 maxNotes: 1,
             });
 
@@ -88,7 +87,7 @@ export function MicInputButton({
         } finally {
             setStatus("idle");
         }
-    }, [status, recordDurationMs, onDetect, algorithm, a4Freq]);
+    }, [status, recordDurationMs, onDetect, a4Freq]);
 
     const isActive = status !== "idle";
 

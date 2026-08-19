@@ -1,16 +1,14 @@
 /**
- * chordEvalCli - 構成音推定の評価 CLI の共通実装
+ * chordEvalCli - 構成音推定の評価 CLI の実装 (引数解析・評価ループ・レポート出力)
  *
- * core の CLI (pitchplease 専用) と apps/web の CLI (basic-pitch を含む) の
- * 両方から使う。core は apps/web に依存できないため、ブラウザ依存の
- * NoteDetector 実装は resolveDetector 経由で呼び出し側から注入する。
+ * 評価対象はアプリと同じ PitchPleaseNoteDetector (構成音検出の唯一の実装)。
+ * 音声デコード・採点・集計などの共通ロジックは chordEvalLib.ts が持つ。
  */
 
 import path from "node:path";
 
 import {
   collectAudioFiles,
-  createEvalDetector,
   decodeAudioToMonoFloat32,
   evaluateBatch,
   evaluateStreaming,
@@ -19,7 +17,6 @@ import {
   midiToName,
   parseExpectedFromFilename,
   summarizeVerdicts,
-  type EvalDetectorFactory,
   type EvalOptions,
   type ExpectedNote,
   type Summary,
@@ -30,30 +27,10 @@ import { attenuateNoteInAudio } from "./spectralAttenuation";
 const DEFAULT_SAMPLE_RATE = 48000;
 const DEFAULT_A4 = 442;
 
-export interface ChordEvalCliConfig {
-  /** Usage 行 (--help / 引数なしで表示する) */
-  usage: string;
-  /** --algorithm の既定値 */
-  defaultAlgorithm: string;
-  /**
-   * 指定アルゴリズムの NoteDetector 生成関数を返す。未知の名前なら throw する。
-   * undefined を返すと createEvalDetector が既定の PitchPleaseNoteDetector を
-   * 生成する (= createDetector 未指定扱い。pitchplease 推奨の estimationOptions
-   * が自動的に下敷きになる。chordEvalLib.ts の resolveEstimationOptions 参照)
-   */
-  resolveDetector: (algorithm: string) => EvalDetectorFactory | undefined;
-  /**
-   * ストリーミング経路 (StreamingChordTracker) を評価できるアルゴリズムか。
-   * false の場合は batch のみ評価する
-   */
-  supportsStreaming: (algorithm: string) => boolean;
-}
-
 interface ParsedArgs {
   inputs: string[];
   sampleRate: number;
   a4Freq: number;
-  algorithm: string;
   rootOptional: boolean;
   verbose: boolean;
   /** 指定時: レベル不均衡 augmentation (1 音ずつ減衰した変異体) で評価する dB 値 */
@@ -62,18 +39,14 @@ interface ParsedArgs {
   windowSeconds?: number;
 }
 
-function parseArgs(
-  argv: string[],
-  config: ChordEvalCliConfig
-): ParsedArgs {
+function parseArgs(argv: string[], usage: string): ParsedArgs {
   const args = argv.slice(2);
   if (args.length === 0 || args.includes("-h") || args.includes("--help")) {
-    console.log(config.usage);
+    console.log(usage);
     process.exit(args.length === 0 ? 1 : 0);
   }
   let sampleRate = DEFAULT_SAMPLE_RATE;
   let a4Freq = DEFAULT_A4;
-  let algorithm = config.defaultAlgorithm;
   let rootOptional = false;
   let verbose = false;
   let attenuateDb: number | undefined;
@@ -85,8 +58,6 @@ function parseArgs(
       sampleRate = parseInt(args[++i], 10);
     } else if (a === "--a4") {
       a4Freq = parseFloat(args[++i]);
-    } else if (a === "--algorithm" || a === "-a") {
-      algorithm = args[++i];
     } else if (a === "--root-optional") {
       rootOptional = true;
     } else if (a === "--verbose" || a === "-v") {
@@ -103,7 +74,6 @@ function parseArgs(
     inputs,
     sampleRate,
     a4Freq,
-    algorithm,
     rootOptional,
     windowSeconds,
     verbose,
@@ -154,18 +124,17 @@ interface EvalEntry {
   group: string;
   expectedCount: number;
   batchVerdict: Verdict;
-  streamingVerdict: Verdict | null;
+  streamingVerdict: Verdict;
 }
 
-/** entries から group ごとの Summary を作る (pick が null を返す entry は除外) */
+/** entries から group ごとの Summary を作る */
 function summarizeByGroup(
   entries: EvalEntry[],
-  pick: (e: EvalEntry) => Verdict | null
+  pick: (e: EvalEntry) => Verdict
 ): Map<string, Summary> {
   const byGroup = new Map<string, { verdicts: Verdict[]; counts: number[] }>();
   for (const entry of entries) {
     const verdict = pick(entry);
-    if (!verdict) continue;
     let bucket = byGroup.get(entry.group);
     if (!bucket) {
       bucket = { verdicts: [], counts: [] };
@@ -183,42 +152,36 @@ function summarizeByGroup(
 
 export async function runChordEval(
   argv: string[],
-  config: ChordEvalCliConfig
+  usage: string
 ): Promise<void> {
   const {
     inputs,
     sampleRate,
     a4Freq,
-    algorithm,
     rootOptional,
     verbose,
     attenuateDb,
     windowSeconds,
-  } = parseArgs(argv, config);
+  } = parseArgs(argv, usage);
   const files = collectAudioFiles(inputs);
   if (files.length === 0) {
     throw new Error("No audio files found");
   }
 
-  const createDetector = config.resolveDetector(algorithm);
-  const streaming = config.supportsStreaming(algorithm);
-
-  // 実際のデコードレートは detector の要求に従う
-  // (pitchplease は --sample-rate をそのまま使うが、basic-pitch は 22050 固定)
-  const probe = createEvalDetector({ sampleRate, a4Freq, createDetector });
+  // createDetector 未指定 = 既定の PitchPleaseNoteDetector。
+  // pitchplease 推奨の estimationOptions が自動的に下敷きになる
+  // (chordEvalLib.ts の resolveEstimationOptions 参照)
   const evalOptions: EvalOptions = {
-    sampleRate: probe.requiredSampleRate,
+    sampleRate,
     a4Freq,
-    createDetector,
     ...(windowSeconds !== undefined && {
       trackerOptions: { windowSeconds },
     }),
   };
 
   console.log(
-    `${files.length} files, algorithm=${algorithm}, sampleRate=${evalOptions.sampleRate}, A4=${a4Freq}` +
+    `${files.length} files, sampleRate=${evalOptions.sampleRate}, A4=${a4Freq}` +
       (rootOptional ? ", 根音は任意として採点 (--root-optional)" : "") +
-      (streaming ? "" : ", streaming 非対応のため batch のみ評価") +
       (attenuateDb !== undefined
         ? `, レベル不均衡 augmentation: 1 音ずつ ${attenuateDb}dB 減衰`
         : "") +
@@ -238,12 +201,12 @@ export async function runChordEval(
     const batch = await evaluateBatch(audio, evalOptions);
     const batchVerdict = judge(expected, batch, optionalMidi);
 
-    const streamingResult = streaming
-      ? await evaluateStreaming(audio, evalOptions)
-      : null;
-    const streamingVerdict = streamingResult
-      ? judge(expected, streamingResult.pitchList, optionalMidi)
-      : null;
+    const streamingResult = await evaluateStreaming(audio, evalOptions);
+    const streamingVerdict = judge(
+      expected,
+      streamingResult.pitchList,
+      optionalMidi
+    );
 
     entries.push({
       group,
@@ -252,14 +215,8 @@ export async function runChordEval(
       streamingVerdict,
     });
 
-    console.log(
-      `${mark(batchVerdict)}${streamingVerdict ? mark(streamingVerdict) : ""} ${label}`
-    );
-    if (
-      verbose ||
-      !batchVerdict.exact ||
-      (streamingVerdict && !streamingVerdict.exact)
-    ) {
+    console.log(`${mark(batchVerdict)}${mark(streamingVerdict)} ${label}`);
+    if (verbose || !batchVerdict.exact || !streamingVerdict.exact) {
       console.log(
         `      expected : ${expected
           .map((e) => (optionalMidi.has(e.midi) ? `(${e.name})` : e.name))
@@ -271,14 +228,12 @@ export async function runChordEval(
             ? ""
             : `  [missing: ${batchVerdict.missing.map(midiToName).join(" ") || "-"} / extra: ${batchVerdict.extra.map(midiToName).join(" ") || "-"}]`)
       );
-      if (streamingResult && streamingVerdict) {
-        console.log(
-          `      streaming: ${formatPitchList(streamingResult.pitchList)} (${streamingResult.confirmations} confirmations)` +
-            (streamingVerdict.exact
-              ? ""
-              : `  [missing: ${streamingVerdict.missing.map(midiToName).join(" ") || "-"} / extra: ${streamingVerdict.extra.map(midiToName).join(" ") || "-"}]`)
-        );
-      }
+      console.log(
+        `      streaming: ${formatPitchList(streamingResult.pitchList)} (${streamingResult.confirmations} confirmations)` +
+          (streamingVerdict.exact
+            ? ""
+            : `  [missing: ${streamingVerdict.missing.map(midiToName).join(" ") || "-"} / extra: ${streamingVerdict.extra.map(midiToName).join(" ") || "-"}]`)
+      );
     }
   }
 
@@ -330,25 +285,19 @@ export async function runChordEval(
     ),
     summarizeByGroup(entries, (e) => e.batchVerdict)
   );
-  const streamingEntries = entries.filter((e) => e.streamingVerdict);
-  if (streamingEntries.length > 0) {
-    printSummary(
-      "streaming",
-      summarizeVerdicts(
-        streamingEntries.map((e) => e.streamingVerdict!),
-        streamingEntries.map((e) => e.expectedCount)
-      ),
-      summarizeByGroup(entries, (e) => e.streamingVerdict)
-    );
-  }
+  printSummary(
+    "streaming",
+    summarizeVerdicts(
+      entries.map((e) => e.streamingVerdict),
+      entries.map((e) => e.expectedCount)
+    ),
+    summarizeByGroup(entries, (e) => e.streamingVerdict)
+  );
 }
 
 /** CLI エントリポイントの共通エラーハンドリング */
-export function runChordEvalMain(
-  argv: string[],
-  config: ChordEvalCliConfig
-): void {
-  runChordEval(argv, config).catch((err: unknown) => {
+export function runChordEvalMain(argv: string[], usage: string): void {
+  runChordEval(argv, usage).catch((err: unknown) => {
     console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
     process.exit(1);
   });

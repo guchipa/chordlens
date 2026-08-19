@@ -16,42 +16,21 @@
  *  - streaming: StreamingChordTracker (アプリの追従経路と同じ)。
  *               最も長く表示されていた確定リストを採用する
  *
- * basic-pitch は TFJS 依存でブラウザ側 (apps/web) の実装のため、ここでは
- * 評価できない。両アルゴリズムの比較は apps/web の同名 CLI を使うこと:
- *   pnpm --filter @chordlens/web eval:chords <dir> --algorithm basicpitch
- *
  * --attenuate <dB>: レベル不均衡 augmentation。採点対象の正解音を 1 音ずつ、
  * 指定 dB だけスペクトル減衰させた変異体を作って評価する (n は変異体数になる)。
  * 実装は ./lib/spectralAttenuation.ts
  *
  * 使い方:
  *   pnpm --filter @chordlens/core eval:chords <dir-or-files...>
- *     [--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--attenuate <dB>] [--verbose]
+ *     [--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--attenuate <dB>]
+ *     [--window-seconds <sec>] [--verbose]
  */
 
-import {
-  runChordEvalMain,
-  type ChordEvalCliConfig,
-} from "./lib/chordEvalCli";
+import { runChordEvalMain } from "./lib/chordEvalCli";
 
-const config: ChordEvalCliConfig = {
-  usage:
-    "Usage: pnpm --filter @chordlens/core eval:chords <dir-or-files...> " +
-    "[--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--attenuate <dB>] [--verbose]",
-  defaultAlgorithm: "pitchplease",
-  resolveDetector: (algorithm) => {
-    if (algorithm !== "pitchplease") {
-      throw new Error(
-        `core の CLI は pitchplease のみ対応している (指定: ${algorithm})。` +
-          "basic-pitch の評価は apps/web の eval:chords を使うこと"
-      );
-    }
-    // undefined を返す (= createDetector 未指定) と chordEvalLib.ts が
-    // 既定の PitchPleaseNoteDetector を生成し、pitchplease 推奨の
-    // estimationOptions (PITCH_PLEASE_ESTIMATION_OPTIONS) を自動的に下敷きにする
-    return undefined;
-  },
-  supportsStreaming: () => true,
-};
-
-runChordEvalMain(process.argv, config);
+runChordEvalMain(
+  process.argv,
+  "Usage: pnpm --filter @chordlens/core eval:chords <dir-or-files...> " +
+    "[--root-optional] [--sample-rate <hz>] [--a4 <hz>] [--attenuate <dB>] " +
+    "[--window-seconds <sec>] [--verbose]"
+);

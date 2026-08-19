@@ -54,17 +54,17 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
 - 基準は**純正律** (平均律ではない)。根音からの周波数比 (`JUST_RATIOS`) で期待周波数を計算
 - 偏差の単位は**セント**: `1200 * log2(actual / expected)`。deviation は ±evalRangeCents で正規化した -1〜1
 - ピッチ推定は 3 アルゴリズム: FFT ピーク (デフォルト) / SWIPE' / 位相ボコーダ
-- 構成音の自動検出は 2 アルゴリズム: basic-pitch (`@spotify/basic-pitch`, TFJS, A4=440 固定,
-  3 秒録音のバッチ方式) / pitchplease (倍音和サリエンス + 貪欲減算, Goertzel ベースの core 実装,
+- 構成音の自動検出は pitchplease のみ (倍音和サリエンス + 貪欲減算, Goertzel ベースの core 実装,
   A4 設定に追従, ノイズ床基準の dB SNR で音名ビンを正規化 (noiseFloor 既定),
   AudioWorklet + `StreamingChordTracker` によるストリーミング方式で低レイテンシ)。
-  いずれも `NoteDetector` adapter 経由で音名特定のみに使い、純正律偏差の計測には使わない。
-  アルゴリズム詳細は `docs/CHORD_DETECTION.md`、追加手順は
+  アルゴリズム選択の設定は持たない (basic-pitch は 3 秒録音のバッチ方式でしか動かせず
+  リアルタイム追従のレイテンシ要件を構成上満たせないため削除済み。経緯は
+  `docs/CHORD_DETECTION.md` §5.4)。
+  `NoteDetector` adapter 経由で音名特定のみに使い、純正律偏差の計測には使わない。
+  アルゴリズム詳細は `docs/CHORD_DETECTION.md`、追加手順は同 §6 と
   `apps/web/lib/audio/noteDetectorFactory.ts` のコメント参照
 - 構成音検出を変更したら実録音で回帰評価する:
   `pnpm --filter @chordlens/core eval:chords <録音ディレクトリ> --root-optional`
-  (basic-pitch を含む比較は `pnpm --filter @chordlens/web eval:chords <dir> --algorithm basicpitch --root-optional`。
-  basic-pitch は TFJS 実装が apps/web 側にあるため CLI が 2 つに分かれている)
   (正解ラベルはファイル名末尾 `_C4-Eb4-G4` 形式・先頭が根音。アンサンブル実験の
   録音は根音奏者の有無が混在するため `--root-optional` で根音を任意採点にする)
   レベル不均衡 (1 人だけ弱い/欠けた演奏) への耐性も `--attenuate 6` / `--attenuate 12` で確認する

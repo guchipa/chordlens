@@ -1,7 +1,7 @@
 /**
  * chordEvalLib の NoteDetector 注入まわりのテスト。
- * 評価 CLI は apps/web からブラウザ依存の検出器 (basic-pitch) を注入して
- * 同じ採点ロジックを共有するため、この seam が壊れると比較評価ができなくなる
+ * 既定以外の検出器を差し込んで同じ採点ロジックで比較評価するための seam
+ * (アブレーション実験で使う) が壊れていないことを確認する
  */
 
 import { describe, expect, it } from "vitest";
@@ -79,7 +79,7 @@ describe("createEvalDetector", () => {
     });
     expect(detector).toBe(stub);
     expect(received).toEqual([{ sampleRate: 48000, a4Freq: 440 }]);
-    // 注入した検出器の要求レートが優先される (basic-pitch は 22050 固定)
+    // 注入した検出器の要求レートが優先される
     expect(detector.requiredSampleRate).toBe(22050);
   });
 });

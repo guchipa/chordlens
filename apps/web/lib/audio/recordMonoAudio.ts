@@ -2,8 +2,8 @@
  * recordMonoAudio - マイク入力の短時間録音とリサンプリング
  *
  * MediaRecorder で一定時間録音し、指定サンプルレートのモノラル
- * Float32Array にデコードして返す。NoteDetector (basic-pitch) への
- * 入力生成に使う。
+ * Float32Array にデコードして返す。MicInputButton (単音のマイク入力) が
+ * NoteDetector へ渡すバッファの生成に使う。
  */
 
 /** チューナー系と同じ制約: エフェクトを切って生の音を取る */

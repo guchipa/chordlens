@@ -3,14 +3,9 @@ import { Provider, createStore } from "jotai";
 import { ChordFollowToggle } from "@/components/feature/ChordFollowToggle";
 import {
     chordFollowEnabledAtom,
-    chordDetectionAlgorithmAtom,
     chordFollowStatusAtom,
     chordFollowErrorAtom,
 } from "@/lib/store/chordDetectionAtoms";
-import {
-    CHORD_DETECTION_ALGORITHM_DESCRIPTIONS,
-    CHORD_DETECTION_ALGORITHM_LABELS,
-} from "@chordlens/core/constants";
 
 describe("ChordFollowToggle", () => {
     const renderWithStore = (setupStore?: (store: ReturnType<typeof createStore>) => void) => {
@@ -52,19 +47,13 @@ describe("ChordFollowToggle", () => {
         expect(screen.getByText("楽器音を待機中...")).toBeInTheDocument();
     });
 
-    it("検出アルゴリズムの選択肢と説明を表示する", () => {
+    it("追従中に和音を検出するとステータスが変わる", () => {
         renderWithStore((store) => {
-            store.set(chordDetectionAlgorithmAtom, "pitchplease");
+            store.set(chordFollowEnabledAtom, true);
+            store.set(chordFollowStatusAtom, "tracking");
         });
 
-        // ラベル文言そのものではなく定数と一致することを確認する
-        expect(screen.getByText("検出アルゴリズム")).toBeInTheDocument();
-        expect(
-            screen.getByText(CHORD_DETECTION_ALGORITHM_LABELS.pitchplease)
-        ).toBeInTheDocument();
-        expect(
-            screen.getByText(CHORD_DETECTION_ALGORITHM_DESCRIPTIONS.pitchplease)
-        ).toBeInTheDocument();
+        expect(screen.getByText("追従中...")).toBeInTheDocument();
     });
 
     it("エラーメッセージを表示する", () => {

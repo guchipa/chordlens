@@ -160,9 +160,7 @@ chordlens/
 │       │   └── utils/exportLog.ts  # CSV ダウンロード（Web バインディング）
 │       ├── functions/           # Cloudflare Pages Functions (client-log API)
 │       ├── public/              # 静的ファイル
-│       ├── scripts/             # Node で動くオフライン CLI。ブラウザ依存の検出器
-│       │                        # (basic-pitch) を含む構成音検出の実データ評価
-│       │                        # (tsconfig.scripts.json 側で型検査する)
+│       ├── scripts/             # アイコン生成などのビルド補助スクリプト
 │       └── __tests__/           # コンポーネント・Web 依存ロジックのテスト (jsdom)
 │
 └── docs/                         # ドキュメント
@@ -243,11 +241,10 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
 ドロワーを閉じても追従は継続する）。ループが動くのは
 **トグル ON かつチューナーの解析実行中 (isProcessing)** のみで、
 解析を停止すると追従も止まる。
-アルゴリズムは `chordDetectionAlgorithmAtom` (localStorage 永続化) で選択し、
-`ChordFollowToggle` の Select で切り替える。処理経路はアルゴリズムにより異なる
+構成音検出は pitchplease (`PitchPleaseNoteDetector`) のみで、選択設定は持たない
 （詳細は [CHORD_DETECTION.md](./CHORD_DETECTION.md)）。
 
-**ストリーミング経路 (pitchplease、既定)**:
+**ストリーミング経路**:
 
 1. **PCM キャプチャ** → `StreamingPcmCapture` (apps/web) が AudioWorklet
    (`public/pcm-capture-processor.js`) で生 PCM をチャンク単位に連続取得
@@ -259,33 +256,19 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
 3. **反映** → 確定した `Pitch[]` を `applyDetectedPitchListAtom` が即時更新。
    体感レイテンシは 1 秒未満
 
-**バッチ経路 (basicpitch)**:
+**単音のマイク入力 (バッチ)**:
 
-> 既定は pitchplease。basicpitch は設定で明示的に選んだ場合のみ使われる。
-> 選択値は localStorage に永続化されるため、既定値の変更は既存ユーザーには適用されない。
+`MicInputButton`（PitchSettingForm 内）はクリック時に `recordMonoAudio()` で
+1.5 秒録音し、同じ `PitchPleaseNoteDetector` で解析して最有力の 1 音を追加する。
+集約オプションは `noteDetectorFactory` の `BATCH_ESTIMATION_OPTIONS`
+（ストリーミングはちらつき対策が異なるため別設定）。
 
-
-1. **音量ゲート** → `SoundLevelMonitor` が入力の RMS を監視し、
-   閾値 (`SOUND_RMS_THRESHOLD`) を超えるまで待機（無音時は推論しない）
-2. **録音** → `recordMonoAudio()` が MediaRecorder で数秒間録音し、
-   22050 Hz モノラル PCM にデコード（追従: 3 秒 / 単音入力: 1.5 秒）
-3. **推論** → `BasicPitchNoteDetector` (apps/web) が MIDI ノートイベントを推定。
-   [@spotify/basic-pitch](https://github.com/spotify/basic-pitch)
-   (TensorFlow.js) を初回検出時に遅延ロード。モデルは
-   `/models/basic-pitch/` から配信（vite-plugin-static-copy が
-   node_modules からコピー）。A4=440Hz 基準
-4. **変換** → core の `noteEventsToPitchList()` がノートイベントを集約・
-   フィルタし `Pitch[]` へ変換。ルート音は `estimateRoot()` で自動推定
-   （確定しない場合は最低音）
-5. **反映** → `applyDetectedPitchListAtom` が `pitchListAtom` を即時更新
-   （変化がなければ更新しない）
-
-単音入力は `MicInputButton`（PitchSettingForm 内）が同じ録音・推論経路で
-最有力の 1 音を追加する。
+かつては basic-pitch (TensorFlow.js) を設定で選べたが、3 秒録音のバッチ方式
+でしか動かせず、自動追従に必要な 1 秒未満のレイテンシを構成上満たせないため
+削除した（実測比較は [CHORD_DETECTION.md](./CHORD_DETECTION.md)）。
 
 注意: 構成音検出は**音名特定**にのみ使い、純正律偏差の計測は従来どおり
-`evaluateSpectrum` 系が担う (basic-pitch は平均律 A4=440Hz 基準の半音格子に
-量子化される点にも注意)。
+`evaluateSpectrum` 系が担う（検出結果は平均律の半音格子に量子化される）。
 
 ---
 
@@ -307,7 +290,6 @@ graph TD
         A7[experimentModeAtom]
         B1[pitchListAtom]
         B2[chordFollowEnabledAtom]
-        B5[chordDetectionAlgorithmAtom]
         B3[chordFollowStatusAtom]
         B4[chordFollowErrorAtom]
         C1[feedbackTypeAtom]
@@ -357,7 +339,7 @@ graph TD
 | **useAudioContext** | Web Audio APIのセットアップ・クリーンアップ |
 | **useSpectrumAnalysis** | スペクトル解析ループ、評価結果の算出 |
 | **usePitchList** | 構成音リストの操作（追加、削除、プリセット） |
-| **useChordFollow** | 構成音の自動追従（pitchplease: ストリーミング / basic-pitch: バッチ） |
+| **useChordFollow** | 構成音の自動追従（ストリーミング解析） |
 
 ### 7.2. 音声解析関数
 
