@@ -15,7 +15,7 @@
  * このフックは常駐するコンポーネント (App) で呼び、状態は atom で共有する。
  */
 
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { StreamingChordTracker } from "@chordlens/core/audio_analysis/streamingChordTracker";
 import {
@@ -50,8 +50,20 @@ function toErrorMessage(err: unknown): string {
     return "構成音の検出中に予期せぬエラーが発生しました。";
 }
 
+/** 1 回ぶんの追従セッション (effect の実行単位) */
+interface FollowSession {
+    cancelled: boolean;
+    onCancel: (() => void) | null;
+}
+
 export function useChordFollow(options: UseChordFollowOptions): void {
     const { active = true, audioNodesRef } = options;
+
+    /**
+     * 現在のセッション。非同期の後始末が、既に走り始めた新しいセッションの
+     * 共有状態 (status atom) を上書きしないよう識別に使う
+     */
+    const currentSessionRef = useRef<FollowSession | null>(null);
 
     const enabled = useAtomValue(chordFollowEnabledAtom);
     const a4Freq = useAtomValue(a4FreqAtom);
@@ -67,10 +79,8 @@ export function useChordFollow(options: UseChordFollowOptions): void {
             return;
         }
 
-        const session: {
-            cancelled: boolean;
-            onCancel: (() => void) | null;
-        } = { cancelled: false, onCancel: null };
+        const session: FollowSession = { cancelled: false, onCancel: null };
+        currentSessionRef.current = session;
         let capture: StreamingPcmCapture | null = null;
 
         const fail = (err: unknown) => {
@@ -106,6 +116,10 @@ export function useChordFollow(options: UseChordFollowOptions): void {
                             .catch(fail);
                     }
                 );
+                // attach の待機中にキャンセルされていたら、これ以上
+                // 共有状態に触らず finally の後始末だけ通す
+                if (session.cancelled) return;
+
                 const detector = createNoteDetector({
                     a4Freq,
                     sampleRate: capture.sampleRate,
@@ -130,7 +144,12 @@ export function useChordFollow(options: UseChordFollowOptions): void {
                 // AudioContext とマイクストリームはチューナー本体の持ち物なので
                 // ここでは自分が張った接続だけを外す
                 capture?.dispose();
-                setStatus("idle");
+                // 既に次のセッションが走っている場合、status はそちらの持ち物。
+                // 遅れて終わった古いセッションが listening/tracking を
+                // idle で塗り潰さないようにする
+                if (currentSessionRef.current === session) {
+                    setStatus("idle");
+                }
             }
         })();
 

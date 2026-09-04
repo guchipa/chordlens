@@ -4,6 +4,7 @@ import { Provider, createStore } from "jotai";
 import type { ReactNode } from "react";
 import { useChordFollow } from "@/lib/hooks/useChordFollow";
 import { pitchListAtom } from "@/lib/store/pitchListAtoms";
+import { a4FreqAtom } from "@/lib/store/audioSettingsAtoms";
 import {
     chordFollowEnabledAtom,
     chordFollowStatusAtom,
@@ -20,6 +21,8 @@ const mocks = vi.hoisted(() => ({
     captureDispose: vi.fn(),
     captureAttach: vi.fn(),
     attachRejection: null as Error | null,
+    /** 設定すると attach がこの Promise の解決まで待つ (競合状態の再現用) */
+    attachGate: null as Promise<void> | null,
     onChunk: null as ((chunk: Float32Array) => void) | null,
 }));
 
@@ -39,16 +42,22 @@ vi.mock("@/lib/audio/noteDetectorFactory", () => ({
 // AudioWorklet ベースの PCM キャプチャをモックする (jsdom に実装がない)
 vi.mock("@/lib/audio/pcmCapture", () => ({
     StreamingPcmCapture: {
-        attach: (target: unknown, onChunk: (chunk: Float32Array) => void) => {
+        attach: async (
+            target: unknown,
+            onChunk: (chunk: Float32Array) => void
+        ) => {
             mocks.captureAttach(target, onChunk);
             if (mocks.attachRejection) {
-                return Promise.reject(mocks.attachRejection);
+                throw mocks.attachRejection;
+            }
+            if (mocks.attachGate) {
+                await mocks.attachGate;
             }
             mocks.onChunk = onChunk;
-            return Promise.resolve({
+            return {
                 sampleRate: 22050,
                 dispose: mocks.captureDispose,
-            });
+            };
         },
     },
 }));
@@ -100,6 +109,7 @@ describe("useChordFollow", () => {
         vi.clearAllMocks();
         mocks.onChunk = null;
         mocks.attachRejection = null;
+        mocks.attachGate = null;
         mocks.detectNotes.mockResolvedValue([]);
     });
 
@@ -255,6 +265,75 @@ describe("useChordFollow", () => {
         await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
         expect(mocks.captureAttach).not.toHaveBeenCalled();
         expect(store.get(chordFollowStatusAtom)).toBe("idle");
+    });
+
+    it("attach の待機中にキャンセルされたら解析を始めない", async () => {
+        let openGate!: () => void;
+        mocks.attachGate = new Promise<void>((resolve) => {
+            openGate = resolve;
+        });
+        const store = setup();
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, true);
+        });
+        await waitFor(() => {
+            expect(mocks.captureAttach).toHaveBeenCalled();
+        });
+
+        // attach が解決する前にトグル OFF
+        act(() => {
+            store.set(chordFollowEnabledAtom, false);
+        });
+        await act(async () => {
+            openGate();
+            await Promise.resolve();
+        });
+
+        // 遅れて解決したセッションは検出器を作らず、共有状態にも触らない
+        expect(mocks.createNoteDetector).not.toHaveBeenCalled();
+        expect(store.get(chordFollowStatusAtom)).toBe("idle");
+        expect(mocks.captureDispose).toHaveBeenCalled();
+    });
+
+    it("古いセッションの後始末が新しいセッションの status を潰さない", async () => {
+        let openGate!: () => void;
+        mocks.attachGate = new Promise<void>((resolve) => {
+            openGate = resolve;
+        });
+        const store = createStore();
+        const wrapper = ({ children }: { children: ReactNode }) => (
+            <Provider store={store}>{children}</Provider>
+        );
+        const audioNodesRef = createAudioNodesRef();
+        renderHook(() => useChordFollow({ audioNodesRef }), { wrapper });
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, true);
+        });
+        await waitFor(() => {
+            expect(mocks.captureAttach).toHaveBeenCalledTimes(1);
+        });
+
+        // A4 変更で effect が張り直され、古いセッションはキャンセルされる
+        act(() => {
+            store.set(a4FreqAtom, 440);
+        });
+        await waitFor(() => {
+            expect(mocks.captureAttach).toHaveBeenCalledTimes(2);
+        });
+
+        // 両セッションの attach をまとめて解決させる (古い方が先に解決する)
+        await act(async () => {
+            openGate();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        // 古いセッションの finally が idle を書くと listening が消える
+        await waitFor(() => {
+            expect(store.get(chordFollowStatusAtom)).toBe("listening");
+        });
     });
 
     it("キャプチャの初期化に失敗したらエラーを設定して追従を OFF にする", async () => {
