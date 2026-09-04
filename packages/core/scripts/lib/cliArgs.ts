@@ -52,3 +52,30 @@ export function requireStringArg(
   }
   return raw;
 }
+
+/**
+ * カンマ区切りの ID リストを読み、既知の ID だけを許可する。
+ * 未知の ID を黙って捨てると、タイプミス (--conditions no-subtraction) で
+ * 空のレポートを出したまま正常終了してしまい気付けない
+ */
+export function requireIdListArg(
+  raw: string | undefined,
+  flag: string,
+  allowed: readonly string[]
+): string[] {
+  const ids = requireStringArg(raw, flag)
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id !== "");
+  if (ids.length === 0) {
+    failArg(`${flag} には 1 つ以上の ID を指定すること`);
+  }
+  const unknown = ids.filter((id) => !allowed.includes(id));
+  if (unknown.length > 0) {
+    failArg(
+      `${flag} に未知の ID を指定した: ${unknown.join(", ")}\n` +
+        `  指定できる ID: ${allowed.join(", ")}`
+    );
+  }
+  return ids;
+}

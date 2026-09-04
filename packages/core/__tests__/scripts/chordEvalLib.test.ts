@@ -10,6 +10,7 @@ import {
   createEvalDetector,
   evaluateBatch,
   evaluateStreaming,
+  parseExpectedFromFilename,
   resolveEvalSampleRate,
   type EvalOptions,
 } from "../../scripts/lib/chordEvalLib";
@@ -39,6 +40,37 @@ class StubNoteDetector implements NoteDetector {
     return Promise.resolve(this.events);
   }
 }
+
+describe("parseExpectedFromFilename", () => {
+  it("先頭の音を根音として MIDI 番号に変換する", () => {
+    expect(parseExpectedFromFilename("20250101_hall_C4-Eb4-G4.wav")).toEqual([
+      { name: "C4", midi: 60, isRoot: true },
+      { name: "Eb4", midi: 63, isRoot: false },
+      { name: "G4", midi: 67, isRoot: false },
+    ]);
+  });
+
+  it("PITCH_NAME_LIST にない異名同音表記も受け付ける", () => {
+    // Ab4 = G#4, D#4 = Eb4。表記揺れ 1 ファイルで評価ラン全体を落とさない
+    expect(
+      parseExpectedFromFilename("20250101_hall_Ab3-D#4-Gb4.wav").map(
+        (e) => e.midi
+      )
+    ).toEqual([56, 63, 66]);
+  });
+
+  it("オクターブ番号が変わる B#/Cb は明示的に弾く", () => {
+    expect(() => parseExpectedFromFilename("x_B#3-D4.wav")).toThrow(
+      /B#\/Cb/
+    );
+  });
+
+  it("音名として解釈できないトークンは弾く", () => {
+    expect(() => parseExpectedFromFilename("x_H4-D4.wav")).toThrow(
+      /Invalid pitch token/
+    );
+  });
+});
 
 describe("createEvalDetector", () => {
   it("createDetector 未指定なら HarmonicNoteDetector を生成する", () => {

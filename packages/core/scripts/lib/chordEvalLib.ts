@@ -62,6 +62,22 @@ export function collectAudioFiles(inputs: string[]): string[] {
   return files;
 }
 
+/**
+ * PITCH_NAME_LIST に載っていない異名同音表記の正規化表。
+ * PITCH_NAME_LIST は 12 音を C#/Eb/F#/G#/Bb の 1 表記に固定しているため、
+ * これがないと "Ab4" のような表記揺れ 1 ファイルで評価ラン全体が落ちる。
+ * オクターブ番号が変わる B#/Cb は表から外し、明示的にエラーにする
+ */
+const ENHARMONIC_ALIASES: Record<string, string> = {
+  Db: "C#",
+  "D#": "Eb",
+  "E#": "F",
+  Fb: "E",
+  Gb: "F#",
+  Ab: "G#",
+  "A#": "Bb",
+};
+
 /** ファイル名末尾の "C4-Eb4-G4" ブロックを正解ラベルとして解釈する (先頭がルート) */
 export function parseExpectedFromFilename(filePath: string): ExpectedNote[] {
   const base = path.basename(filePath, path.extname(filePath));
@@ -71,10 +87,14 @@ export function parseExpectedFromFilename(filePath: string): ExpectedNote[] {
     if (!match) {
       throw new Error(`Invalid pitch token "${token}" in "${base}"`);
     }
-    const [, pitchName, octaveStr] = match;
+    const [, rawPitchName, octaveStr] = match;
+    const pitchName = ENHARMONIC_ALIASES[rawPitchName] ?? rawPitchName;
     const pitchIndex = PITCH_NAME_LIST.indexOf(pitchName);
     if (pitchIndex === -1) {
-      throw new Error(`Unsupported pitch name "${pitchName}"`);
+      throw new Error(
+        `Unsupported pitch name "${rawPitchName}" in "${base}" ` +
+          `(B#/Cb はオクターブ番号が変わるため非対応。C/B と書くこと)`
+      );
     }
     const octaveNum = parseInt(octaveStr, 10);
     return {

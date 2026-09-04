@@ -40,7 +40,7 @@ import {
   type Verdict,
 } from "./lib/chordEvalLib";
 import { attenuateNoteInAudio } from "./lib/spectralAttenuation";
-import { requireNumberArg, requireStringArg } from "./lib/cliArgs";
+import { requireNumberArg, requireIdListArg } from "./lib/cliArgs";
 import type { HarmonicNoteDetectorOptions } from "../src/audio_analysis/noteDetection";
 
 const DEFAULT_SAMPLE_RATE = 48000;
@@ -165,9 +165,17 @@ function parseArgs(argv: string[]): ParsedArgs {
     } else if (a === "--root-optional") {
       parsed.rootOptional = true;
     } else if (a === "--conditions") {
-      parsed.conditionIds = requireStringArg(args[++i], a).split(",");
+      parsed.conditionIds = requireIdListArg(
+        args[++i],
+        a,
+        CONDITIONS.map((c) => c.id)
+      );
     } else if (a === "--variants") {
-      parsed.variantIds = requireStringArg(args[++i], a).split(",");
+      parsed.variantIds = requireIdListArg(
+        args[++i],
+        a,
+        VARIANTS.map((v) => v.id)
+      );
     } else {
       parsed.inputs.push(a);
     }
