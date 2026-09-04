@@ -320,12 +320,12 @@ function frameRms(frame: Float32Array): number {
 }
 
 /**
- * この値以上のサンプルレート入力は隣接ペア平均で 1/2 にデシメーションする。
- * 解析対象の最高周波数は最高候補音 B6 の 6 倍音 ≈ 11.8kHz なので、
- * 24kHz (Nyquist 12kHz) あれば足りる。48kHz をそのまま解析すると
- * Goertzel のサンプルループが倍かかり、メインスレッドを塞ぐ
+ * デシメーション後に確保すべき最小サンプルレート。
+ * 解析対象の最高周波数は既定の最高候補音 B6 (maxMidiNote = 95) の
+ * 6 倍音 ≈ 11.9kHz なので、24kHz (Nyquist 12kHz) を下回ると
+ * 高音域のサリエンスが高次倍音を失う。maxMidiNote を上げるならこの値も見直す
  */
-const DECIMATION_MIN_SAMPLE_RATE = 32000;
+const MIN_ANALYSIS_SAMPLE_RATE = 24000;
 
 /** 隣接 2 サンプルの平均で 1/2 デシメーションする (粗いローパス込み) */
 function decimateByTwo(audio: Float32Array): Float32Array {
@@ -417,7 +417,7 @@ export class HarmonicNoteDetector implements NoteDetector {
 
   private options: Required<HarmonicNoteDetectorOptions>;
   /** 実際に解析するサンプルレート (高レート入力はデシメーション後) */
-  private analysisSampleRate: number;
+  readonly analysisSampleRate: number;
   /** 候補音の数 (minMidiNote〜maxMidiNote) */
   private candidateCount: number;
   /**
@@ -434,8 +434,13 @@ export class HarmonicNoteDetector implements NoteDetector {
     // ablation: undefined を明示的に渡された場合も既定 (全機能有効) に倒す
     this.options.ablation = this.options.ablation ?? {};
     this.requiredSampleRate = this.options.sampleRate;
+    // 1/2 に落としても解析に必要な帯域が残るときだけデシメーションする。
+    // 48kHz をそのまま解析すると Goertzel のサンプルループが倍かかり
+    // メインスレッドを塞ぐため、可能なら落とす (48000 → 24000)。
+    // 44.1kHz を落とすと Nyquist 11.0kHz となり B6 の 6 倍音が測れなくなるため
+    // そのまま解析する
     this.analysisSampleRate =
-      this.options.sampleRate >= DECIMATION_MIN_SAMPLE_RATE
+      this.options.sampleRate / 2 >= MIN_ANALYSIS_SAMPLE_RATE
         ? this.options.sampleRate / 2
         : this.options.sampleRate;
 

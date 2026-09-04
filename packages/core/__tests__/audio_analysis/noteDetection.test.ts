@@ -79,6 +79,23 @@ describe("noteDetection", () => {
       expect(detectedMidi.has(67)).toBe(true);
     });
 
+    it("デシメーションは解析帯域 (24kHz) が残るときだけ行う", () => {
+      // 48kHz は 24kHz に落としても B6 の 6 倍音 (≈11.9kHz) が Nyquist 内
+      expect(
+        new HarmonicNoteDetector({ a4Freq: A4_FREQ, sampleRate: 48000 })
+          .analysisSampleRate
+      ).toBe(24000);
+      // 44.1kHz / 32kHz は落とすと 6 倍音が Nyquist を割るためそのまま解析する
+      expect(
+        new HarmonicNoteDetector({ a4Freq: A4_FREQ, sampleRate: 44100 })
+          .analysisSampleRate
+      ).toBe(44100);
+      expect(
+        new HarmonicNoteDetector({ a4Freq: A4_FREQ, sampleRate: 32000 })
+          .analysisSampleRate
+      ).toBe(32000);
+    });
+
     it("フレームが 1 サンプル未満になる設定は構築時に弾く", () => {
       // frameLength が 0 だと detectNotes のループが前進せず戻らなくなる
       expect(
