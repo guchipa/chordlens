@@ -130,10 +130,12 @@ chordlens/
 │       │   ├── constants.ts     # 定数定義
 │       │   ├── types.ts         # 型定義
 │       │   └── index.ts         # エントリーポイント
-│       ├── scripts/             # オフライン解析 CLI (analyze-audio-file) と
-│       │                        # 構成音検出の実データ評価 (evaluate-chord-detection)。
-│       │                        # 評価の共通ロジックは lib/chordEvalLib・lib/chordEvalCli に置き、
-│       │                        # apps/web 側の CLI からも再利用する。
+│       ├── scripts/             # オフライン解析 CLI (analyze-audio-file)、
+│       │                        # 構成音検出の実データ評価 (evaluate-chord-detection)、
+│       │                        # 各機構の寄与切り分け (ablation-chord-detection)。
+│       │                        # 評価スクリプト間の共通ロジックは
+│       │                        # lib/chordEvalLib・lib/chordEvalCli・lib/cliArgs に置く
+│       │                        # (Node 専用。core の公開 export には含めない)。
 │       │                        # lib/spectralAttenuation.ts はレベル不均衡
 │       │                        # augmentation (--attenuate) 用のスペクトル減衰
 │       ├── __tests__/           # コアロジックのユニットテスト（Node 環境）
