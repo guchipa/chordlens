@@ -16,6 +16,7 @@ import {
   judge,
   midiToName,
   parseExpectedFromFilename,
+  resolveEvalSampleRate,
   summarizeVerdicts,
   type EvalOptions,
   type ExpectedNote,
@@ -23,6 +24,7 @@ import {
   type Verdict,
 } from "./chordEvalLib";
 import { attenuateNoteInAudio } from "./spectralAttenuation";
+import { requireNumberArg } from "./cliArgs";
 
 const DEFAULT_SAMPLE_RATE = 48000;
 const DEFAULT_A4 = 442;
@@ -55,17 +57,17 @@ function parseArgs(argv: string[], usage: string): ParsedArgs {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--sample-rate" || a === "-r") {
-      sampleRate = parseInt(args[++i], 10);
+      sampleRate = requireNumberArg(args[++i], a, { integer: true });
     } else if (a === "--a4") {
-      a4Freq = parseFloat(args[++i]);
+      a4Freq = requireNumberArg(args[++i], a);
     } else if (a === "--root-optional") {
       rootOptional = true;
     } else if (a === "--verbose" || a === "-v") {
       verbose = true;
     } else if (a === "--attenuate") {
-      attenuateDb = parseFloat(args[++i]);
+      attenuateDb = requireNumberArg(args[++i], a);
     } else if (a === "--window-seconds") {
-      windowSeconds = parseFloat(args[++i]);
+      windowSeconds = requireNumberArg(args[++i], a);
     } else {
       inputs.push(a);
     }
@@ -179,8 +181,11 @@ export async function runChordEval(
     }),
   };
 
+  // 注入した検出器が固定レートを要求する場合はそちらが正になる
+  const decodeSampleRate = resolveEvalSampleRate(evalOptions);
+
   console.log(
-    `${files.length} files, sampleRate=${evalOptions.sampleRate}, A4=${a4Freq}` +
+    `${files.length} files, sampleRate=${decodeSampleRate}, A4=${a4Freq}` +
       (rootOptional ? ", 根音は任意として採点 (--root-optional)" : "") +
       (attenuateDb !== undefined
         ? `, レベル不均衡 augmentation: 1 音ずつ ${attenuateDb}dB 減衰`
@@ -244,7 +249,7 @@ export async function runChordEval(
       : new Set<number>();
     const group = extractGroup(file);
     const name = path.basename(file);
-    const audio = decodeAudioToMonoFloat32(file, evalOptions.sampleRate);
+    const audio = decodeAudioToMonoFloat32(file, decodeSampleRate);
 
     if (attenuateDb === undefined) {
       await evaluateAndRecord(audio, expected, optionalMidi, group, name);
@@ -260,7 +265,7 @@ export async function runChordEval(
         .map((e) => e.midi);
       const variant = attenuateNoteInAudio(
         audio,
-        evalOptions.sampleRate,
+        decodeSampleRate,
         target.midi,
         attenuateDb,
         a4Freq,

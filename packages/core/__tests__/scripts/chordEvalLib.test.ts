@@ -9,6 +9,8 @@ import { describe, expect, it } from "vitest";
 import {
   createEvalDetector,
   evaluateBatch,
+  evaluateStreaming,
+  resolveEvalSampleRate,
   type EvalOptions,
 } from "../../scripts/lib/chordEvalLib";
 import { HarmonicNoteDetector } from "../../src/audio_analysis/noteDetection";
@@ -21,6 +23,8 @@ import type {
 class StubNoteDetector implements NoteDetector {
   readonly requiredSampleRate: number;
   calls = 0;
+  /** detectNotes に渡されたフレームの長さ (サンプル数) */
+  readonly frameLengths: number[] = [];
 
   constructor(
     requiredSampleRate: number,
@@ -29,8 +33,9 @@ class StubNoteDetector implements NoteDetector {
     this.requiredSampleRate = requiredSampleRate;
   }
 
-  detectNotes(): Promise<DetectedNoteEvent[]> {
+  detectNotes(monoAudio: Float32Array): Promise<DetectedNoteEvent[]> {
     this.calls++;
+    this.frameLengths.push(monoAudio.length);
     return Promise.resolve(this.events);
   }
 }
@@ -81,6 +86,41 @@ describe("createEvalDetector", () => {
     expect(received).toEqual([{ sampleRate: 48000, a4Freq: 440 }]);
     // 注入した検出器の要求レートが優先される
     expect(detector.requiredSampleRate).toBe(22050);
+  });
+});
+
+describe("resolveEvalSampleRate", () => {
+  it("既定の検出器では opts.sampleRate をそのまま返す", () => {
+    expect(resolveEvalSampleRate({ sampleRate: 44100, a4Freq: 442 })).toBe(
+      44100
+    );
+  });
+
+  it("固定レートを要求する検出器を注入するとそちらが優先される", () => {
+    expect(
+      resolveEvalSampleRate({
+        sampleRate: 48000,
+        a4Freq: 442,
+        createDetector: () => new StubNoteDetector(22050),
+      })
+    ).toBe(22050);
+  });
+});
+
+describe("evaluateStreaming", () => {
+  it("注入した検出器の要求レートでフレームを切り出す", async () => {
+    // 音声は resolveEvalSampleRate (= 22050) でデコードされている前提。
+    // opts.sampleRate (48000) でトラッカーを組むとフレーム長と時刻がずれる
+    const stub = new StubNoteDetector(22050);
+    await evaluateStreaming(new Float32Array(22050), {
+      sampleRate: 48000,
+      a4Freq: 442,
+      createDetector: () => stub,
+    });
+
+    const expectedFrameLength = Math.floor(0.25 * 22050);
+    expect(stub.frameLengths.length).toBeGreaterThan(0);
+    expect(stub.frameLengths.every((n) => n === expectedFrameLength)).toBe(true);
   });
 });
 

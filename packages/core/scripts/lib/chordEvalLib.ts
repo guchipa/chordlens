@@ -207,6 +207,17 @@ export interface EvalOptions {
 }
 
 /**
+ * 実際に音声をデコードすべきサンプルレートを返す。
+ * 注入した検出器が固定レートを要求する場合 (`createDetector`) は
+ * opts.sampleRate ではなくそちらが正になるため、デコード・augmentation・
+ * StreamingChordTracker のすべてでこの値を使うこと。
+ * 食い違ったまま流すと、検出器が想定と違う長さ・時刻のフレームを受け取る
+ */
+export function resolveEvalSampleRate(opts: EvalOptions): number {
+  return createEvalDetector(opts).requiredSampleRate;
+}
+
+/**
  * EvalOptions から NoteDetector を生成する。
  * 実際に音声をデコードすべきサンプルレートは、生成した detector の
  * requiredSampleRate から取得すること (固定レートを要求する実装があるため)
@@ -273,7 +284,10 @@ export async function evaluateStreaming(
   const detector = createEvalDetector(opts);
   const tracker = new StreamingChordTracker({
     detector,
-    sampleRate: opts.sampleRate,
+    // 音声は detector の要求レートでデコードされている前提
+    // (resolveEvalSampleRate 参照)。opts.sampleRate を使うと、固定レートを
+    // 要求する検出器を注入したときにフレーム長と時刻の両方がずれる
+    sampleRate: detector.requiredSampleRate,
     estimationOptions: opts.estimationOptions,
     ...opts.trackerOptions,
   });

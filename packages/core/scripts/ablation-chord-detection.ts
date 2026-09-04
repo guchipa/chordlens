@@ -40,6 +40,7 @@ import {
   type Verdict,
 } from "./lib/chordEvalLib";
 import { attenuateNoteInAudio } from "./lib/spectralAttenuation";
+import { requireNumberArg, requireStringArg } from "./lib/cliArgs";
 import type { HarmonicNoteDetectorOptions } from "../src/audio_analysis/noteDetection";
 
 const DEFAULT_SAMPLE_RATE = 48000;
@@ -158,15 +159,15 @@ function parseArgs(argv: string[]): ParsedArgs {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--sample-rate" || a === "-r") {
-      parsed.sampleRate = parseInt(args[++i], 10);
+      parsed.sampleRate = requireNumberArg(args[++i], a, { integer: true });
     } else if (a === "--a4") {
-      parsed.a4Freq = parseFloat(args[++i]);
+      parsed.a4Freq = requireNumberArg(args[++i], a);
     } else if (a === "--root-optional") {
       parsed.rootOptional = true;
     } else if (a === "--conditions") {
-      parsed.conditionIds = args[++i].split(",");
+      parsed.conditionIds = requireStringArg(args[++i], a).split(",");
     } else if (a === "--variants") {
-      parsed.variantIds = args[++i].split(",");
+      parsed.variantIds = requireStringArg(args[++i], a).split(",");
     } else {
       parsed.inputs.push(a);
     }
