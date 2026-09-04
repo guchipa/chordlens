@@ -49,6 +49,7 @@ export function App() {
     comparisonResults,
     startProcessing,
     stopProcessing,
+    audioNodesRef,
   } = useAudioAnalysis({
     currentPitchList,
     evalRangeCents,
@@ -64,8 +65,8 @@ export function App() {
   });
 
   // 構成音の自動追従ループ (トグルは SettingsDrawer 内、状態は Jotai atom)。
-  // 解析実行中のみ推定を行う
-  useChordFollow({ active: isProcessing });
+  // 解析実行中のみ、チューナー本体の音声グラフを共有して推定を行う
+  useChordFollow({ active: isProcessing, audioNodesRef });
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
