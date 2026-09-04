@@ -57,7 +57,7 @@ export interface HarmonicNoteDetectorOptions {
   a4Freq?: number;
   /** 入力バッファのサンプルレート (Hz) */
   sampleRate?: number;
-  /** 候補音の下限 MIDI ノート番号 (デフォルト: C1 = 24) */
+  /** 候補音の下限 MIDI ノート番号 (デフォルト: C2 = 36。理由は NOTE_DETECTION_DEFAULTS) */
   minMidiNote?: number;
   /** 候補音の上限 MIDI ノート番号 (デフォルト: B6 = 95) */
   maxMidiNote?: number;
@@ -87,7 +87,8 @@ export interface HarmonicNoteDetectorOptions {
    * (= フレーム内で maxDynamicRangeDb を超えるダイナミックレンジの SNR を
    * 与えない)。真基音同士のダイナミックレンジは実測でほぼ全て 26dB 以内に
    * 収まる一方、床が局所的に極端に低く推定された領域 (実音が疎な高音域など)
-   * では弱いアーティファクトでも SNR が過大評価されやすい。Infinity で無効
+   * では弱いアーティファクトでも SNR が過大評価されやすい。
+   * デフォルトは 45 (dB)。Infinity を渡すとケイリングを無効にできる
    */
   maxDynamicRangeDb?: number;
   /**
@@ -561,7 +562,7 @@ export class HarmonicNoteDetector implements NoteDetector {
     const floorDb = computeFloorDb(powerDb, floorWindowSemitones, floorPercentile);
     // 床のケイリング: フレーム内最大パワーから maxDynamicRangeDb 以上下がった
     // 床は frameMaxDb - maxDynamicRangeDb まで切り上げる (詳細は
-    // maxDynamicRangeDb オプションのコメント参照)。Infinity (既定) なら無効
+    // maxDynamicRangeDb オプションのコメント参照)。Infinity なら無効
     const frameMaxDb = 10 * Math.log10(maxPower);
     const ceilingDb = frameMaxDb - maxDynamicRangeDb;
     const cappedFloorDb = floorDb.map((db) => Math.max(db, ceilingDb));

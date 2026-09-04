@@ -107,7 +107,7 @@ chordlens/                    # プロジェクトルート (monorepo)
 │   │   │   ├── noteDetection.ts # 構成音検出 (倍音和サリエンス + 貪欲減算)
 │   │   │   ├── swipePitchEstimation.ts # SWIPE' ピッチ推定
 │   │   │   └── phaseVocoderEstimation.ts # 位相ボコーダ法
-│   │   ├── adapters/        # プラットフォーム抽象 (storage / audio)
+│   │   ├── adapters/        # プラットフォーム抽象 (storage / audio / noteDetection)
 │   │   ├── presets/         # プリセット管理コア
 │   │   ├── logging/         # ログ CSV 変換
 │   │   ├── constants.ts     # 定数定義

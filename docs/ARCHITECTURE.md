@@ -152,7 +152,7 @@ chordlens/
 │       │   └── ui/              # shadcn/ui プリミティブ
 │       ├── lib/                 # Web 依存のロジック
 │       │   ├── hooks/           # カスタムフック（Web Audio API 使用）
-│       │   ├── audio/           # NoteDetector 実装・PCM キャプチャ・録音ユーティリティ
+│       │   ├── audio/           # NoteDetector の生成 (factory)・PCM キャプチャ・録音ユーティリティ
 │       │   ├── store/           # Jotai atoms（localStorage 永続化）
 │       │   ├── experiments/     # 評価実験ロジック
 │       │   ├── firebase/        # Firebase 連携
@@ -248,7 +248,10 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
 
 1. **PCM キャプチャ** → `StreamingPcmCapture` (apps/web) が AudioWorklet
    (`public/pcm-capture-processor.js`) で生 PCM をチャンク単位に連続取得
-   （AudioContext のネイティブレートのまま、リサンプルなし）
+   （AudioContext のネイティブレートのまま、リサンプルなし）。
+   AudioContext とマイクストリームは新規に取得せず、チューナー本体
+   (`useAudioContext` の `audioNodesRef`) のグラフに attach して共有する
+   （マイク入力グラフの二重確保を避けるため）
 2. **逐次解析** → core の `StreamingChordTracker` がリングバッファに蓄積し、
    0.25 秒フレームが揃うごとに `HarmonicNoteDetector` (core、倍音和サリエンス +
    貪欲減算、A4 設定に追従) で解析。直近 1 秒のスライディングウィンドウを

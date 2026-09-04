@@ -307,7 +307,7 @@ graph LR
   (根音の 1 オクターブ下の幽霊音) を除去する対称フィルタ。音 X の 12 半音上
   (X+12) が検出リストにあり `score(X) < score(X+12) × subOctaveSuppressionScoreRatio`
   なら X を除去する。コアの既定は 0 (無効) だが、検出器側の推奨オプション
-  (`PITCH_PLEASE_ESTIMATION_OPTIONS` / `STREAMING_CHORD_ESTIMATION_DEFAULTS`) は
+  (`NOTE_DETECTION_ESTIMATION_OPTIONS` / `STREAMING_CHORD_ESTIMATION_DEFAULTS`) は
   batch・streaming とも 0.4 を使う
 - **ルート推定**: `estimateRoot` (コード定義との完全一致照合) で推定し、
   確定しなければ最低音をルートにする
