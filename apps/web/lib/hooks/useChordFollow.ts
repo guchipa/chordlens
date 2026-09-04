@@ -20,6 +20,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { StreamingChordTracker } from "@chordlens/core/audio_analysis/streamingChordTracker";
 import {
     applyDetectedPitchListAtom,
+    pitchListAtom,
     a4FreqAtom,
     chordFollowEnabledAtom,
     chordFollowStatusAtom,
@@ -64,8 +65,14 @@ export function useChordFollow(options: UseChordFollowOptions): void {
      * 共有状態 (status atom) を上書きしないよう識別に使う
      */
     const currentSessionRef = useRef<FollowSession | null>(null);
+    /**
+     * 稼働中のトラッカー。構成音リストが外部で編集されたときに
+     * 確定値の基準を合わせ直すために保持する
+     */
+    const trackerRef = useRef<StreamingChordTracker | null>(null);
 
     const enabled = useAtomValue(chordFollowEnabledAtom);
+    const pitchList = useAtomValue(pitchListAtom);
     const a4Freq = useAtomValue(a4FreqAtom);
     const setEnabled = useSetAtom(chordFollowEnabledAtom);
     const setStatus = useSetAtom(chordFollowStatusAtom);
@@ -82,6 +89,8 @@ export function useChordFollow(options: UseChordFollowOptions): void {
         const session: FollowSession = { cancelled: false, onCancel: null };
         currentSessionRef.current = session;
         let capture: StreamingPcmCapture | null = null;
+        // finally の後始末から参照するため try の外で宣言する
+        let tracker: StreamingChordTracker | null = null;
 
         const fail = (err: unknown) => {
             if (!session.cancelled) {
@@ -95,7 +104,6 @@ export function useChordFollow(options: UseChordFollowOptions): void {
             try {
                 // チャンク到着ごとに push + poll。
                 // poll は tracker 内で直列化されるため多重呼び出しでよい
-                let tracker: StreamingChordTracker | null = null;
                 capture = await StreamingPcmCapture.attach(
                     {
                         context: nodes.audioContext,
@@ -131,6 +139,7 @@ export function useChordFollow(options: UseChordFollowOptions): void {
                     detector,
                     sampleRate: capture.sampleRate,
                 });
+                trackerRef.current = tracker;
                 setStatus("listening");
 
                 // キャンセル (トグル OFF / アンマウント) まで維持する
@@ -144,6 +153,9 @@ export function useChordFollow(options: UseChordFollowOptions): void {
                 // AudioContext とマイクストリームはチューナー本体の持ち物なので
                 // ここでは自分が張った接続だけを外す
                 capture?.dispose();
+                if (trackerRef.current === tracker) {
+                    trackerRef.current = null;
+                }
                 // 既に次のセッションが走っている場合、status はそちらの持ち物。
                 // 遅れて終わった古いセッションが listening/tracking を
                 // idle で塗り潰さないようにする
@@ -167,4 +179,19 @@ export function useChordFollow(options: UseChordFollowOptions): void {
         setError,
         applyDetectedPitchList,
     ]);
+
+    /**
+     * 構成音リストが変わるたびにトラッカーの確定値の基準を合わせる。
+     *
+     * 自動追従が反映した直後は同じキーなので何も変わらないが、ユーザーが
+     * 手でリストを編集した場合は基準がその編集後の内容になるため、同じ和音を
+     * 鳴らし続けているだけで追従が再確定できる (この同期がないと、
+     * 別の和音を鳴らすかトグルを OFF/ON するまで復帰しない)。
+     *
+     * セッションを回し直すと解析が途切れるため、pitchList は上の effect の
+     * 依存に入れずここで別に扱う
+     */
+    useEffect(() => {
+        trackerRef.current?.syncConfirmedPitchList(pitchList);
+    }, [pitchList]);
 }

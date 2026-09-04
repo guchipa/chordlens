@@ -180,6 +180,57 @@ describe("useChordFollow", () => {
         expect(mocks.captureDispose).toHaveBeenCalled();
     });
 
+    it("手編集で pitchList が変わっても同じ和音の追従が復帰する", async () => {
+        // トラッカーの stableKey は「最後に emit した内容」しか追わないため、
+        // 手編集を知らせないと同じ和音を鳴らし続けても変化なし扱いになり、
+        // 別の和音を鳴らすまで追従が無言で止まる
+        mocks.detectNotes.mockResolvedValue([
+            frameNote(65), // F4
+            frameNote(69), // A4
+            frameNote(72), // C5
+        ]);
+        const store = setup();
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, true);
+        });
+        await waitFor(() => {
+            expect(mocks.onChunk).not.toBeNull();
+        });
+
+        await injectFrame();
+        await injectFrame();
+        await injectFrame();
+        await waitFor(() => {
+            expect(
+                store
+                    .get(pitchListAtom)
+                    .map((p) => `${p.pitchName}${p.octaveNum}`)
+            ).toEqual(["F4", "A4", "C5"]);
+        });
+
+        // ユーザーが手でリストを編集する
+        act(() => {
+            store.set(pitchListAtom, [
+                { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+            ]);
+        });
+
+        // 同じ和音を鳴らし続けているだけで再確定する
+        await injectFrame();
+        await waitFor(() => {
+            expect(
+                store
+                    .get(pitchListAtom)
+                    .map((p) => `${p.pitchName}${p.octaveNum}`)
+            ).toEqual(["F4", "A4", "C5"]);
+        });
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, false);
+        });
+    });
+
     it("無音フレームでは listening 表示のまま pitchList を保持する", async () => {
         mocks.detectNotes.mockResolvedValue([]);
         const store = setup();

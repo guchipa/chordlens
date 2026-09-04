@@ -163,6 +163,29 @@ describe("StreamingChordTracker", () => {
     expect(changedDuringSilence).toBe(false);
   });
 
+  it("syncConfirmedPitchList で基準を差し替えると同じ和音を再確定できる", async () => {
+    // 同じ和音を鳴らし続けているだけでは再確定しない (stableKey と一致するため)
+    const cMajor = [60, 64, 67];
+    const tracker = createTracker([cMajor]);
+
+    const before = await runFrames(tracker, 6);
+    expect(before.filter((c) => c !== null)).toHaveLength(1);
+
+    // ユーザーが手でリストを編集した想定で基準を差し替える
+    tracker.syncConfirmedPitchList([
+      { pitchName: "C", octaveNum: 4, isRoot: true, enabled: true },
+    ]);
+
+    const after = await runFrames(tracker, 2);
+    const reconfirmed = after.find((c) => c !== null);
+    expect(reconfirmed).toBeDefined();
+    expect(reconfirmed!.map((p) => `${p.pitchName}${p.octaveNum}`)).toEqual([
+      "C4",
+      "E4",
+      "G4",
+    ]);
+  });
+
   it("provisional のみのフレームは無音 (silent: true) 扱いになる", async () => {
     /** provisional イベントだけを返すフェイク detector */
     class ProvisionalOnlyDetector implements NoteDetector {

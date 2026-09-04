@@ -176,6 +176,22 @@ export class StreamingChordTracker {
   }
 
   /**
+   * 外部 (ユーザーの手編集・プリセット読み込みなど) で構成音リストが
+   * 差し替わったことを知らせ、確定値の基準をそれに合わせる。
+   *
+   * stableKey はトラッカーが最後に emit した内容しか追わないため、これを
+   * 呼ばないと「手編集で消した音を含む和音を鳴らし続けても
+   * key === stableKey で変化なし扱いになり、別の和音を鳴らすまで追従が
+   * 復帰しない」という無言の停止が起きる。
+   *
+   * recentKeys (ヒステリシス窓) は意図的に保持する。同じ和音が鳴り続けて
+   * いれば次のサイクルで即座に再確定でき、復帰が速い
+   */
+  syncConfirmedPitchList(pitchList: Pitch[]): void {
+    this.stableKey = pitchListKey(pitchList);
+  }
+
+  /**
    * 1 フレームぶんの推定とヒステリシス判定。
    * 直近 stableCycles 回の推定キーが一致し、かつ現在の確定値と異なる
    * 非空リストのときだけ新しい確定値を返す
