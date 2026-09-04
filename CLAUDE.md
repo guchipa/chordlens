@@ -69,6 +69,9 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
   (正解ラベルはファイル名末尾 `_C4-Eb4-G4` 形式・先頭が根音。アンサンブル実験の
   録音は根音奏者の有無が混在するため `--root-optional` で根音を任意採点にする)
   レベル不均衡 (1 人だけ弱い/欠けた演奏) への耐性も `--attenuate 6` / `--attenuate 12` で確認する
+- 各機構 (デチューン探索・ノイズ床正規化・倍音和サリエンス・貪欲減算) の寄与は
+  `pnpm --filter @chordlens/core eval:ablation <録音ディレクトリ> --root-optional` で
+  切り分ける。結果は `docs/CHORD_DETECTION.md` §5.6
 - A4 デフォルトは **442Hz** (`packages/core/src/constants.ts`)
 - 数値解析コードを変更したら必ず `packages/core/__tests__/audio_analysis/` のテストを実行
 

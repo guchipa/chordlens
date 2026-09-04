@@ -105,6 +105,31 @@ export interface HarmonicNoteDetectorOptions {
   harmonicPureSubtract?: number;
   /** サブオクターブ降下のサリエンス拮抗判定比 */
   subHarmonicDescendRatio?: number;
+  /**
+   * アブレーション評価用のスイッチ (既定は全機能有効)。
+   * アプリからは使わない。各機構の寄与を実録音で切り分けるためだけに存在する
+   * (scripts/ablation-chord-detection.ts、docs/CHORD_DETECTION.md §5.6)
+   */
+  ablation?: NoteDetectionAblation;
+}
+
+/**
+ * 個々の機構を無効化するアブレーション用スイッチ。
+ * すべて省略時 false (= 本番と同じ全機能有効)
+ */
+export interface NoteDetectionAblation {
+  /** デチューン探索を無効化し、平均律格子の中心周波数だけを測る */
+  disableDetuneSearch?: boolean;
+  /** 倍音和サリエンスを無効化し、基音ビンの振幅だけを候補のスコアにする */
+  disableHarmonicSalience?: boolean;
+  /** 貪欲減算を無効化する (採用音の基音・倍音位置の残差を減らさない) */
+  disableHarmonicSubtraction?: boolean;
+  /**
+   * 正規化だけを frameMax (フレーム内最大パワー基準) に戻す。
+   * normalizationMode: "frameMax" と違い、Hann 窓・12f 減算系列・降下閾値は
+   * noiseFloor の設定のまま残すため、床正規化そのものの寄与を切り分けられる
+   */
+  useFrameMaxNormalization?: boolean;
 }
 
 export const NOTE_DETECTION_DEFAULTS: Required<HarmonicNoteDetectorOptions> = {
@@ -140,6 +165,7 @@ export const NOTE_DETECTION_DEFAULTS: Required<HarmonicNoteDetectorOptions> = {
   // 0.85 は実データの座標降下法探索の結果 (docs/CHORD_DETECTION.md §5)。
   // 調整用 (TUS)・検証用 (YCY) の両方でストリーミング経路が改善した
   subHarmonicDescendRatio: 0.85,
+  ablation: {},
 };
 
 /**
@@ -161,8 +187,12 @@ const DETUNE_COVER_CENTS = 45;
 function detuneOffsetsForFreq(
   freqHz: number,
   frameSeconds: number,
-  useHannCapture = false
+  useHannCapture = false,
+  disabled = false
 ): number[] {
+  if (disabled) {
+    return [0];
+  }
   const captureHz = useHannCapture ? 1 / frameSeconds : 1 / (2 * frameSeconds);
   const halfWidthCents = 1200 * Math.log2(1 + captureHz / freqHz);
   if (halfWidthCents >= DETUNE_COVER_CENTS) {
@@ -368,16 +398,19 @@ function computeHannWindow(n: number): Float32Array {
  */
 export function harmonicSalience(
   midiNote: number,
-  amplitudeByMidi: (midiNote: number) => number
+  amplitudeByMidi: (midiNote: number) => number,
+  weights: readonly number[] = SALIENCE_WEIGHTS
 ): number {
   let salience = 0;
   for (let k = 0; k < HARMONIC_SEMITONE_OFFSETS.length; k++) {
     salience +=
-      SALIENCE_WEIGHTS[k] *
-      amplitudeByMidi(midiNote + HARMONIC_SEMITONE_OFFSETS[k]);
+      weights[k] * amplitudeByMidi(midiNote + HARMONIC_SEMITONE_OFFSETS[k]);
   }
   return salience;
 }
+
+/** アブレーション用: 基音ビンだけを見る (倍音和サリエンスを無効化した重み) */
+const FUNDAMENTAL_ONLY_WEIGHTS = [1, 0, 0, 0, 0, 0];
 
 export class HarmonicNoteDetector implements NoteDetector {
   readonly requiredSampleRate: number;
@@ -398,6 +431,8 @@ export class HarmonicNoteDetector implements NoteDetector {
 
   constructor(options: HarmonicNoteDetectorOptions = {}) {
     this.options = { ...NOTE_DETECTION_DEFAULTS, ...options };
+    // ablation: undefined を明示的に渡された場合も既定 (全機能有効) に倒す
+    this.options.ablation = this.options.ablation ?? {};
     this.requiredSampleRate = this.options.sampleRate;
     this.analysisSampleRate =
       this.options.sampleRate >= DECIMATION_MIN_SAMPLE_RATE
@@ -442,7 +477,8 @@ export class HarmonicNoteDetector implements NoteDetector {
       for (const cents of detuneOffsetsForFreq(
         baseFreq,
         frameSeconds,
-        useHannCapture
+        useHannCapture,
+        this.options.ablation.disableDetuneSearch
       )) {
         const freq = baseFreq * Math.pow(2, cents / 1200);
         if (freq >= sampleRate / 2) continue;
@@ -500,6 +536,10 @@ export class HarmonicNoteDetector implements NoteDetector {
     if (maxPower <= 0) {
       return null;
     }
+    // アブレーション: 床正規化だけを外す (Hann 窓・12f 減算はそのまま)
+    if (this.options.ablation.useFrameMaxNormalization) {
+      return powers.map((p) => Math.sqrt(p / maxPower));
+    }
     const eps = maxPower * 1e-12; // log(0) 回避
     const powerDb = powers.map((p) => 10 * Math.log10(p + eps));
     const floorDb = computeFloorDb(powerDb, floorWindowSemitones, floorPercentile);
@@ -529,8 +569,15 @@ export class HarmonicNoteDetector implements NoteDetector {
       subHarmonicDescendRatio,
       normalizationMode,
       provisionalMinRatio,
+      ablation,
     } = this.options;
     const isNoiseFloor = normalizationMode === "noiseFloor";
+    // アブレーション: 倍音和サリエンスを外すと基音ビンだけのスコアになる
+    const salienceWeights = ablation.disableHarmonicSalience
+      ? FUNDAMENTAL_ONLY_WEIGHTS
+      : SALIENCE_WEIGHTS;
+    const salienceOf = (midiNote: number, lookup: (m: number) => number) =>
+      harmonicSalience(midiNote, lookup, salienceWeights);
     // noiseFloor は床基準の SNR で強い音の高次倍音 (7f〜12f) が露出しうるため
     // 減算系列だけ拡張する (サリエンス計算は HARMONIC_SEMITONE_OFFSETS のまま)
     const subtractOffsets = isNoiseFloor
@@ -574,7 +621,7 @@ export class HarmonicNoteDetector implements NoteDetector {
     }
 
     const initialMaxSalience = Math.max(
-      ...eligible.map((m) => harmonicSalience(m, residualByMidi))
+      ...eligible.map((m) => salienceOf(m, residualByMidi))
     );
     if (initialMaxSalience <= 0) {
       return [];
@@ -594,7 +641,7 @@ export class HarmonicNoteDetector implements NoteDetector {
       let bestSalience = 0;
       for (const midiNote of eligible) {
         if (!isAcceptable(midiNote)) continue;
-        const s = harmonicSalience(midiNote, residualByMidi);
+        const s = salienceOf(midiNote, residualByMidi);
         if (s > bestSalience) {
           bestSalience = s;
           best = midiNote;
@@ -613,7 +660,7 @@ export class HarmonicNoteDetector implements NoteDetector {
           const lower = best - offset;
           if (!isAcceptable(lower)) continue;
           if (residualByMidi(lower) < descendFundamentalMin) continue;
-          const lowerSalience = harmonicSalience(lower, residualByMidi);
+          const lowerSalience = salienceOf(lower, residualByMidi);
           if (lowerSalience >= subHarmonicDescendRatio * bestSalience) {
             best = lower;
             bestSalience = lowerSalience;
@@ -631,6 +678,12 @@ export class HarmonicNoteDetector implements NoteDetector {
       excluded.add(best);
       excluded.add(best - 1);
       excluded.add(best + 1);
+
+      // アブレーション: 貪欲減算を外すと残差を更新しない
+      // (同一音の再選択は excluded で防いでいるため無限ループにはならない)
+      if (ablation.disableHarmonicSubtraction) {
+        continue;
+      }
 
       // 倍音減算: 倍音が複数立っている複合音は倍音位置をほぼ全て差し引き、
       // 純音に近い音は控えめに引く (倍音位置の実音の重ねを残すため)
@@ -667,7 +720,7 @@ export class HarmonicNoteDetector implements NoteDetector {
         midiNote,
         ratio: Math.min(
           1,
-          harmonicSalience(midiNote, residualByMidi) / initialMaxSalience
+          salienceOf(midiNote, residualByMidi) / initialMaxSalience
         ),
       }))
       .filter(({ ratio }) => ratio >= provisionalMinRatio)
