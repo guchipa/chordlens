@@ -63,4 +63,19 @@ describe("ChordFollowToggle", () => {
 
         expect(screen.getByText("マイクが見つかりません。")).toBeInTheDocument();
     });
+
+    it("スイッチ操作でエラー表示を消す", () => {
+        // 失敗時は useChordFollow がトグルを OFF に戻すため、次のセッション
+        // 開始時の setError(null) には到達しない。操作した時点で消えること
+        const { store } = renderWithStore((s) => {
+            s.set(chordFollowErrorAtom, "マイクが見つかりません。");
+        });
+
+        fireEvent.click(screen.getByRole("switch"));
+
+        expect(store.get(chordFollowErrorAtom)).toBeNull();
+        expect(
+            screen.queryByText("マイクが見つかりません。")
+        ).not.toBeInTheDocument();
+    });
 });

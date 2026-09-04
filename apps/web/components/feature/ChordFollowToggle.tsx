@@ -1,6 +1,7 @@
 "use client";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useCallback } from "react";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -33,6 +34,20 @@ export function ChordFollowToggle() {
     const [enabled, setEnabled] = useAtom(chordFollowEnabledAtom);
     const status = useAtomValue(chordFollowStatusAtom);
     const error = useAtomValue(chordFollowErrorAtom);
+    const setError = useSetAtom(chordFollowErrorAtom);
+
+    /**
+     * 失敗時は useChordFollow が自動でトグルを OFF に戻すため、
+     * 次のセッション開始時の setError(null) には到達しない。
+     * ユーザーが操作した時点でここでエラー表示を消す
+     */
+    const handleToggle = useCallback(
+        (next: boolean) => {
+            setError(null);
+            setEnabled(next);
+        },
+        [setError, setEnabled]
+    );
 
     const label = statusLabel(status);
 
@@ -47,7 +62,7 @@ export function ChordFollowToggle() {
                         <Switch
                             id="chord-follow-switch"
                             checked={enabled}
-                            onCheckedChange={setEnabled}
+                            onCheckedChange={handleToggle}
                         />
                         <Label htmlFor="chord-follow-switch" className="cursor-pointer">
                             自動追従モード
