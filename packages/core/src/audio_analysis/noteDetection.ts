@@ -439,6 +439,17 @@ export class HarmonicNoteDetector implements NoteDetector {
         ? this.options.sampleRate / 2
         : this.options.sampleRate;
 
+    // フレームが 1 サンプル未満になる設定を弾く。detectNotes のループは
+    // frameLength ずつ前進するため、0 だと終端に到達せず戻らなくなる
+    const frameLength = Math.floor(
+      this.options.frameSeconds * this.analysisSampleRate
+    );
+    if (!Number.isFinite(frameLength) || frameLength < 1) {
+      throw new Error(
+        `frameSeconds (${this.options.frameSeconds}) と sampleRate (${this.options.sampleRate}) の組み合わせでは解析フレームが 1 サンプル未満になる`
+      );
+    }
+
     const { minMidiNote, maxMidiNote, a4Freq } = this.options;
     const sampleRate = this.analysisSampleRate;
     this.candidateCount = maxMidiNote - minMidiNote + 1;
@@ -743,6 +754,7 @@ export class HarmonicNoteDetector implements NoteDetector {
       this.analysisSampleRate !== this.options.sampleRate
         ? decimateByTwo(monoAudio)
         : monoAudio;
+    // コンストラクタで 1 サンプル以上であることを保証済み
     const frameLength = Math.floor(frameSeconds * sampleRate);
     const events: DetectedNoteEvent[] = [];
 

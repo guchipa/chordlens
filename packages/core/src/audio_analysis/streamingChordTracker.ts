@@ -101,7 +101,14 @@ export class StreamingChordTracker {
       ...options.estimationOptions,
     };
 
+    // フレームが 1 サンプル未満になる設定を弾く。長さ 0 の frameBuffer は
+    // readInto が常に成功して consumed が進まないため poll のループが戻らない
     const frameLength = Math.floor(this.frameSeconds * this.sampleRate);
+    if (!Number.isFinite(frameLength) || frameLength < 1) {
+      throw new Error(
+        `frameSeconds (${this.frameSeconds}) と sampleRate (${this.sampleRate}) の組み合わせでは解析フレームが 1 サンプル未満になる`
+      );
+    }
     this.frameBuffer = new Float32Array(frameLength);
     const bufferSeconds = options.bufferSeconds ?? 2;
     this.ring = new Float32RingBuffer(

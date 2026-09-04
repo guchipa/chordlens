@@ -224,6 +224,27 @@ describe("StreamingChordTracker", () => {
     expect(changes.every((c) => c === null)).toBe(true);
   });
 
+  it("フレームが 1 サンプル未満になる設定は構築時に弾く", () => {
+    // frameLength が 0 だと readInto が常に成功して consumed が進まず、
+    // poll のループが戻らなくなる (ハングの代わりに構築時エラーにする)
+    expect(
+      () =>
+        new StreamingChordTracker({
+          detector: new ScriptedDetector([[]]),
+          sampleRate: SAMPLE_RATE,
+          frameSeconds: 0,
+        })
+    ).toThrow(/1 サンプル未満/);
+    expect(
+      () =>
+        new StreamingChordTracker({
+          detector: new ScriptedDetector([[]]),
+          sampleRate: SAMPLE_RATE,
+          frameSeconds: 1 / (SAMPLE_RATE * 2),
+        })
+    ).toThrow(/1 サンプル未満/);
+  });
+
   it("実際の HarmonicNoteDetector と組み合わせて C メジャーを確定する", async () => {
     const a4Freq = 442;
     // このテストの主眼は StreamingChordTracker の追従・確定ロジックであり、

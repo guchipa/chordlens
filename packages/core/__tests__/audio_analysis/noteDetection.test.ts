@@ -79,6 +79,21 @@ describe("noteDetection", () => {
       expect(detectedMidi.has(67)).toBe(true);
     });
 
+    it("フレームが 1 サンプル未満になる設定は構築時に弾く", () => {
+      // frameLength が 0 だと detectNotes のループが前進せず戻らなくなる
+      expect(
+        () => new HarmonicNoteDetector({ a4Freq: A4_FREQ, frameSeconds: 0 })
+      ).toThrow(/1 サンプル未満/);
+      expect(
+        () =>
+          new HarmonicNoteDetector({
+            a4Freq: A4_FREQ,
+            sampleRate: SAMPLE_RATE,
+            frameSeconds: 1 / (SAMPLE_RATE * 2),
+          })
+      ).toThrow(/1 サンプル未満/);
+    });
+
     it("単音(A4)を検出する", async () => {
       const detector = new HarmonicNoteDetector({ a4Freq: A4_FREQ });
       // 背景雑音なしの純音単体は矩形窓 Goertzel のスペクトル漏れ自体が
