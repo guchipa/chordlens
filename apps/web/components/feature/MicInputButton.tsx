@@ -52,6 +52,10 @@ export function MicInputButton({
         setMessage(null);
 
         try {
+            // sampleRate は検出器の既定 (48kHz = 評価スクリプトと同じ動作点)
+            // に委ね、録音側をその requiredSampleRate に合わせる。
+            // ここで低いレートを渡すとデシメーションが効かず、高音域の
+            // 倍音ビンを落としたまま解析することになる
             const detector = createNoteDetector({ a4Freq });
 
             setStatus("recording");

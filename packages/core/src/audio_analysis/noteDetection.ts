@@ -135,7 +135,13 @@ export interface NoteDetectionAblation {
 
 export const NOTE_DETECTION_DEFAULTS: Required<HarmonicNoteDetectorOptions> = {
   a4Freq: A4_FREQ,
-  sampleRate: 22050,
+  // AudioContext のネイティブレートとして最も一般的な 48kHz を既定にする。
+  // デシメーション後の解析レートが MIN_ANALYSIS_SAMPLE_RATE ちょうど (24kHz)
+  // になり、最高候補音 B6 の 6 倍音まで測れる。22.05kHz を既定にしていた頃は
+  // デシメーションが効かずそのまま解析され (Nyquist 11.0kHz)、
+  // sampleRate を渡さない呼び出し側だけが高音域の倍音を失っていた。
+  // 実データ評価スクリプトの既定もこの値
+  sampleRate: 48000,
   // C1 (32Hz) ではなく C2 (65Hz) を下限とする: 電源ハム (50/60Hz) が
   // C1-B1 の格子とデチューン探索幅の内側に落ちるため。管楽器の和音練習で
   // C2 未満の構成音は実用上現れない
