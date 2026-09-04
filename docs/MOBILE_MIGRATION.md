@@ -46,6 +46,7 @@ chordlens/
 |----------------|-----------|---------|------------------|
 | `KeyValueStorage` | 設定・プリセットの永続化 | `localStorage` (`apps/web/lib/presets.ts`) | MMKV / AsyncStorage |
 | `SpectrumSource` | マイク入力とスペクトル取得 | `AudioContext` + `AnalyserNode` (`apps/web/lib/hooks/audio/useAudioContext.ts` が同等機能) | react-native-audio-api / native モジュール + `core/audio_analysis/fft.ts` |
+| `NoteDetector` | 構成音検出 (音名の集合を返す) | `HarmonicNoteDetector` (core) を `apps/web/lib/audio/noteDetectorFactory.ts` が生成 | 実装は core にありプラットフォーム非依存。生成時に A4・サンプルレートを注入するだけでよい |
 
 ## 3. プラットフォーム依存ポイントの全リスト
 
@@ -54,6 +55,8 @@ chordlens/
 | 依存 | 現在の実装箇所 | 移行方針 |
 |------|--------------|---------|
 | マイク入力 | `lib/hooks/audio/useAudioContext.ts` (getUserMedia) | `SpectrumSource` 実装に置換 |
+| 生 PCM の連続取得 | `lib/audio/pcmCapture.ts` (`StreamingPcmCapture`: AudioWorklet。チューナー本体のグラフに attach する) | ネイティブの PCM コールバック (react-native-audio-api の worklet 等) で `Float32Array` チャンクを供給する薄い実装に置換。蓄積・解析は core の `StreamingChordTracker` がそのまま担う |
+| 単音の録音 | `lib/audio/recordMonoAudio.ts` (MediaRecorder + decodeAudioData) | expo-av 等で録音し、モノラル `Float32Array` にデコードして `NoteDetector` に渡す |
 | FFT (AnalyserNode) | 同上 + `useSpectrumAnalysis.ts` | ネイティブ AnalyserNode 互換 or 自前 FFT (`core/audio_analysis/fft.ts` を利用) |
 | 解析ループ | `useSpectrumAnalysis.ts` (requestAnimationFrame) | RN でも rAF は利用可。精度が必要なら setInterval / ネイティブコールバック |
 | 設定の永続化 | `lib/store/*` (jotai `atomWithStorage` → localStorage) | `createJSONStorage` に MMKV 等を注入 (jotai 自体は RN 対応) |

@@ -17,6 +17,7 @@ export default defineConfig({
       manifest: false,
       includeAssets: [
         "audio-processor.js",
+        "pcm-capture-processor.js",
         "icon-192.png",
         "icon-512.png",
         "manifest.json",

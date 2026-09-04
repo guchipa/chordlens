@@ -2,6 +2,24 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# core-js の postinstall はバナー表示のみのため実行しない
+# ffmpeg-static は install スクリプトでバイナリをダウンロードするため許可する
+# @firebase/util の postinstall は FIREBASE_WEBAPP_CONFIG 用スタブ生成のみで、
+# 未設定時の出力はパッケージ同梱のものと同一のため実行しない
+# esbuild/workerd は install スクリプトでプラットフォーム別バイナリを取得するため許可する
+# (vite のビルド・wrangler の pages:dev に必須)
+# protobufjs の postinstall はバージョン整合性の警告表示のみのため実行しない
+# sharp は install スクリプトでネイティブバイナリを取得するため許可する
+# (apps/web/scripts/generate-icons.js で実利用)
+allowBuilds:
+  '@firebase/util': false
+  core-js: false
+  esbuild: true
+  ffmpeg-static: true
+  protobufjs: false
+  sharp: true
+  workerd: true
+
 packageExtensions:
   "@hookform/resolvers":
     peerDependencies:

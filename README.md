@@ -67,16 +67,21 @@ chordlens/
 │       │   │   ├── calcJustFreq.ts          # 純正律周波数計算
 │       │   │   ├── justAnalyze.ts           # スペクトル解析・評価
 │       │   │   ├── rootEstimation.ts        # 根音推定アルゴリズム
-│       │   │   ├── pitchDetection.ts        # ピッチ検出（自己相関法）
+│       │   │   ├── noteDetection.ts         # 構成音検出（倍音和サリエンス + 貪欲減算）
+│       │   │   ├── chordToneEstimation.ts   # ノートイベント → 構成音リスト変換
+│       │   │   ├── streamingChordTracker.ts # PCM ストリームからの逐次和音推定
+│       │   │   ├── float32RingBuffer.ts     # PCM 用リングバッファ
+│       │   │   ├── goertzel.ts              # Goertzel 法（単一周波数 DFT）
 │       │   │   ├── swipePitchEstimation.ts  # SWIPE' ピッチ推定
 │       │   │   ├── phaseVocoderEstimation.ts # 位相ボコーダ法
+│       │   │   ├── peakInterpolation.ts     # ピーク補間
 │       │   │   └── fft.ts                   # FFT 共通ユーティリティ
-│       │   ├── adapters/             # プラットフォーム抽象 (storage / audio)
+│       │   ├── adapters/             # プラットフォーム抽象 (storage / audio / noteDetection)
 │       │   ├── presets/              # プリセット管理コア（ストレージ注入式）
 │       │   ├── logging/              # ログ CSV 変換
 │       │   ├── constants.ts          # 定数定義
 │       │   └── types.ts              # 型定義（Zodスキーマ含む）
-│       ├── scripts/                  # 音声ファイル解析 CLI
+│       ├── scripts/                  # 音声ファイル解析 CLI・構成音検出の実データ評価
 │       └── __tests__/                # コアロジックのテスト (Node 環境)
 │
 ├── apps/

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtom, useSetAtom } from "jotai";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,9 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PITCH_NAME_LIST, OCTAVE_NUM_LIST } from "@chordlens/core/constants";
 import { FormSchema, type Pitch } from "@chordlens/core/types";
 import { MicInputButton } from "@/components/feature/MicInputButton";
-import { PitchConfirmDialog } from "@/components/feature/PitchConfirmDialog";
-import type { PitchCandidate } from "@chordlens/core/audio_analysis/pitchDetection";
-import { pitchListAtom, addOrUpdatePitchAtom, a4FreqAtom } from "@/lib/store";
+import { pitchListAtom, addOrUpdatePitchAtom } from "@/lib/store";
 
 // フォーム入力型（zodスキーマの入力型を明示的に取得）
 type PitchFormInput = z.input<typeof FormSchema>;
@@ -36,7 +34,6 @@ type PitchFormInput = z.input<typeof FormSchema>;
 export function PitchSettingForm() {
   const [currentPitchList] = useAtom(pitchListAtom);
   const addOrUpdatePitch = useSetAtom(addOrUpdatePitchAtom);
-  const [a4Freq] = useAtom(a4FreqAtom);
 
   const form = useForm<PitchFormInput, unknown, Pitch>({
     resolver: zodResolver(FormSchema),
@@ -48,44 +45,13 @@ export function PitchSettingForm() {
     },
   });
 
-  // マイク入力による音名推定の状態
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [detectedCandidates, setDetectedCandidates] = useState<
-    PitchCandidate[]
-  >([]);
-
-  // マイク入力による検出完了時のハンドラ
-  const handleDetectionComplete = useCallback(
-    (candidates: PitchCandidate[]) => {
-      if (candidates.length > 0) {
-        setDetectedCandidates(candidates);
-        setIsDialogOpen(true);
-      }
-    },
-    []
-  );
-
-  // 検出した音を追加するハンドラ
-  const handleConfirmPitch = useCallback(
-    (selected: PitchCandidate) => {
-      addOrUpdatePitch({
-        pitchName: selected.pitchName,
-        octaveNum: selected.octaveNum,
-        isRoot: false,
-        enabled: true,
-      });
-      // ダイアログを閉じてリセット
-      setIsDialogOpen(false);
-      setDetectedCandidates([]);
+  // マイク入力で検出した音を即時追加するハンドラ
+  const handleMicDetect = useCallback(
+    (pitch: Pitch) => {
+      addOrUpdatePitch({ ...pitch, isRoot: false, enabled: true });
     },
     [addOrUpdatePitch]
   );
-
-  // キャンセル時のハンドラ
-  const handleCancelPitch = useCallback(() => {
-    setIsDialogOpen(false);
-    setDetectedCandidates([]);
-  }, []);
 
   const isRootChecked = form.watch("isRoot");
   const hasRoot = useMemo(
@@ -188,10 +154,7 @@ export function PitchSettingForm() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <MicInputButton
-                      onDetectionComplete={handleDetectionComplete}
-                      a4Freq={a4Freq}
-                    />
+                    <MicInputButton onDetect={handleMicDetect} />
                   </div>
                   <FormMessage className="sm:ml-28" />
                 </FormItem>
@@ -264,14 +227,6 @@ export function PitchSettingForm() {
           </form>
         </Form>
       </CardContent>
-      {/* マイク入力による音名検出の確認ダイアログ */}
-      <PitchConfirmDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        candidates={detectedCandidates}
-        onConfirm={handleConfirmPitch}
-        onCancel={handleCancelPitch}
-      />
     </Card>
   );
 }

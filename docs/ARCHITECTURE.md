@@ -111,21 +111,33 @@ chordlens/
 │       │   │   ├── justAnalyze.ts          # スペクトル評価
 │       │   │   ├── calcJustFreq.ts         # 純正律周波数計算
 │       │   │   ├── rootEstimation.ts       # 根音推定
-│       │   │   ├── pitchDetection.ts       # ピッチ検出（自己相関法）
+│       │   │   ├── chordToneEstimation.ts  # 構成音推定（ノートイベント→Pitch[] 変換）
+│       │   │   ├── noteDetection.ts       # 構成音検出の実装（倍音和サリエンス + 貪欲減算）
+│       │   │   ├── goertzel.ts             # Goertzel アルゴリズム（単一周波数 DFT）
+│       │   │   ├── streamingChordTracker.ts # PCM ストリームからの逐次和音推定
+│       │   │   ├── float32RingBuffer.ts    # PCM 用リングバッファ
 │       │   │   ├── swipePitchEstimation.ts # SWIPE' ピッチ推定
 │       │   │   ├── phaseVocoderEstimation.ts # 位相ボコーダ法
 │       │   │   ├── peakInterpolation.ts    # ピーク補間
 │       │   │   └── fft.ts                  # FFT 共通ユーティリティ
 │       │   ├── adapters/        # プラットフォーム抽象インターフェース
 │       │   │   ├── storage.ts              # KeyValueStorage（localStorage 等の抽象）
-│       │   │   └── audio.ts                # SpectrumSource（音声入力の抽象）
+│       │   │   ├── audio.ts                # SpectrumSource（音声入力の抽象）
+│       │   │   └── noteDetection.ts        # NoteDetector（構成音検出の抽象・実装は audio_analysis 側）
 │       │   ├── presets/         # プリセット管理コア（ストレージ注入式）
 │       │   ├── logging/         # ログ CSV 変換
 │       │   ├── utils/           # emaHold（EMA + ホールド平滑化）
 │       │   ├── constants.ts     # 定数定義
 │       │   ├── types.ts         # 型定義
 │       │   └── index.ts         # エントリーポイント
-│       ├── scripts/             # analyze-audio-file.ts（オフライン解析 CLI）
+│       ├── scripts/             # オフライン解析 CLI (analyze-audio-file)、
+│       │                        # 構成音検出の実データ評価 (evaluate-chord-detection)、
+│       │                        # 各機構の寄与切り分け (ablation-chord-detection)。
+│       │                        # 評価スクリプト間の共通ロジックは
+│       │                        # lib/chordEvalLib・lib/chordEvalCli・lib/cliArgs に置く
+│       │                        # (Node 専用。core の公開 export には含めない)。
+│       │                        # lib/spectralAttenuation.ts はレベル不均衡
+│       │                        # augmentation (--attenuate) 用のスペクトル減衰
 │       ├── __tests__/           # コアロジックのユニットテスト（Node 環境）
 │       └── tsconfig.json        # DOM lib なし = ブラウザ API 依存を禁止
 │
@@ -142,6 +154,7 @@ chordlens/
 │       │   └── ui/              # shadcn/ui プリミティブ
 │       ├── lib/                 # Web 依存のロジック
 │       │   ├── hooks/           # カスタムフック（Web Audio API 使用）
+│       │   ├── audio/           # NoteDetector の生成 (factory)・PCM キャプチャ・録音ユーティリティ
 │       │   ├── store/           # Jotai atoms（localStorage 永続化）
 │       │   ├── experiments/     # 評価実験ロジック
 │       │   ├── firebase/        # Firebase 連携
@@ -149,11 +162,13 @@ chordlens/
 │       │   └── utils/exportLog.ts  # CSV ダウンロード（Web バインディング）
 │       ├── functions/           # Cloudflare Pages Functions (client-log API)
 │       ├── public/              # 静的ファイル
+│       ├── scripts/             # アイコン生成などのビルド補助スクリプト
 │       └── __tests__/           # コンポーネント・Web 依存ロジックのテスト (jsdom)
 │
 └── docs/                         # ドキュメント
     ├── ARCHITECTURE.md          # 本ドキュメント
     ├── SPECIFICATION.md         # 詳細仕様
+    ├── CHORD_DETECTION.md       # 構成音自動検出アルゴリズム
     ├── MOBILE_MIGRATION.md      # モバイルアプリ移行計画
     └── EVALUATION.md            # 評価実験ガイド
 ```
@@ -220,6 +235,46 @@ sequenceDiagram
 
 詳細は [AUDIO_PIPELINE.md](./AUDIO_PIPELINE.md) を参照。
 
+### 5.3. 構成音自動追従フロー
+
+構成音を手動入力せずに、演奏した和音にチューナー設定を自動で追従させられる。
+SettingsDrawer 内の `ChordFollowToggle` で ON/OFF し、ループ本体は
+App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共有するため、
+ドロワーを閉じても追従は継続する）。ループが動くのは
+**トグル ON かつチューナーの解析実行中 (isProcessing)** のみで、
+解析を停止すると追従も止まる。
+構成音検出は `HarmonicNoteDetector` (core) のみで、選択設定は持たない
+（詳細は [CHORD_DETECTION.md](./CHORD_DETECTION.md)）。
+
+**ストリーミング経路**:
+
+1. **PCM キャプチャ** → `StreamingPcmCapture` (apps/web) が AudioWorklet
+   (`public/pcm-capture-processor.js`) で生 PCM をチャンク単位に連続取得
+   （AudioContext のネイティブレートのまま、リサンプルなし）。
+   AudioContext とマイクストリームは新規に取得せず、チューナー本体
+   (`useAudioContext` の `audioNodesRef`) のグラフに attach して共有する
+   （マイク入力グラフの二重確保を避けるため）
+2. **逐次解析** → core の `StreamingChordTracker` がリングバッファに蓄積し、
+   0.25 秒フレームが揃うごとに `HarmonicNoteDetector` (core、倍音和サリエンス +
+   貪欲減算、A4 設定に追従) で解析。直近 1 秒のスライディングウィンドウを
+   `noteEventsToPitchList()` で集約し、2 サイクル一致のヒステリシスで確定
+3. **反映** → 確定した `Pitch[]` を `applyDetectedPitchListAtom` が即時更新。
+   体感レイテンシは 1 秒未満
+
+**単音のマイク入力 (バッチ)**:
+
+`MicInputButton`（PitchSettingForm 内）はクリック時に `recordMonoAudio()` で
+1.5 秒録音し、同じ `HarmonicNoteDetector` で解析して最有力の 1 音を追加する。
+集約オプションは `noteDetectorFactory` の `BATCH_ESTIMATION_OPTIONS`
+（ストリーミングはちらつき対策が異なるため別設定）。
+
+かつては basic-pitch (TensorFlow.js) を設定で選べたが、3 秒録音のバッチ方式
+でしか動かせず、自動追従に必要な 1 秒未満のレイテンシを構成上満たせないため
+削除した（実測比較は [CHORD_DETECTION.md](./CHORD_DETECTION.md)）。
+
+注意: 構成音検出は**音名特定**にのみ使い、純正律偏差の計測は従来どおり
+`evaluateSpectrum` 系が担う（検出結果は平均律の半音格子に量子化される）。
+
 ---
 
 ## 6. 状態管理アーキテクチャ
@@ -239,6 +294,9 @@ graph TD
         A6[holdEnabledAtom]
         A7[experimentModeAtom]
         B1[pitchListAtom]
+        B2[chordFollowEnabledAtom]
+        B3[chordFollowStatusAtom]
+        B4[chordFollowErrorAtom]
         C1[feedbackTypeAtom]
     end
 
@@ -254,11 +312,12 @@ graph TD
         E4[loadPresetAtom]
         E5[togglePitchEnabledAtom]
         E6[setRootAtom]
+        E7[applyDetectedPitchListAtom]
     end
 
     A5 --> D1
     A1 & A2 & A3 & A4 & A5 & A6 & A7 --> D2
-    B1 --> E1 & E2 & E3 & E4 & E5 & E6
+    B1 --> E1 & E2 & E3 & E4 & E5 & E6 & E7
 
     style Primitive fill:#e3f2fd
     style Derived fill:#fff3e0
@@ -285,6 +344,7 @@ graph TD
 | **useAudioContext** | Web Audio APIのセットアップ・クリーンアップ |
 | **useSpectrumAnalysis** | スペクトル解析ループ、評価結果の算出 |
 | **usePitchList** | 構成音リストの操作（追加、削除、プリセット） |
+| **useChordFollow** | 構成音の自動追従（ストリーミング解析） |
 
 ### 7.2. 音声解析関数
 
@@ -293,6 +353,9 @@ graph TD
 | **evaluateSpectrum** | スペクトルから各音の純正律評価を実施 |
 | **getJustFrequencies** | 構成音から純正律周波数を計算 |
 | **estimateRoot** | 和音の根音を自動推定 |
+| **noteEventsToPitchList** | 検出ノートイベントを構成音リスト (Pitch[]) に変換 |
+| **HarmonicNoteDetector** | 倍音和サリエンス + 貪欲減算による構成音検出 (NoteDetector 実装、core) |
+| **StreamingChordTracker** | PCM ストリームからの逐次和音推定 (ヒステリシス付き、core) |
 | **quadraticInterpolation** | パラボラ補間でサブビン精度の周波数推定 |
 
 ---

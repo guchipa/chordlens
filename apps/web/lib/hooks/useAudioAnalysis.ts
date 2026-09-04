@@ -87,5 +87,11 @@ export function useAudioAnalysis({
     comparisonResults,
     startProcessing,
     stopProcessing,
+    /**
+     * 解析中の AudioContext / マイク源 (停止中は null)。
+     * 構成音の自動追従 (useChordFollow) がマイク入力グラフを二重に
+     * 確保せずに済むよう、同じグラフを共有するために公開する
+     */
+    audioNodesRef: nodesRef,
   };
 }
