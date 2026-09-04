@@ -17,6 +17,15 @@
  * ためリサンプルは行わない。
  */
 
+/**
+ * チャンクの受け取り手。
+ *
+ * **チャンクは呼び出し後に worklet へ返却されるため、保持してはならない**
+ * (必要な内容は同期的にコピーすること)。StreamingChordTracker.push は
+ * リングバッファへコピーするのでこの契約を満たす
+ */
+export type PcmChunkHandler = (chunk: Float32Array) => void;
+
 /** PCM を取り出す対象のグラフ (チューナー本体の AudioContext とマイク源) */
 export interface PcmCaptureTarget {
   context: AudioContext;
@@ -47,14 +56,25 @@ export class StreamingPcmCapture {
    */
   static async attach(
     target: PcmCaptureTarget,
-    onChunk: (chunk: Float32Array) => void
+    onChunk: PcmChunkHandler
   ): Promise<StreamingPcmCapture> {
     const { context, source } = target;
     // 同じモジュールの二重登録は無害 (解決済みの Promise が返る)
     await context.audioWorklet.addModule("/pcm-capture-processor.js");
     const node = new AudioWorkletNode(context, "pcm-capture-processor");
     node.port.onmessage = (event: MessageEvent<Float32Array>) => {
-      onChunk(event.data);
+      const chunk = event.data;
+      try {
+        onChunk(chunk);
+      } finally {
+        // 使い終わったバッファを worklet へ返し、オーディオレンダー
+        // スレッド上での再確保をなくす (返却が届かなくても worklet 側は
+        // 新規確保にフォールバックする)。onChunk が投げても返却は行う
+        const buffer = chunk.buffer;
+        if (buffer.byteLength > 0) {
+          node.port.postMessage(buffer, [buffer]);
+        }
+      }
     };
     // worklet は destination に到達する経路がないと process() が呼ばれない
     // ブラウザがあるため、ゲイン 0 の経路で繋いで無音のまま駆動する
