@@ -1,7 +1,7 @@
-"use client";
-
 import React, { useMemo } from "react";
 import { getSingleEqualJustDiff } from "@chordlens/core/audio_analysis/calcJustFreq";
+
+import styles from "./BarFeedback.module.css";
 
 interface BarFeedbackProps {
   pitchName: string;
@@ -36,28 +36,24 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
   const isClose = deviation !== null && Math.abs(deviation) < 0.2;
 
   return (
-    <div className="flex flex-col gap-2 p-4 w-full border rounded-lg bg-card">
-      <div className="text-sm font-medium text-center text-muted-foreground">
+    <div className={styles.container}>
+      <div className={styles.pitchLabel}>
         {pitchName}
       </div>
 
-      <div className="relative h-12 w-full bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden">
+      <div className={styles.track}>
         {/* 中央ライン */}
-        <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-400 dark:bg-gray-600 z-10" />
+        <div className={styles.centerLine} />
 
         {/* 許容範囲の表示 */}
         <div
-          className="absolute top-0 bottom-0 bg-green-100 dark:bg-green-900/30"
-          style={{
-            left: "45%",
-            width: "10%",
-          }}
+          className={styles.toleranceRange}
         />
 
         {/* 平均律の位置を示す目印 */}
         {etPercentage !== null && (
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-blue-500 dark:bg-blue-400 z-10"
+            className={styles.equalMarker}
             style={{
               left: `${50 + etPercentage}%`,
             }}
@@ -69,22 +65,21 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
           <>
             {/* バー */}
             <div
-              className="absolute top-1 bottom-1 rounded transition-all duration-150"
+              className={styles.bar}
               style={{
                 backgroundColor: isInTune
-                  ? "#22c55e"
+                  ? "var(--ion-color-success)"
                   : isClose
-                    ? "#eab308"
-                    : "#ef4444",
+                    ? "var(--ion-color-warning)"
+                    : "var(--ion-color-danger)",
                 left: percentage > 0 ? "50%" : `${50 + percentage}%`,
                 width: `${Math.abs(percentage)}%`,
-                maxWidth: "50%",
               }}
             />
 
             {/* インジケーター */}
             <div
-              className="absolute top-0 bottom-0 w-1 bg-gray-700 dark:bg-gray-300 transition-all duration-150 z-20"
+              className={styles.indicator}
               style={{
                 left: `${50 + percentage}%`,
               }}
@@ -93,18 +88,16 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
         )}
 
         {deviation === null && (
-          <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+          <div className={styles.emptyMessage}>
             音を検出していません
           </div>
         )}
       </div>
 
-      <div className="flex justify-between text-xs text-muted-foreground">
+      <div className={styles.statusRow}>
         <span>低い</span>
         <span
-          className={
-            isInTune ? "text-green-600 dark:text-green-400 font-semibold" : ""
-          }
+          className={isInTune ? styles.inTune : undefined}
         >
           {deviation === null ? "--" : isInTune ? "✓" : "調整中"}
         </span>

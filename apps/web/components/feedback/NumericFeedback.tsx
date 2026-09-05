@@ -1,6 +1,6 @@
-"use client";
-
 import React from "react";
+
+import styles from "./NumericFeedback.module.css";
 
 interface NumericFeedbackProps {
   pitchName: string;
@@ -20,56 +20,54 @@ export const NumericFeedback: React.FC<NumericFeedbackProps> = ({
   const isInTune = centValue !== null && Math.abs(centValue) < 5;
 
   return (
-    <div className="flex flex-col items-center gap-4 p-6 border rounded-lg bg-card">
-      <div className="text-base font-medium text-muted-foreground">
+    <div className={styles.container}>
+      <div className={styles.pitchLabel}>
         {pitchName}
       </div>
 
       {centValue !== null ? (
         <>
           {/* 大きなセント表示 */}
-          <div className="flex items-baseline gap-2 min-w-[280px] justify-center">
+          <div className={styles.centRow}>
             <span
-              className={`text-7xl font-bold tabular-nums transition-colors duration-300 ${isInTune
-                ? "text-green-600 dark:text-green-400"
+              className={`${styles.centValue} ${isInTune
+                ? styles.centValueInTune
                 : Math.abs(centValue) < 15
-                  ? "text-yellow-600 dark:text-yellow-400"
-                  : "text-red-600 dark:text-red-400"
+                  ? styles.centValueClose
+                  : styles.centValueFar
                 }`}
             >
               {centValue > 0 ? "+" : ""}
               {centValue.toFixed(1)}
             </span>
-            <span className="text-2xl text-muted-foreground">¢</span>
+            <span className={styles.centUnit}>¢</span>
           </div>
 
           {/* 方向インジケーター */}
-          <div className="flex items-center gap-4">
+          <div className={styles.directionRow}>
             <div
-              className={`text-3xl transition-opacity ${centValue < -5 ? "opacity-100" : "opacity-20"
+              className={`${styles.directionIcon} ${centValue < -5 ? styles.directionIconActive : ""
                 }`}
             >
               ↓
             </div>
             <div
-              className={`text-2xl font-semibold transition-opacity ${isInTune
-                ? "opacity-100 text-green-600 dark:text-green-400"
-                : "opacity-20"
+              className={`${styles.checkIcon} ${isInTune ? styles.checkIconActive : ""
                 }`}
             >
               ✓
             </div>
             <div
-              className={`text-3xl transition-opacity ${centValue > 5 ? "opacity-100" : "opacity-20"
+              className={`${styles.directionIcon} ${centValue > 5 ? styles.directionIconActive : ""
                 }`}
             >
               ↑
             </div>
           </div>
 
-          <div className="text-sm text-center text-muted-foreground">
+          <div className={styles.statusText}>
             {isInTune ? (
-              <span className="text-green-600 dark:text-green-400 font-semibold">
+              <span className={styles.statusTextInTune}>
                 チューニング完了
               </span>
             ) : (
@@ -80,7 +78,7 @@ export const NumericFeedback: React.FC<NumericFeedbackProps> = ({
           </div>
         </>
       ) : (
-        <div className="min-w-[280px] h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+        <div className={styles.emptyMessage}>
           音を検出していません
         </div>
       )}

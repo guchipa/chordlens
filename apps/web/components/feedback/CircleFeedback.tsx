@@ -1,5 +1,3 @@
-"use client";
-
 import { PITCH_NAME_LIST } from '@chordlens/core/constants';
 import React from 'react';
 

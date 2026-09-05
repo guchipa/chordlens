@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { TunerMeter } from "./MeterFeedback";
 import { BarFeedback } from "./BarFeedback";
@@ -9,6 +7,8 @@ import { BarFeedback } from "./BarFeedback";
 import type { FeedbackType } from "@chordlens/core/constants";
 import type { Pitch } from "@chordlens/core/types";
 import { CircleFeedback } from "./CircleFeedback";
+
+import styles from "./UnifiedFeedback.module.css";
 
 interface UnifiedFeedbackProps {
   feedbackType: FeedbackType;
@@ -52,7 +52,7 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
 
   if (analysisData.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      <div className={styles.emptyMessage}>
         解析データがありません
       </div>
     );
@@ -81,7 +81,7 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
   // バー表示も横長なので縦に並べる
   if (feedbackType === "bar") {
     return (
-      <div className="flex flex-col gap-3 w-full max-w-4xl mx-auto">
+      <div className={styles.barList}>
         {analysisData.map((data) => {
           const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
           const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
@@ -108,8 +108,8 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
     }));
 
     return (
-      <div className="flex justify-center w-full px-4">
-        <CircleFeedback analysisData={circleData} className="w-full max-w-3xl" />
+      <div className={styles.circleWrapper}>
+        <CircleFeedback analysisData={circleData} className={styles.circle} />
       </div>
     );
   }

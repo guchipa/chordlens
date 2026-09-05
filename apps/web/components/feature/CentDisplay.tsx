@@ -1,19 +1,20 @@
-"use client";
-
 import React, { useCallback, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonNote,
+  IonButton,
+} from "@ionic/react";
 import type { Pitch } from "@chordlens/core/types";
 import { getEqualJustDiff, getEqualFrequencies, getJustFrequencies } from "@chordlens/core/audio_analysis/calcJustFreq";
 import { PITCH_NAME_LIST } from "@chordlens/core/constants";
+
+import styles from "./CentDisplay.module.css";
 
 // 表示するcentの小数点以下桁数
 const CENT_DIGIT_NUM = 2;
@@ -154,64 +155,56 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
   }, [pitchList, a4Freq, playToneContinuous]);
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>音名</TableHead>
-              <TableHead>音程</TableHead>
-              <TableHead className="text-right">セント差</TableHead>
-              <TableHead className="text-center">再生</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pitchList.map((pitch, index) => {
-              const interval = calculateInterval(pitchList, index);
-              const intervalName = INTERVAL_NAMES[interval] || "?";
-              const centValue = equalJustDiff[index];
+    <IonCard className={styles.card}>
+      <IonCardHeader>
+        <IonCardTitle>{title}</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <IonList>
+          {pitchList.map((pitch, index) => {
+            const interval = calculateInterval(pitchList, index);
+            const intervalName = INTERVAL_NAMES[interval] || "?";
+            const centValue = equalJustDiff[index];
+            const centText =
+              centValue !== undefined
+                ? `${centValue >= 0 ? "+" : ""}${centValue.toFixed(CENT_DIGIT_NUM)}`
+                : "---";
+            const isEqualPlaying = playingState.get(`equal-${index}`) ?? false;
+            const isJustPlaying = playingState.get(`just-${index}`) ?? false;
 
-              return (
-                <TableRow key={`${pitch.pitchName}-${pitch.octaveNum}-${index}`}>
-                  <TableCell className="font-medium">
+            return (
+              <IonItem key={`${pitch.pitchName}-${pitch.octaveNum}-${index}`} lines="full">
+                <IonLabel>
+                  <h3>
                     {pitch.pitchName}
                     {pitch.octaveNum}
-                  </TableCell>
-                  <TableCell>{intervalName}</TableCell>
-                  <TableCell className="text-right">
-                    {centValue !== undefined
-                      ? `${centValue >= 0 ? "+" : ""}${centValue.toFixed(CENT_DIGIT_NUM)}`
-                      : "---"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex gap-1 justify-center">
-                      <Button
-                        size="sm"
-                        variant={playingState.get(`equal-${index}`) ? "default" : "outline"}
-                        onClick={() => toggleEqual(index)}
-                        title="平均律を再生/停止"
-                      >
-                        平
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={playingState.get(`just-${index}`) ? "default" : "outline"}
-                        onClick={() => toggleJust(index)}
-                        title="純正律を再生/停止"
-                      >
-                        純
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+                  </h3>
+                  <IonNote>{intervalName}</IonNote>
+                </IonLabel>
+                <div slot="end" className={styles.endGroup}>
+                  <span className={styles.centValue}>{centText}</span>
+                  <IonButton
+                    size="small"
+                    fill={isEqualPlaying ? "solid" : "outline"}
+                    onClick={() => toggleEqual(index)}
+                    aria-label="平均律を再生/停止"
+                  >
+                    平
+                  </IonButton>
+                  <IonButton
+                    size="small"
+                    fill={isJustPlaying ? "solid" : "outline"}
+                    onClick={() => toggleJust(index)}
+                    aria-label="純正律を再生/停止"
+                  >
+                    純
+                  </IonButton>
+                </div>
+              </IonItem>
+            );
+          })}
+        </IonList>
+      </IonCardContent>
+    </IonCard>
   );
 };

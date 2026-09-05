@@ -1,7 +1,5 @@
-"use client";
-
 import React, { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { IonCard, IonCardHeader, IonCardTitle, IonCardContent } from "@ionic/react";
 import {
   METER_MAX_DEVIATION_DEGREES,
   METER_NEEDLE_HOLD_MS,
@@ -12,6 +10,8 @@ import {
 import type { Pitch } from "@chordlens/core/types";
 import { getSingleEqualJustDiff } from "@chordlens/core/audio_analysis/calcJustFreq";
 import { updateEmaHoldList, type EmaHoldState } from "@chordlens/core/utils/emaHold";
+
+import styles from "./MeterFeedback.module.css";
 
 interface TunerMeterProps {
   /**
@@ -111,18 +111,18 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
     };
   }, []);
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>{title || "Tuner"}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col justify-center items-center">
-        <div className="flex w-64 h-32 overflow-hidden mb-4">
+    <IonCard className={styles.card}>
+      <IonCardHeader>
+        <IonCardTitle>{title || "Tuner"}</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent className={styles.content}>
+        <div className={styles.meterWrapper}>
           {/* メーターの背景（半円） */}
           <svg
-            className="w-full h-full"
+            className={styles.meterSvg}
             viewBox="0 0 100 50"
           >
-            <path d="M 0 50 A 50 50 0 0 1 100 50 L 0 50 Z" fill="#e0e0e0" />
+            <path d="M 0 50 A 50 50 0 0 1 100 50 L 0 50 Z" style={{ fill: "var(--ion-color-light)" }} />
             {/* 目盛り */}
             {[
               -METER_MAX_DEVIATION_DEGREES,
@@ -143,7 +143,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
                   y1={y1}
                   x2={x2}
                   y2={y2}
-                  stroke="black"
+                  style={{ stroke: "var(--ion-text-color)" }}
                   strokeWidth="1"
                 />
               );
@@ -209,29 +209,29 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
                 />
               );
             })}
-            <circle cx="50" cy="50" r="3" fill="black" />
+            <circle cx="50" cy="50" r="3" style={{ fill: "var(--ion-text-color)" }} />
           </svg>
         </div>
-        <div className="flex flex-wrap justify-start gap-x-4 gap-y-2 mt-4">
+        <div className={styles.legend}>
           {displayData.map(({ pitch: { pitchName, octaveNum } }, index) => (
             <div
               key={`${pitchName}-${octaveNum}-${index}`}
-              className="flex items-center gap-2 text-sm"
+              className={styles.legendItem}
             >
               <span
-                className="w-3 h-3 rounded-full"
+                className={styles.legendDot}
                 style={{
                   backgroundColor: PITCH_COLOR_MAP[pitchName] || "#888",
                 }}
               />
-              <span className="font-semibold">
+              <span className={styles.legendLabel}>
                 {pitchName}
                 {octaveNum}
               </span>
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </IonCardContent>
+    </IonCard>
   );
 };
