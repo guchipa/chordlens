@@ -1,14 +1,8 @@
-"use client";
-
 import { useState, useCallback } from "react";
 import { useAtomValue } from "jotai";
-import { Mic, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { IonButton, IonIcon, IonSpinner, IonNote } from "@ionic/react";
+import { micOutline } from "ionicons/icons";
+
 import { noteEventsToPitchList } from "@chordlens/core/audio_analysis/chordToneEstimation";
 import type { Pitch } from "@chordlens/core/types";
 import {
@@ -17,6 +11,8 @@ import {
 } from "@/lib/audio/noteDetectorFactory";
 import { recordMonoAudio } from "@/lib/audio/recordMonoAudio";
 import { a4FreqAtom } from "@/lib/store";
+
+import styles from "./MicInputButton.module.css";
 
 interface MicInputButtonProps {
     /** 検出完了時のコールバック (最有力の 1 音) */
@@ -34,7 +30,9 @@ type DetectionStatus = "idle" | "recording" | "processing";
  *
  * クリックで短時間録音し、構成音検出で推定した最有力の 1 音を
  * 即座にコールバックへ渡す。
- * 録音中は赤色のパルスアニメーション、処理中はスピナーを表示。
+ * 録音中はボタンを危険色に、処理中はスピナーを表示。
+ * ホバーカードの代わりに、メッセージ (エラー/録音中/解析中) はボタン直下に表示する
+ * (モバイルにホバーはないため)。
  */
 export function MicInputButton({
     onDetect,
@@ -95,48 +93,36 @@ export function MicInputButton({
 
     const isActive = status !== "idle";
 
+    const statusText = message
+        ? message
+        : status === "recording"
+            ? "録音中..."
+            : status === "processing"
+                ? "解析中..."
+                : null;
+
     return (
-        <HoverCard openDelay={200} closeDelay={100}>
-            <HoverCardTrigger asChild>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleClick}
-                    disabled={disabled || isActive}
-                    className={`relative ${status === "recording"
-                            ? "border-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900"
-                            : ""
-                        }`}
-                    aria-label="マイクで入力"
-                >
-                    {status === "processing" ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <>
-                            <Mic
-                                className={`h-4 w-4 ${status === "recording" ? "text-red-500" : ""}`}
-                            />
-                            {status === "recording" && (
-                                <span className="absolute inset-0 animate-ping rounded-md bg-red-400 opacity-30" />
-                            )}
-                        </>
-                    )}
-                </Button>
-            </HoverCardTrigger>
-            <HoverCardContent side="top" className="w-auto p-2">
-                <p className="text-sm">
-                    {message ? (
-                        <span className="text-red-500">{message}</span>
-                    ) : status === "recording" ? (
-                        "録音中..."
-                    ) : status === "processing" ? (
-                        "解析中..."
-                    ) : (
-                        "マイクで入力"
-                    )}
-                </p>
-            </HoverCardContent>
-        </HoverCard>
+        <div className={styles.wrapper}>
+            <IonButton
+                type="button"
+                fill="outline"
+                size="small"
+                color={status === "recording" ? "danger" : undefined}
+                onClick={handleClick}
+                disabled={disabled || isActive}
+                aria-label="マイクで入力"
+            >
+                {status === "processing" ? (
+                    <IonSpinner name="crescent" slot="icon-only" />
+                ) : (
+                    <IonIcon icon={micOutline} slot="icon-only" />
+                )}
+            </IonButton>
+            {statusText && (
+                <IonNote color={message ? "danger" : undefined}>
+                    {statusText}
+                </IonNote>
+            )}
+        </div>
     );
 }

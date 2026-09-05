@@ -1,24 +1,22 @@
-"use client";
-
 import { useAtom } from "jotai";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonList,
+  IonItem,
+  IonSelect,
+  IonSelectOption,
+  IonInput,
+  IonRange,
+  IonLabel,
+  IonNote,
+  IonAccordionGroup,
+  IonAccordion,
+  IonToggle,
+} from "@ionic/react";
+
 import {
   evalRangeCentsAtom,
   a4FreqAtom,
@@ -38,6 +36,8 @@ import {
   PITCH_ALGORITHM_DESCRIPTIONS,
 } from "@chordlens/core/constants";
 
+import styles from "./SettingsForm.module.css";
+
 const FFT_SIZE_OPTIONS = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
 
 export function SettingsForm() {
@@ -52,215 +52,221 @@ export function SettingsForm() {
   const [holdEnabled, setHoldEnabled] = useAtom(holdEnabledAtom);
   const [experimentMode, setExperimentMode] = useAtom(experimentModeAtom);
   const [pitchAlgorithm, setPitchAlgorithm] = useAtom(pitchAlgorithmAtom);
-  const [swipeBandwidthCents, setSwipeBandwidthCents] = useAtom(swipeBandwidthCentsAtom);
+  const [swipeBandwidthCents, setSwipeBandwidthCents] = useAtom(
+    swipeBandwidthCentsAtom
+  );
 
-  const handleEvalRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value)) {
-      setEvalRange(value);
+  const handleEvalRangeChange = (value: string | null | undefined) => {
+    const parsed = parseInt(value ?? "", 10);
+    if (!isNaN(parsed)) {
+      setEvalRange(parsed);
     }
   };
 
-  const handleA4FreqChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value)) {
-      setA4Freq(value);
+  const handleA4FreqChange = (value: string | null | undefined) => {
+    const parsed = parseInt(value ?? "", 10);
+    if (!isNaN(parsed)) {
+      setA4Freq(parsed);
     }
   };
 
-  const handleSensitivityChange = (value: number[]) => {
-    if (value.length > 0) {
-      setSensitivity(value[0]);
+  const handleSwipeBandwidthChange = (value: string | null | undefined) => {
+    const parsed = parseInt(value ?? "", 10);
+    if (!isNaN(parsed) && parsed >= 100) {
+      setSwipeBandwidthCents(parsed);
     }
-  };
-
-  const handleFftSizeChange = (value: string) => {
-    const intValue = parseInt(value, 10);
-    setFftSize(intValue);
   };
 
   const handleSmoothingTimeConstantChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    value: string | null | undefined
   ) => {
-    const value = parseFloat(e.target.value);
-    if (!isNaN(value) && value >= 0.0 && value <= 1.0) {
-      setSmoothingTimeConstant(value);
+    const parsed = parseFloat(value ?? "");
+    if (!isNaN(parsed) && parsed >= 0.0 && parsed <= 1.0) {
+      setSmoothingTimeConstant(parsed);
     }
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>設定</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="pitchAlgorithm">アルゴリズム</Label>
-          <Select
-            value={pitchAlgorithm}
-            onValueChange={(v) => setPitchAlgorithm(v as typeof pitchAlgorithm)}
-          >
-            <SelectTrigger id="pitchAlgorithm">
-              <SelectValue placeholder="アルゴリズムを選択" />
-            </SelectTrigger>
-            <SelectContent>
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>設定</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <IonList>
+          <IonItem lines="none">
+            <IonSelect
+              label="アルゴリズム"
+              value={pitchAlgorithm}
+              onIonChange={(e) =>
+                setPitchAlgorithm(
+                  e.detail.value as typeof pitchAlgorithm
+                )
+              }
+            >
               {PITCH_ALGORITHMS.map((alg) => (
-                <SelectItem key={alg} value={alg}>
+                <IonSelectOption key={alg} value={alg}>
                   {PITCH_ALGORITHM_LABELS[alg]}
-                </SelectItem>
+                </IonSelectOption>
               ))}
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-gray-500 mt-1">
+            </IonSelect>
+          </IonItem>
+          <IonNote className={styles.fieldNote}>
             {PITCH_ALGORITHM_DESCRIPTIONS[pitchAlgorithm]}
-          </p>
-        </div>
-        {pitchAlgorithm === "swipe" && (
-          <div>
-            <Label htmlFor="swipeBandwidthCents">バンドパス幅 (セント)</Label>
-            <Input
-              id="swipeBandwidthCents"
+          </IonNote>
+
+          {pitchAlgorithm === "swipe" && (
+            <>
+              <IonItem lines="none">
+                <IonInput
+                  label="バンドパス幅 (セント)"
+                  labelPlacement="stacked"
+                  type="number"
+                  inputmode="decimal"
+                  value={swipeBandwidthCents}
+                  min={100}
+                  max={4800}
+                  step="100"
+                  onIonInput={(e) =>
+                    handleSwipeBandwidthChange(e.detail.value)
+                  }
+                />
+              </IonItem>
+              <IonNote className={styles.fieldNote}>
+                各構成音の周囲をこの幅でバンドパスフィルタします。広いほど倍音を含みます。
+              </IonNote>
+            </>
+          )}
+
+          <IonItem lines="none">
+            <IonInput
+              label="音程評価範囲 (セント)"
+              labelPlacement="stacked"
               type="number"
-              value={swipeBandwidthCents}
-              onChange={(e) => {
-                const v = parseInt(e.target.value, 10);
-                if (!isNaN(v) && v >= 100) setSwipeBandwidthCents(v);
-              }}
-              min="100"
-              max="4800"
-              step="100"
+              inputmode="decimal"
+              value={evalRange}
+              min={1}
+              max={100}
+              onIonInput={(e) => handleEvalRangeChange(e.detail.value)}
             />
-            <p className="text-sm text-gray-500 mt-1">
-              各構成音の周囲をこの幅でバンドパスフィルタします。広いほど倍音を含みます。
-            </p>
-          </div>
-        )}
-        <div>
-          <Label htmlFor="evalRangeCents">音程評価範囲 (セント)</Label>
-          <Input
-            id="evalRangeCents"
-            type="number"
-            value={evalRange}
-            onChange={handleEvalRangeChange}
-            min="1"
-            max="100"
-          />
-          <p className="text-sm text-gray-500 mt-1">
+          </IonItem>
+          <IonNote className={styles.fieldNote}>
             ±この値の範囲で音程のズレを評価します。
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="a4Freq">A4周波数 (Hz)</Label>
-          <Input
-            id="a4Freq"
-            type="number"
-            value={a4Freq}
-            onChange={handleA4FreqChange}
-            min="430"
-            max="450"
-          />
-          <p className="text-sm text-gray-500 mt-1">
+          </IonNote>
+
+          <IonItem lines="none">
+            <IonInput
+              label="A4周波数 (Hz)"
+              labelPlacement="stacked"
+              type="number"
+              inputmode="decimal"
+              value={a4Freq}
+              min={430}
+              max={450}
+              onIonInput={(e) => handleA4FreqChange(e.detail.value)}
+            />
+          </IonItem>
+          <IonNote className={styles.fieldNote}>
             基準となるA4の周波数を設定します。
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="sensitivity">音量感度</Label>
-          <Slider
-            id="sensitivity"
-            value={[sensitivity]}
-            onValueChange={handleSensitivityChange}
-            min={SENSITIVITY_MIN}
-            max={SENSITIVITY_MAX}
-            step={1}
-            className="cursor-pointer mt-2"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>低（大きい音のみ）</span>
-            <span className="font-medium text-foreground">{sensitivity}</span>
-            <span>高（小さい音も検出）</span>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
+          </IonNote>
+
+          <IonItem lines="none">
+            <IonRange
+              aria-label="音量感度"
+              min={SENSITIVITY_MIN}
+              max={SENSITIVITY_MAX}
+              step={1}
+              pin={true}
+              value={sensitivity}
+              onIonChange={(e) =>
+                setSensitivity(e.detail.value as number)
+              }
+            >
+              <IonLabel slot="start">低（大きい音のみ）</IonLabel>
+              <IonLabel slot="end">高（小さい音も検出）</IonLabel>
+            </IonRange>
+          </IonItem>
+          <IonNote className={styles.fieldNote}>
             小さい音も検出したい場合は感度を上げてください。
-          </p>
-        </div>
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="item-1">
-            <AccordionTrigger>高度な設定</AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="fftSize">FFTサイズ</Label>
-                  <Select
-                    value={fftSize.toString()}
-                    onValueChange={handleFftSizeChange}
+          </IonNote>
+
+          <IonAccordionGroup className={styles.accordionGroup}>
+            <IonAccordion value="advanced">
+              <IonItem slot="header" lines="none">
+                <IonLabel>高度な設定</IonLabel>
+              </IonItem>
+              <div slot="content" className={styles.accordionContent}>
+                <IonItem lines="none">
+                  <IonSelect
+                    label="FFTサイズ"
+                    value={fftSize}
+                    onIonChange={(e) =>
+                      setFftSize(Number(e.detail.value))
+                    }
                   >
-                    <SelectTrigger id="fftSize">
-                      <SelectValue placeholder="FFTサイズを選択" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FFT_SIZE_OPTIONS.map((size) => (
-                        <SelectItem key={size} value={size.toString()}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-gray-500 mt-1">
-                    周波数分解能に影響します (2のべき乗)。
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="smoothingTimeConstant">平滑化定数</Label>
-                  <Input
-                    id="smoothingTimeConstant"
+                    {FFT_SIZE_OPTIONS.map((size) => (
+                      <IonSelectOption key={size} value={size}>
+                        {size}
+                      </IonSelectOption>
+                    ))}
+                  </IonSelect>
+                </IonItem>
+                <IonNote className={styles.fieldNote}>
+                  周波数分解能に影響します (2のべき乗)。
+                </IonNote>
+
+                <IonItem lines="none">
+                  <IonInput
+                    label="平滑化定数"
+                    labelPlacement="stacked"
                     type="number"
+                    inputmode="decimal"
                     value={smoothingTimeConstant}
-                    onChange={handleSmoothingTimeConstantChange}
-                    min="0.0"
-                    max="1.0"
+                    min={0.0}
+                    max={1.0}
                     step="0.1"
+                    onIonInput={(e) =>
+                      handleSmoothingTimeConstantChange(e.detail.value)
+                    }
                   />
-                  <p className="text-sm text-gray-500 mt-1">
-                    スペクトルの変化の滑らかさを調整します (0.0-1.0)。
-                  </p>
-                </div>
-                {/* 表示保持（ホールド）機能トグル */}
-                <div className="flex items-center justify-between pt-2 border-t border-border mt-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="holdEnabled" className="cursor-pointer">
-                      表示保持（ホールド）
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      音が途切れても約250ms表示を保持します。
-                    </p>
-                  </div>
-                  <Switch
-                    id="holdEnabled"
+                </IonItem>
+                <IonNote className={styles.fieldNote}>
+                  スペクトルの変化の滑らかさを調整します (0.0-1.0)。
+                </IonNote>
+
+                <IonItem lines="none">
+                  <IonToggle
                     checked={holdEnabled}
-                    onCheckedChange={setHoldEnabled}
-                  />
-                </div>
-                {/* 実験用機能トグル */}
-                <div className="flex items-center justify-between pt-2 border-t border-border mt-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="experimentMode" className="cursor-pointer">
-                      実験用機能を使う
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      ログ記録・周波数観測パネルを表示します。
-                    </p>
-                  </div>
-                  <Switch
-                    id="experimentMode"
+                    labelPlacement="end"
+                    onIonChange={(e) =>
+                      setHoldEnabled(e.detail.checked)
+                    }
+                  >
+                    表示保持（ホールド）
+                  </IonToggle>
+                </IonItem>
+                <IonNote className={styles.fieldNote}>
+                  音が途切れても約250ms表示を保持します。
+                </IonNote>
+
+                <IonItem lines="none">
+                  <IonToggle
                     checked={experimentMode}
-                    onCheckedChange={setExperimentMode}
-                  />
-                </div>
+                    labelPlacement="end"
+                    onIonChange={(e) =>
+                      setExperimentMode(e.detail.checked)
+                    }
+                  >
+                    実験用機能を使う
+                  </IonToggle>
+                </IonItem>
+                <IonNote className={styles.fieldNote}>
+                  ログ記録・周波数観測パネルを表示します。
+                </IonNote>
               </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </CardContent>
-    </Card>
+            </IonAccordion>
+          </IonAccordionGroup>
+        </IonList>
+      </IonCardContent>
+    </IonCard>
   );
 }

@@ -1,21 +1,15 @@
-"use client";
-
 import { useAtom } from "jotai";
-import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonItem,
+  IonSelect,
+  IonSelectOption,
+  IonNote,
+} from "@ionic/react";
+
 import {
   FEEDBACK_TYPES,
   FEEDBACK_TYPE_LABELS,
@@ -28,33 +22,28 @@ export function FeedbackTypeSelector() {
   const [feedbackType, setFeedbackType] = useAtom(feedbackTypeAtom);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>フィードバック形式</CardTitle>
-        <CardDescription>
-          {FEEDBACK_TYPE_DESCRIPTIONS[feedbackType]}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Label htmlFor="feedback-type" className="sr-only">
-          フィードバック形式
-        </Label>
-        <Select
-          value={feedbackType}
-          onValueChange={(value) => setFeedbackType(value as FeedbackType)}
-        >
-          <SelectTrigger id="feedback-type">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>フィードバック形式</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <IonItem lines="none">
+          <IonSelect
+            label="フィードバック形式"
+            value={feedbackType}
+            onIonChange={(e) =>
+              setFeedbackType(e.detail.value as FeedbackType)
+            }
+          >
             {FEEDBACK_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
+              <IonSelectOption key={type} value={type}>
                 {FEEDBACK_TYPE_LABELS[type]}
-              </SelectItem>
+              </IonSelectOption>
             ))}
-          </SelectContent>
-        </Select>
-      </CardContent>
-    </Card>
+          </IonSelect>
+        </IonItem>
+        <IonNote>{FEEDBACK_TYPE_DESCRIPTIONS[feedbackType]}</IonNote>
+      </IonCardContent>
+    </IonCard>
   );
 }

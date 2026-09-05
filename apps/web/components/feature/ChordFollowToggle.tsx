@@ -1,10 +1,16 @@
-"use client";
-
 import { useCallback } from "react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import {
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
+    IonCardContent,
+    IonItem,
+    IonToggle,
+    IonText,
+    IonNote,
+} from "@ionic/react";
+
 import {
     chordFollowEnabledAtom,
     chordFollowStatusAtom,
@@ -42,9 +48,9 @@ export function ChordFollowToggle() {
      * ユーザーが操作した時点でここでエラー表示を消す
      */
     const handleToggle = useCallback(
-        (next: boolean) => {
+        (e: CustomEvent<{ checked: boolean }>) => {
             setError(null);
-            setEnabled(next);
+            setEnabled(e.detail.checked);
         },
         [setError, setEnabled]
     );
@@ -52,39 +58,40 @@ export function ChordFollowToggle() {
     const label = statusLabel(status);
 
     return (
-        <Card className="w-full max-w-lg">
-            <CardHeader>
-                <CardTitle>構成音の自動検出</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                        <Switch
-                            id="chord-follow-switch"
-                            checked={enabled}
-                            onCheckedChange={handleToggle}
-                        />
-                        <Label htmlFor="chord-follow-switch" className="cursor-pointer">
-                            自動追従モード
-                        </Label>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                        解析の実行中に、演奏した和音から構成音を自動で推定し、
-                        リストに反映します。楽器音を検出したときだけ推定を行います。
+        <IonCard>
+            <IonCardHeader>
+                <IonCardTitle>構成音の自動検出</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+                <IonItem lines="none">
+                    <IonToggle
+                        checked={enabled}
+                        labelPlacement="end"
+                        onIonChange={handleToggle}
+                    >
+                        自動追従モード
+                    </IonToggle>
+                </IonItem>
+                <IonNote>
+                    解析の実行中に、演奏した和音から構成音を自動で推定し、
+                    リストに反映します。楽器音を検出したときだけ推定を行います。
+                </IonNote>
+                {enabled && label && (
+                    <p>
+                        <IonText color="tertiary">{label}</IonText>
                     </p>
-                    {enabled && label && (
-                        <p className="text-sm text-blue-600">{label}</p>
-                    )}
-                    {enabled && !label && (
-                        <p className="text-sm text-gray-500">
-                            解析を開始すると追従が始まります
-                        </p>
-                    )}
-                    {error && (
-                        <p className="text-sm font-medium text-red-600">{error}</p>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+                )}
+                {enabled && !label && (
+                    <p>
+                        <IonNote>解析を開始すると追従が始まります</IonNote>
+                    </p>
+                )}
+                {error && (
+                    <p>
+                        <IonText color="danger">{error}</IonText>
+                    </p>
+                )}
+            </IonCardContent>
+        </IonCard>
     );
 }

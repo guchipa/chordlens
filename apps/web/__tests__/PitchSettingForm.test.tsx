@@ -4,6 +4,7 @@ import { Provider, createStore } from "jotai";
 import { PitchSettingForm } from "@/components/feature/PitchSettingForm";
 import { pitchListAtom } from "@/lib/store/pitchListAtoms";
 import type { Pitch } from "@chordlens/core/types";
+import { fireIonChange } from "./helpers/ionic";
 
 // AudioContext のモック
 const mockAudioContext = {
@@ -50,31 +51,36 @@ describe("PitchSettingForm", () => {
     };
   };
 
-  it("renders the form correctly", () => {
-    renderWithJotai();
+  it("renders the form correctly", async () => {
+    const { container } = renderWithJotai();
     expect(screen.getByText("評価する音の追加")).toBeInTheDocument();
-    expect(screen.getByText("音名")).toBeInTheDocument();
-    expect(screen.getByText("オクターブ")).toBeInTheDocument();
+
+    // IonSelect の label prop は Stencil のシャドウ DOM 内に描画され、
+    // jsdom では light DOM のテキストとして拾えないため、
+    // アップグレード後の label プロパティを直接検証する
+    await customElements.whenDefined("ion-select");
+    const selects = container.querySelectorAll("ion-select");
+    expect((selects[0] as unknown as { label: string }).label).toBe("音名");
+    expect((selects[1] as unknown as { label: string }).label).toBe(
+      "オクターブ"
+    );
+
     expect(screen.getByText("根音として設定")).toBeInTheDocument();
   });
 
   it("submits the form with the correct data", async () => {
-    const { store } = renderWithJotai();
+    const { store, container } = renderWithJotai();
 
-    // 音名を選択
-    const pitchNameSelect = screen.getAllByRole("combobox")[0];
-    fireEvent.click(pitchNameSelect);
+    // 音名を選択 (ion-select は 1 つ目が音名、2 つ目がオクターブ)
+    await customElements.whenDefined("ion-select");
+    const pitchNameSelect = container.querySelectorAll("ion-select")[0];
+    fireIonChange(pitchNameSelect, { value: "C" });
 
-    await waitFor(() => {
-      const cOption = screen.getByRole("option", { name: "C" });
-      fireEvent.click(cOption);
-    });
-
-    // 送信ボタンをクリック
-    const submitButton = screen.getByRole("button", {
-      name: /設定した音を追加/i,
-    });
-    fireEvent.click(submitButton);
+    // 送信 (IonButton type="submit" は jsdom で form submit を起こさないため
+    // form 要素へ直接 submit イベントを発火する)
+    const form = container.querySelector("form");
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
 
     // Use waitFor to handle the asynchronous submission process
     await waitFor(() => {

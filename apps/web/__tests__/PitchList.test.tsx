@@ -43,7 +43,7 @@ describe("PitchList", () => {
     const { store } = renderWithJotai(mockPitchList);
 
     // 削除ボタンをクリック（最初の要素を削除）
-    fireEvent.click(screen.getAllByRole("button", { name: "" })[0]);
+    fireEvent.click(screen.getAllByLabelText(/を削除/)[0]);
 
     // Jotai storeから要素が削除されていることを確認
     const updatedList = store.get(pitchListAtom);

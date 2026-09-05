@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
 import { ChordFollowToggle } from "@/components/feature/ChordFollowToggle";
 import {
@@ -6,6 +6,7 @@ import {
     chordFollowStatusAtom,
     chordFollowErrorAtom,
 } from "@/lib/store/chordDetectionAtoms";
+import { fireIonChange } from "./helpers/ionic";
 
 describe("ChordFollowToggle", () => {
     const renderWithStore = (setupStore?: (store: ReturnType<typeof createStore>) => void) => {
@@ -21,20 +22,29 @@ describe("ChordFollowToggle", () => {
         };
     };
 
-    it("タイトルとトグルを表示する", () => {
-        renderWithStore();
+    const getToggle = (container: HTMLElement) =>
+        container.querySelector("ion-toggle") as Element;
+
+    it("タイトルとトグルを表示する", async () => {
+        const { container } = renderWithStore();
         expect(screen.getByText("構成音の自動検出")).toBeInTheDocument();
         expect(screen.getByText("自動追従モード")).toBeInTheDocument();
-        expect(screen.getByRole("switch")).not.toBeChecked();
+
+        await customElements.whenDefined("ion-toggle");
+        const toggle = getToggle(container);
+        expect(toggle).not.toBeNull();
+        expect(toggle).not.toHaveAttribute("checked");
     });
 
-    it("スイッチ操作で chordFollowEnabledAtom を切り替える", () => {
-        const { store } = renderWithStore();
+    it("スイッチ操作で chordFollowEnabledAtom を切り替える", async () => {
+        const { store, container } = renderWithStore();
+        await customElements.whenDefined("ion-toggle");
+        const toggle = getToggle(container);
 
-        fireEvent.click(screen.getByRole("switch"));
+        fireIonChange(toggle, { checked: true });
         expect(store.get(chordFollowEnabledAtom)).toBe(true);
 
-        fireEvent.click(screen.getByRole("switch"));
+        fireIonChange(toggle, { checked: false });
         expect(store.get(chordFollowEnabledAtom)).toBe(false);
     });
 
@@ -64,14 +74,17 @@ describe("ChordFollowToggle", () => {
         expect(screen.getByText("マイクが見つかりません。")).toBeInTheDocument();
     });
 
-    it("スイッチ操作でエラー表示を消す", () => {
+    it("スイッチ操作でエラー表示を消す", async () => {
         // 失敗時は useChordFollow がトグルを OFF に戻すため、次のセッション
         // 開始時の setError(null) には到達しない。操作した時点で消えること
-        const { store } = renderWithStore((s) => {
+        const { store, container } = renderWithStore((s) => {
             s.set(chordFollowErrorAtom, "マイクが見つかりません。");
         });
 
-        fireEvent.click(screen.getByRole("switch"));
+        await customElements.whenDefined("ion-toggle");
+        act(() => {
+            fireIonChange(getToggle(container), { checked: true });
+        });
 
         expect(store.get(chordFollowErrorAtom)).toBeNull();
         expect(

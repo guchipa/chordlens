@@ -27,6 +27,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
         navigateFallbackDenylist: [/^\/api\//],
+        // Ionic React 導入でメインバンドルが既定の 2MiB を超えたため引き上げる。
+        // 根本対応 (コード分割) は最終タスク (Tailwind 撤去 + バンドル最適化) で検討する
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
       devOptions: {
         enabled: false,

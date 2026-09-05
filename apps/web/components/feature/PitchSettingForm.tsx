@@ -1,32 +1,29 @@
-"use client";
-
 import { useAtom, useSetAtom } from "jotai";
 import { useMemo, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonList,
+  IonItem,
+  IonSelect,
+  IonSelectOption,
+  IonCheckbox,
+  IonButton,
+  IonNote,
+  IonText,
+} from "@ionic/react";
+
 import { PITCH_NAME_LIST, OCTAVE_NUM_LIST } from "@chordlens/core/constants";
 import { FormSchema, type Pitch } from "@chordlens/core/types";
 import { MicInputButton } from "@/components/feature/MicInputButton";
 import { pitchListAtom, addOrUpdatePitchAtom } from "@/lib/store";
+
+import styles from "./PitchSettingForm.module.css";
 
 // フォーム入力型（zodスキーマの入力型を明示的に取得）
 type PitchFormInput = z.input<typeof FormSchema>;
@@ -91,142 +88,129 @@ export function PitchSettingForm() {
   );
 
   return (
-    <Card className="w-full max-w-lg">
-      <CardHeader>
-        <CardTitle>評価する音の追加</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>評価する音の追加</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <IonList>
+            <Controller
               control={form.control}
               name="pitchName"
-              render={({ field }) => (
-                <FormItem className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                  <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
-                    音名
-                  </FormLabel>
-                  <Select
-                    key={`pitchName-${field.value || "empty"}`}
-                    onValueChange={field.onChange}
-                    value={field.value || undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="音名を選んでください" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
+              render={({ field, fieldState }) => (
+                <>
+                  <IonItem lines="none">
+                    <IonSelect
+                      label="音名"
+                      placeholder="音名を選んでください"
+                      value={field.value || undefined}
+                      onIonChange={(e) => field.onChange(e.detail.value)}
+                    >
                       {PITCH_NAME_LIST.map((name) => (
-                        <SelectItem key={name} value={name}>
+                        <IonSelectOption key={name} value={name}>
                           {name}
-                        </SelectItem>
+                        </IonSelectOption>
                       ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage className="sm:ml-28" />
-                </FormItem>
+                    </IonSelect>
+                  </IonItem>
+                  {fieldState.error?.message && (
+                    <IonNote color="danger" className={styles.fieldNote}>
+                      {fieldState.error.message}
+                    </IonNote>
+                  )}
+                </>
               )}
             />
-            <FormField
+
+            <Controller
               control={form.control}
               name="octaveNum"
-              render={({ field }) => (
-                <FormItem className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                  <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
-                    オクターブ
-                  </FormLabel>
-                  <div className="flex items-center gap-2 flex-1">
-                    <Select
-                      onValueChange={(val) => field.onChange(Number(val))}
-                      value={field.value ? field.value.toString() : undefined}
+              render={({ field, fieldState }) => (
+                <>
+                  <IonItem lines="none">
+                    <IonSelect
+                      label="オクターブ"
+                      placeholder="オクターブ番号を選んでください"
+                      value={field.value ?? undefined}
+                      onIonChange={(e) =>
+                        field.onChange(Number(e.detail.value))
+                      }
                     >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="オクターブ番号を選んでください" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {OCTAVE_NUM_LIST.map((num) => (
-                          <SelectItem key={num} value={num.toString()}>
-                            {num}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <MicInputButton onDetect={handleMicDetect} />
-                  </div>
-                  <FormMessage className="sm:ml-28" />
-                </FormItem>
+                      {OCTAVE_NUM_LIST.map((num) => (
+                        <IonSelectOption key={num} value={num}>
+                          {num}
+                        </IonSelectOption>
+                      ))}
+                    </IonSelect>
+                    <div slot="end">
+                      <MicInputButton onDetect={handleMicDetect} />
+                    </div>
+                  </IonItem>
+                  {fieldState.error?.message && (
+                    <IonNote color="danger" className={styles.fieldNote}>
+                      {fieldState.error.message}
+                    </IonNote>
+                  )}
+                </>
               )}
             />
-            <FormField
+
+            <Controller
               control={form.control}
               name="isRoot"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={!!field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={hasRoot} // 根音が既にある場合は無効化
-                      id="is-root-checkbox"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel
-                      htmlFor="is-root-checkbox"
-                      className={`cursor-pointer ${hasRoot ? "cursor-not-allowed text-gray-500" : ""
-                        }`}
-                    >
-                      根音として設定
-                    </FormLabel>
-                    {hasRoot && (
-                      <p className="text-xs text-gray-500">
-                        根音は既に設定されています。2つ目の根音は設定できません。
-                      </p>
-                    )}
-                  </div>
-                </FormItem>
+                <IonItem lines="none">
+                  <IonCheckbox
+                    checked={!!field.value}
+                    disabled={hasRoot}
+                    labelPlacement="end"
+                    onIonChange={(e) => field.onChange(e.detail.checked)}
+                  >
+                    根音として設定
+                  </IonCheckbox>
+                  {hasRoot && (
+                    <IonNote slot="helper">
+                      根音は既に設定されています。2つ目の根音は設定できません。
+                    </IonNote>
+                  )}
+                </IonItem>
               )}
             />
-            <FormField
+
+            <Controller
               control={form.control}
               name="enabled"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value !== false} // undefined (default) or true -> checked
-                      onCheckedChange={field.onChange}
-                      id="enabled-checkbox"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel
-                      htmlFor="enabled-checkbox"
-                      className="cursor-pointer"
-                    >
-                      計測に含める
-                    </FormLabel>
-                    <p className="text-xs text-gray-500">
-                      チェックを外すと、この音は解析の対象外となります（根音としての計算には使用されます）。
-                    </p>
-                  </div>
-                </FormItem>
+                <IonItem lines="none">
+                  <IonCheckbox
+                    checked={field.value !== false}
+                    labelPlacement="end"
+                    onIonChange={(e) => field.onChange(e.detail.checked)}
+                  >
+                    計測に含める
+                  </IonCheckbox>
+                  <IonNote slot="helper">
+                    チェックを外すと、この音は解析の対象外となります（根音としての計算には使用されます）。
+                  </IonNote>
+                </IonItem>
               )}
             />
-            {showRootWarning && (
-              <p className="text-sm font-medium text-red-600">
+          </IonList>
+
+          {showRootWarning && (
+            <p className={styles.warning}>
+              <IonText color="danger">
                 警告: 根音が設定されていません。解析には根音の指定が必要です。
-              </p>
-            )}
-            <Button type="submit" className="w-full" disabled={!isFormValid}>
-              設定した音を追加
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              </IonText>
+            </p>
+          )}
+
+          <IonButton expand="block" type="submit" disabled={!isFormValid}>
+            設定した音を追加
+          </IonButton>
+        </form>
+      </IonCardContent>
+    </IonCard>
   );
 }
