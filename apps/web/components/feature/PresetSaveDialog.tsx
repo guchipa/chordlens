@@ -1,19 +1,21 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  IonModal,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonButton,
+  IonContent,
+  IonFooter,
+  IonInput,
+  IonNote,
+  IonText,
+} from "@ionic/react";
 import { savePreset, isDuplicatePresetName } from "@/lib/presets";
 import type { Pitch } from "@chordlens/core/types";
+
+import styles from "./PresetSaveDialog.module.css";
 
 interface PresetSaveDialogProps {
   open: boolean;
@@ -31,6 +33,7 @@ export const PresetSaveDialog: React.FC<PresetSaveDialogProps> = ({
   const [presetName, setPresetName] = useState("");
   const [error, setError] = useState("");
   const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
+  const inputRef = useRef<HTMLIonInputElement>(null);
 
   const handleSave = () => {
     setError("");
@@ -80,64 +83,75 @@ export const PresetSaveDialog: React.FC<PresetSaveDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <IonModal
+      isOpen={open}
+      onDidDismiss={() => onOpenChange(false)}
+      onDidPresent={() => {
+        inputRef.current?.setFocus();
+      }}
+      initialBreakpoint={0.5}
+      breakpoints={[0, 0.5, 0.9]}
+    >
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>
+            {showOverwriteConfirm ? "上書き確認" : "プリセット保存"}
+          </IonTitle>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent className="ion-padding">
         {!showOverwriteConfirm ? (
           <>
-            <DialogHeader>
-              <DialogTitle>プリセット保存</DialogTitle>
-              <DialogDescription>
-                現在の構成音リストをプリセットとして保存します。
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="preset-name">プリセット名</Label>
-                <Input
-                  id="preset-name"
-                  placeholder="例: Cメジャートライアド"
-                  value={presetName}
-                  onChange={(e) => setPresetName(e.target.value)}
-                  maxLength={30}
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSave();
-                    }
-                  }}
-                />
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <p className="text-sm text-muted-foreground">
-                  {presetName.length} / 30 文字
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCancel}>
-                キャンセル
-              </Button>
-              <Button onClick={handleSave} disabled={pitchList.length === 0}>
-                保存
-              </Button>
-            </DialogFooter>
+            <IonText color="medium">
+              <p>現在の構成音リストをプリセットとして保存します。</p>
+            </IonText>
+            <IonInput
+              ref={inputRef}
+              label="プリセット名"
+              labelPlacement="stacked"
+              placeholder="例: Cメジャートライアド"
+              value={presetName}
+              maxlength={30}
+              onIonInput={(e) => setPresetName(e.detail.value ?? "")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSave();
+                }
+              }}
+            />
+            {error && <IonNote color="danger">{error}</IonNote>}
+            <IonNote color="medium" className={styles.charCount}>
+              {presetName.length} / 30 文字
+            </IonNote>
           </>
         ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>上書き確認</DialogTitle>
-              <DialogDescription>
-                「{presetName}」は既に存在します。上書きしますか？
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCancelOverwrite}>
-                キャンセル
-              </Button>
-              <Button onClick={handleSave}>上書き保存</Button>
-            </DialogFooter>
-          </>
+          <IonText>
+            <p>「{presetName}」は既に存在します。上書きしますか？</p>
+          </IonText>
         )}
-      </DialogContent>
-    </Dialog>
+      </IonContent>
+      <IonFooter>
+        <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton
+              fill="outline"
+              onClick={
+                showOverwriteConfirm ? handleCancelOverwrite : handleCancel
+              }
+            >
+              キャンセル
+            </IonButton>
+          </IonButtons>
+          <IonButtons slot="end">
+            <IonButton
+              onClick={handleSave}
+              disabled={!showOverwriteConfirm && pitchList.length === 0}
+            >
+              {showOverwriteConfirm ? "上書き保存" : "保存"}
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonFooter>
+    </IonModal>
   );
 };

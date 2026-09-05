@@ -1,21 +1,23 @@
-"use client";
-
 import { useAtom, useSetAtom } from "jotai";
 import { useState, useEffect } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonCardContent,
+  IonButton,
+  IonIcon,
+} from "@ionic/react";
+import { saveOutline } from "ionicons/icons";
+
 import { PresetSaveDialog } from "@/components/feature/PresetSaveDialog";
 import { PresetList } from "@/components/feature/PresetList";
 import type { PitchPreset } from "@chordlens/core/types";
 import { getPresets, isLocalStorageAvailable } from "@/lib/presets";
-import { Save } from "lucide-react";
 import { pitchListAtom, loadPresetAtom } from "@/lib/store";
+
+import styles from "./PresetManager.module.css";
 
 export function PresetManager() {
   const [pitchList] = useAtom(pitchListAtom);
@@ -58,46 +60,44 @@ export function PresetManager() {
 
   if (!localStorageAvailable) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>プリセット機能</CardTitle>
-          <CardDescription>
+      <IonCard>
+        <IonCardHeader>
+          <IonCardTitle>プリセット機能</IonCardTitle>
+          <IonCardSubtitle>
             localStorageが利用できないため、プリセット機能は使用できません。
-          </CardDescription>
-        </CardHeader>
-      </Card>
+          </IonCardSubtitle>
+        </IonCardHeader>
+      </IonCard>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>プリセット</CardTitle>
-              <CardDescription>
-                構成音リストを保存・読み込みできます
-              </CardDescription>
-            </div>
-            <Button
-              onClick={handleSaveClick}
-              disabled={pitchList.length === 0}
-              size="sm"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              保存
-            </Button>
+      <IonCard>
+        <IonCardHeader className={styles.header}>
+          <div>
+            <IonCardTitle>プリセット</IonCardTitle>
+            <IonCardSubtitle>
+              構成音リストを保存・読み込みできます
+            </IonCardSubtitle>
           </div>
-        </CardHeader>
-        <CardContent>
+          <IonButton
+            onClick={handleSaveClick}
+            disabled={pitchList.length === 0}
+            size="small"
+          >
+            <IonIcon icon={saveOutline} slot="start" />
+            保存
+          </IonButton>
+        </IonCardHeader>
+        <IonCardContent>
           <PresetList
             presets={presets}
             onLoad={handleLoadPreset}
             onDelete={handleDeletePreset}
           />
-        </CardContent>
-      </Card>
+        </IonCardContent>
+      </IonCard>
 
       <PresetSaveDialog
         open={saveDialogOpen}
