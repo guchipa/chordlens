@@ -1,5 +1,6 @@
 import { useLayoutEffect, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { IonToast } from "@ionic/react";
 import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSession";
 import {
   CONDITIONS,
@@ -103,16 +104,18 @@ export function ExperimentSessionProvider({ children }: Props) {
 
   return (
     <>
-      {authError && (
-        <div className="bg-yellow-100 border-b border-yellow-300 px-4 py-2 text-sm text-yellow-900">
-          ⚠ {authError} ローカルでの動作確認のみ可能です。
-        </div>
-      )}
-      {!authReady && !authError && (
-        <div className="bg-blue-100 border-b border-blue-300 px-4 py-2 text-sm text-blue-900">
-          実験サーバーに接続中…
-        </div>
-      )}
+      <IonToast
+        isOpen={!!authError}
+        position="top"
+        color="warning"
+        message={`⚠ ${authError ?? ""} ローカルでの動作確認のみ可能です。`}
+      />
+      <IonToast
+        isOpen={!authReady && !authError}
+        position="top"
+        color="tertiary"
+        message="実験サーバーに接続中…"
+      />
       {children}
     </>
   );

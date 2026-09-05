@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
+import {
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonButton,
+  IonRange,
+  IonLabel,
+  IonText,
+} from "@ionic/react";
 import { useCountdownTimer } from "@/lib/hooks/experiments/useCountdownTimer";
 import { RootPlaybackToggle } from "./RootPlaybackToggle";
 import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSession";
@@ -39,6 +46,8 @@ import {
 } from "@/lib/store";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { updatePairStatus } from "@/lib/firebase/session";
+
+import styles from "./PracticeWithTuner.module.css";
 
 export function PracticeWithTuner() {
   const navigate = useNavigate();
@@ -135,86 +144,96 @@ export function PracticeWithTuner() {
 
   if (showInstructions) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>練習の前に — ChordLens の使い方</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <div className="space-y-3">
+      <IonCard>
+        <IonCardHeader>
+          <IonCardTitle>練習の前に — ChordLens の使い方</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent className={styles.content}>
+          <div className={styles.instructionsSection}>
             <section>
-              <p className="font-semibold">ChordLens とは</p>
-              <p className="text-muted-foreground">
-                ChordLens はあなたのピッチをリアルタイムで解析し、目標ピッチとのずれを視覚的に表示するツールです。練習中はこのフィードバックを参考に、純正律のピッチに合わせていきます。
-              </p>
+              <p className={styles.sectionTitle}>ChordLens とは</p>
+              <IonText color="medium">
+                <p>
+                  ChordLens はあなたのピッチをリアルタイムで解析し、目標ピッチとのずれを視覚的に表示するツールです。練習中はこのフィードバックを参考に、純正律のピッチに合わせていきます。
+                </p>
+              </IonText>
             </section>
             <section>
-              <p className="font-semibold">操作方法</p>
-              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                <li>練習したい和音のボタンを選択します（B♭ major / C minor / F7）。</li>
-                <li>「根音再生」ボタンで根音を鳴らし、音程の基準を確認します。</li>
-                <li>「解析開始」ボタンを押してから歌い始めると、画面にピッチの偏差が表示されます。</li>
-                <li>フィードバック表示を見ながらピッチを調整してください。</li>
-              </ol>
+              <p className={styles.sectionTitle}>操作方法</p>
+              <IonText color="medium">
+                <ol>
+                  <li>練習したい和音のボタンを選択します（B♭ major / C minor / F7）。</li>
+                  <li>「根音再生」ボタンで根音を鳴らし、音程の基準を確認します。</li>
+                  <li>「解析開始」ボタンを押してから歌い始めると、画面にピッチの偏差が表示されます。</li>
+                  <li>フィードバック表示を見ながらピッチを調整してください。</li>
+                </ol>
+              </IonText>
             </section>
             <section>
-              <p className="font-semibold">フィードバックの見方</p>
-              <p className="text-muted-foreground">
-                各パートのバーが中央（0 cent）に近いほどピッチが合っています。上にずれているときは少し低めに、下にずれているときは少し高めに調整してください。
-              </p>
+              <p className={styles.sectionTitle}>フィードバックの見方</p>
+              <IonText color="medium">
+                <p>
+                  各パートのバーが中央（0 cent）に近いほどピッチが合っています。上にずれているときは少し低めに、下にずれているときは少し高めに調整してください。
+                </p>
+              </IonText>
             </section>
             <section>
-              <p className="font-semibold">練習時間</p>
-              <p className="text-muted-foreground">
-                練習時間は <span className="font-semibold text-foreground">10 分間</span> です。3つの和音を自由に切り替えながら練習してください。時間になると自動的に次のフェーズへ進みます。
-              </p>
+              <p className={styles.sectionTitle}>練習時間</p>
+              <IonText color="medium">
+                <p>
+                  練習時間は <strong>10 分間</strong> です。3つの和音を自由に切り替えながら練習してください。時間になると自動的に次のフェーズへ進みます。
+                </p>
+              </IonText>
             </section>
           </div>
-          <Button className="w-full" onClick={handleStartPractice}>
+          <IonButton expand="block" onClick={handleStartPractice}>
             練習を始める
-          </Button>
-        </CardContent>
-      </Card>
+          </IonButton>
+        </IonCardContent>
+      </IonCard>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>練習 (10分) — ChordLens あり</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-900">
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>練習 (10分) — ChordLens あり</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent className={styles.content}>
+        <div className={styles.infoBox}>
           ChordLens の視覚フィードバックを参考に、純正律のピッチに合わせる練習を行ってください。
         </div>
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">残り時間</p>
-          <p className="text-6xl font-bold tabular-nums">
+        <div className={styles.timerWrap}>
+          <IonText color="medium">
+            <p>残り時間</p>
+          </IonText>
+          <p className={styles.timerValue}>
             {String(minutes).padStart(2, "0")}:
             {String(seconds).padStart(2, "0")}
           </p>
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium">練習する和音</p>
-          <div className="flex flex-wrap gap-2">
+          <p className={styles.sectionTitle}>練習する和音</p>
+          <div className={styles.chordButtons}>
             {CHORD_KEYS.map((c) => (
-              <Button
+              <IonButton
                 key={c}
-                size="sm"
-                variant={c === selectedChord ? "default" : "outline"}
+                size="small"
+                fill={c === selectedChord ? "solid" : "outline"}
                 onClick={() => handleSelectChord(c)}
               >
                 {CHORD_LABELS[c]}
-              </Button>
+              </IonButton>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button onClick={isProcessing ? stopProcessing : startProcessing}>
+        <div className={styles.controlsRow}>
+          <IonButton onClick={isProcessing ? stopProcessing : startProcessing}>
             {isProcessing ? "解析停止" : "解析開始"}
-          </Button>
+          </IonButton>
           <RootPlaybackToggle
             key={selectedChord}
             frequencyHz={getRootFreqHz(CHORD_ROOT_KEY[selectedChord], instruments)}
@@ -223,22 +242,25 @@ export function PracticeWithTuner() {
         </div>
 
         {cond === "with" && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">マイク感度</span>
-              <span className="text-muted-foreground tabular-nums">{sensitivity}</span>
+          <div>
+            <div className={styles.sensitivityHeader}>
+              <span>マイク感度</span>
+              <IonText color="medium">
+                <span className={styles.sensitivityValue}>{sensitivity}</span>
+              </IonText>
             </div>
-            <Slider
+            <IonRange
+              aria-label="マイク感度"
               min={0}
               max={100}
               step={1}
-              value={[sensitivity]}
-              onValueChange={([v]) => setSensitivity(v)}
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>低（大きい音のみ）</span>
-              <span>高（小さい音も検出）</span>
-            </div>
+              pin={true}
+              value={sensitivity}
+              onIonChange={(e) => setSensitivity(e.detail.value as number)}
+            >
+              <IonLabel slot="start">低（大きい音のみ）</IonLabel>
+              <IonLabel slot="end">高（小さい音も検出）</IonLabel>
+            </IonRange>
           </div>
         )}
 
@@ -258,7 +280,7 @@ export function PracticeWithTuner() {
           a4Freq={a4Freq}
           title="現在の和音"
         />
-      </CardContent>
-    </Card>
+      </IonCardContent>
+    </IonCard>
   );
 }

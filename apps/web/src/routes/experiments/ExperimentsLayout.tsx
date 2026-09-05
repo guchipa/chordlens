@@ -1,14 +1,32 @@
 import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+} from "@ionic/react";
 import { ExperimentSessionProvider } from "@/components/feature/experiments/ExperimentSessionProvider";
+
+import styles from "./ExperimentsLayout.module.css";
 
 export function ExperimentsLayout() {
   return (
     <Suspense fallback={null}>
       <ExperimentSessionProvider>
-        <div className="container mx-auto max-w-3xl p-4 sm:p-6 md:p-8">
-          <Outlet />
-        </div>
+        <IonPage>
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>ChordLens 実験</IonTitle>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent className="ion-padding">
+            <div className={styles.container}>
+              <Outlet />
+            </div>
+          </IonContent>
+        </IonPage>
       </ExperimentSessionProvider>
     </Suspense>
   );

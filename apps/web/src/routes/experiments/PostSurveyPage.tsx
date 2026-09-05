@@ -3,8 +3,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonList,
+  IonListHeader,
+  IonLabel,
+  IonButton,
+} from "@ionic/react";
 import {
   PostSurveySchema,
   UsabilitySurveySchema,
@@ -23,6 +31,8 @@ import type {
   PostSurveyAnswers,
   UsabilitySurveyAnswers,
 } from "@/lib/experiments/types";
+
+import styles from "./PostSurveyPage.module.css";
 
 const Combined = z.object({
   post: PostSurveySchema,
@@ -94,28 +104,18 @@ export function PostSurveyPage() {
   const isLastStep = step === "B";
 
   return (
-    <main className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            事後アンケート — {memberLabel}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 flex gap-2 text-sm text-muted-foreground">
-            <span
-              className={
-                step === "A" ? "font-semibold text-foreground" : ""
-              }
-            >
+    <main>
+      <IonCard>
+        <IonCardHeader>
+          <IonCardTitle>事後アンケート — {memberLabel}</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent>
+          <div className={styles.stepRow}>
+            <span className={step === "A" ? styles.stepCurrent : undefined}>
               被験者 A
             </span>
             <span>→</span>
-            <span
-              className={
-                step === "B" ? "font-semibold text-foreground" : ""
-              }
-            >
+            <span className={step === "B" ? styles.stepCurrent : undefined}>
               被験者 B
             </span>
           </div>
@@ -123,10 +123,12 @@ export function PostSurveyPage() {
           <FormProvider {...form}>
             <form
               onSubmit={form.handleSubmit(isLastStep ? handleStepB : handleStepA)}
-              className="space-y-6"
+              className={styles.form}
             >
-              <fieldset className="space-y-4 rounded-lg border p-4">
-                <legend className="px-2 font-semibold">練習の感想</legend>
+              <IonList>
+                <IonListHeader>
+                  <IonLabel>練習の感想</IonLabel>
+                </IonListHeader>
                 <FivePointField
                   name="post.improvementPerceived"
                   label="10分の練習で音程が改善したと感じる"
@@ -141,13 +143,13 @@ export function PostSurveyPage() {
                   name="post.freeText"
                   label="自由記述 (任意)"
                 />
-              </fieldset>
+              </IonList>
 
               {isWith && (
-                <fieldset className="space-y-4 rounded-lg border p-4">
-                  <legend className="px-2 font-semibold">
-                    システムの有用性
-                  </legend>
+                <IonList>
+                  <IonListHeader>
+                    <IonLabel>システムの有用性</IonLabel>
+                  </IonListHeader>
                   <FivePointField
                     name="usability.practiceQuality"
                     label="和音練習の質が上がると感じた"
@@ -164,26 +166,22 @@ export function PostSurveyPage() {
                     name="usability.continuedUse"
                     label="今後も練習に取り入れたい"
                   />
-                </fieldset>
+                </IonList>
               )}
 
-              {error && (
-                <p className="rounded bg-red-50 p-3 text-sm text-red-700">
-                  {error}
-                </p>
-              )}
+              {error && <p className={styles.errorBox}>{error}</p>}
 
-              <Button type="submit" className="w-full" disabled={submitting}>
+              <IonButton expand="block" type="submit" disabled={submitting}>
                 {isLastStep
                   ? submitting
                     ? "送信中..."
                     : "送信して完了"
                   : "次の被験者へ →"}
-              </Button>
+              </IonButton>
             </form>
           </FormProvider>
-        </CardContent>
-      </Card>
+        </IonCardContent>
+      </IonCard>
     </main>
   );
 }

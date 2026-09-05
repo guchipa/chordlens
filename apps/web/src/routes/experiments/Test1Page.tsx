@@ -1,7 +1,15 @@
 import { useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonText,
+} from "@ionic/react";
 import { RecordingSession } from "@/components/feature/experiments/RecordingSession";
 import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSession";
+
+import styles from "./TestPage.module.css";
 
 export function Test1Page() {
   const { setPhase } = useExperimentSession();
@@ -9,12 +17,12 @@ export function Test1Page() {
     setPhase("test1");
   }, [setPhase]);
   return (
-    <main className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>1 回目テスト</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+    <main className={styles.page}>
+      <IonCard>
+        <IonCardHeader>
+          <IonCardTitle>1 回目テスト</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent>
           <p>
             B♭ メジャー / C マイナー / F7 の 3 和音について、各 5 秒間の演奏を録音します。
           </p>
@@ -22,11 +30,13 @@ export function Test1Page() {
             ボタンを押すと 4 秒のカウントダウンが始まり、その間にシステムが根音を再生します。
             根音が鳴り続けている間、ペアそれぞれの担当音を演奏してください。
           </p>
-          <p className="font-medium text-amber-700">
-            ピッチが多少不安定でも、明確に音を外していなければやり直さないでください。
-          </p>
-        </CardContent>
-      </Card>
+          <IonText color="warning">
+            <p className={styles.warning}>
+              ピッチが多少不安定でも、明確に音を外していなければやり直さないでください。
+            </p>
+          </IonText>
+        </IonCardContent>
+      </IonCard>
       <RecordingSession
         phase="test1"
         nextPath="/experiments/practice/"

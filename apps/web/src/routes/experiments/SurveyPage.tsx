@@ -3,6 +3,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonButton,
+  IonText,
+} from "@ionic/react";
+import {
   PreSurveySchema,
   type PreSurveyInput,
   type PreSurveyOutput,
@@ -14,11 +22,11 @@ import {
   type InstrumentKey,
 } from "@/lib/experiments/instrumentChordMap";
 import { PairMemberInput } from "@/components/feature/experiments/PairMemberInput";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSession";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { writePreSurvey } from "@/lib/firebase/session";
+
+import styles from "./SurveyPage.module.css";
 
 export function SurveyPage() {
   const navigate = useNavigate();
@@ -84,57 +92,50 @@ export function SurveyPage() {
   };
 
   return (
-    <main className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>実験の流れ</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+    <main className={styles.page}>
+      <IonCard>
+        <IonCardHeader>
+          <IonCardTitle>実験の流れ</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent>
           <p>本実験はペア(2名)で実施します。所要時間は約 25 分です。</p>
-          <ol className="list-decimal pl-5 space-y-1">
+          <ol>
             <li>事前アンケート (このページ)</li>
             <li>1 回目テスト (3 和音 × 5 秒録音)</li>
             <li>10 分間の練習</li>
             <li>2 回目テスト (1 回目と同じ)</li>
             <li>事後アンケート</li>
           </ol>
-          <p className="text-muted-foreground">
-            録音中は根音をシステムが再生します。各メンバーは担当音 (3 度 / 5 度 / 7 度) を演奏してください。
-          </p>
-        </CardContent>
-      </Card>
+          <IonText color="medium">
+            <p>
+              録音中は根音をシステムが再生します。各メンバーは担当音 (3 度 / 5 度 / 7 度) を演奏してください。
+            </p>
+          </IonText>
+        </IonCardContent>
+      </IonCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>実験前アンケート</CardTitle>
-        </CardHeader>
-        <CardContent className="gap-4 flex flex-col">
-          <p className="text-sm text-muted-foreground">
-            どちらがメンバーAなのか，Bなのかを忘れないでください．テストや実験後アンケートで必要になります．
-          </p>
+      <IonCard>
+        <IonCardHeader>
+          <IonCardTitle>実験前アンケート</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent>
+          <IonText color="medium">
+            <p>
+              どちらがメンバーAなのか，Bなのかを忘れないでください．テストや実験後アンケートで必要になります．
+            </p>
+          </IonText>
           <FormProvider {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className={styles.list}>
               <PairMemberInput member="memberA" title="メンバー A" />
               <PairMemberInput member="memberB" title="メンバー B" />
-              {submitError && (
-                <p className="rounded bg-red-50 p-3 text-sm text-red-700">
-                  {submitError}
-                </p>
-              )}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={submitting}
-              >
+              {submitError && <p className={styles.errorBox}>{submitError}</p>}
+              <IonButton expand="block" type="submit" disabled={submitting}>
                 {submitting ? "送信中..." : "1 回目テストへ進む"}
-              </Button>
+              </IonButton>
             </form>
           </FormProvider>
-        </CardContent>
-      </Card>
+        </IonCardContent>
+      </IonCard>
     </main>
   );
 }

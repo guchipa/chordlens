@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { IonButton } from "@ionic/react";
 
 interface Props {
   frequencyHz: number;
@@ -87,13 +85,13 @@ export function RootPlaybackToggle({ frequencyHz, label }: Props) {
   }, []);
 
   return (
-    <Button
+    <IonButton
       type="button"
-      variant={isPlaying ? "secondary" : "outline"}
+      fill={isPlaying ? "solid" : "outline"}
       onClick={isPlaying ? stop : start}
-      size="sm"
+      size="small"
     >
       {label ?? `根音 ${frequencyHz.toFixed(1)}Hz`} {isPlaying ? "■ 停止" : "▶ 再生"}
-    </Button>
+    </IonButton>
   );
 }

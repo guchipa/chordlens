@@ -1,21 +1,14 @@
-"use client";
-
-import { useFormContext } from "react-hook-form";
+import { useFormContext, Controller } from "react-hook-form";
 import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  IonList,
+  IonListHeader,
+  IonLabel,
+  IonItem,
+  IonSelect,
+  IonSelectOption,
+  IonInput,
+  IonNote,
+} from "@ionic/react";
 import {
   INSTRUMENT_KEYS,
   INSTRUMENT_LABELS,
@@ -40,153 +33,150 @@ interface Props {
 }
 
 export function PairMemberInput({ member, title }: Props) {
-  const form = useFormContext<PreSurveyInput>();
+  const { control } = useFormContext<PreSurveyInput>();
 
   return (
-    <fieldset className="space-y-4 rounded-lg border p-4">
-      <legend className="px-2 font-semibold">{title}</legend>
+    <IonList>
+      <IonListHeader>
+        <IonLabel>{title}</IonLabel>
+      </IonListHeader>
 
-      <FormField
-        control={form.control}
+      <Controller
+        control={control}
         name={`${member}.instrument` as const}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>担当楽器</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              value={(field.value as string) ?? ""}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="楽器を選択" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
+        render={({ field, fieldState }) => (
+          <>
+            <IonItem lines="none">
+              <IonSelect
+                label="担当楽器"
+                labelPlacement="stacked"
+                placeholder="楽器を選択"
+                value={(field.value as string | undefined) ?? undefined}
+                onIonChange={(e) => field.onChange(e.detail.value)}
+              >
                 {INSTRUMENT_KEYS.map((key) => (
-                  <SelectItem key={key} value={key}>
+                  <IonSelectOption key={key} value={key}>
                     {INSTRUMENT_LABELS[key]}
-                  </SelectItem>
+                  </IonSelectOption>
                 ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
+              </IonSelect>
+            </IonItem>
+            {fieldState.error?.message && (
+              <IonNote color="danger">{fieldState.error.message}</IonNote>
+            )}
+          </>
         )}
       />
 
-      <FormField
-        control={form.control}
+      <Controller
+        control={control}
         name={`${member}.experienceYears` as const}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>演奏歴 (年)</FormLabel>
-            <FormControl>
-              <Input
+        render={({ field, fieldState }) => (
+          <>
+            <IonItem lines="none">
+              <IonInput
+                label="演奏歴 (年)"
+                labelPlacement="stacked"
                 type="number"
-                inputMode="numeric"
+                inputmode="numeric"
                 min={0}
                 max={80}
                 value={(field.value as number | undefined) ?? ""}
-                onChange={(e) => field.onChange(e.target.value)}
+                onIonInput={(e) => field.onChange(e.detail.value)}
               />
-            </FormControl>
-            <p className="text-xs text-muted-foreground">
-              1 年未満の場合は実験対象外となります。
-            </p>
-            <FormMessage />
-          </FormItem>
+            </IonItem>
+            <IonNote>1 年未満の場合は実験対象外となります。</IonNote>
+            {fieldState.error?.message && (
+              <IonNote color="danger">{fieldState.error.message}</IonNote>
+            )}
+          </>
         )}
       />
 
-      <FormField
-        control={form.control}
+      <Controller
+        control={control}
         name={`${member}.pitchMatchingSkill` as const}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>音程（ピッチ）を耳で合わせるのは得意だと思う</FormLabel>
-            <Select
-              onValueChange={(v) => field.onChange(Number(v))}
-              value={field.value ? String(field.value) : undefined}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="5段階で選択" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
+        render={({ field, fieldState }) => (
+          <>
+            <IonItem lines="none">
+              <IonSelect
+                label="音程（ピッチ）を耳で合わせるのは得意だと思う"
+                labelPlacement="stacked"
+                placeholder="5段階で選択"
+                value={field.value ?? undefined}
+                onIonChange={(e) => field.onChange(Number(e.detail.value))}
+              >
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <SelectItem key={n} value={String(n)}>
+                  <IonSelectOption key={n} value={n}>
                     {FIVE_LABELS[n]}
-                  </SelectItem>
+                  </IonSelectOption>
                 ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
+              </IonSelect>
+            </IonItem>
+            {fieldState.error?.message && (
+              <IonNote color="danger">{fieldState.error.message}</IonNote>
+            )}
+          </>
         )}
       />
 
-      <FormField
-        control={form.control}
+      <Controller
+        control={control}
         name={`${member}.chordEvaluationSkill` as const}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              和音を聞いて「合っている / 濁っている」が分かる
-            </FormLabel>
-            <Select
-              onValueChange={(v) => field.onChange(Number(v))}
-              value={field.value ? String(field.value) : undefined}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="5段階で選択" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
+        render={({ field, fieldState }) => (
+          <>
+            <IonItem lines="none">
+              <IonSelect
+                label="和音を聞いて「合っている / 濁っている」が分かる"
+                labelPlacement="stacked"
+                placeholder="5段階で選択"
+                value={field.value ?? undefined}
+                onIonChange={(e) => field.onChange(Number(e.detail.value))}
+              >
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <SelectItem key={n} value={String(n)}>
+                  <IonSelectOption key={n} value={n}>
                     {FIVE_LABELS[n]}
-                  </SelectItem>
+                  </IonSelectOption>
                 ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
+              </IonSelect>
+            </IonItem>
+            {fieldState.error?.message && (
+              <IonNote color="danger">{fieldState.error.message}</IonNote>
+            )}
+          </>
         )}
       />
 
-      <FormField
-        control={form.control}
+      <Controller
+        control={control}
         name={`${member}.justIntonationFamiliarity` as const}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>純正律という概念を知っている</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              value={(field.value as string) ?? ""}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="最も近いものを選択" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
+        render={({ field, fieldState }) => (
+          <>
+            <IonItem lines="none">
+              <IonSelect
+                label="純正律という概念を知っている"
+                labelPlacement="stacked"
+                placeholder="最も近いものを選択"
+                value={(field.value as string | undefined) ?? undefined}
+                onIonChange={(e) => field.onChange(e.detail.value)}
+              >
                 {(
                   Object.keys(
                     JUST_INTONATION_FAMILIARITY_LABELS
                   ) as (keyof typeof JUST_INTONATION_FAMILIARITY_LABELS)[]
                 ).map((key) => (
-                  <SelectItem key={key} value={key}>
+                  <IonSelectOption key={key} value={key}>
                     {JUST_INTONATION_FAMILIARITY_LABELS[key]}
-                  </SelectItem>
+                  </IonSelectOption>
                 ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
+              </IonSelect>
+            </IonItem>
+            {fieldState.error?.message && (
+              <IonNote color="danger">{fieldState.error.message}</IonNote>
+            )}
+          </>
         )}
       />
-    </fieldset>
+    </IonList>
   );
 }

@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonButton,
+  IonText,
+} from "@ionic/react";
 import { useCountdownTimer } from "@/lib/hooks/experiments/useCountdownTimer";
 import { RootPlaybackToggle } from "./RootPlaybackToggle";
 import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSession";
@@ -18,6 +24,8 @@ import {
 } from "@/lib/experiments/instrumentChordMap";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { updatePairStatus } from "@/lib/firebase/session";
+
+import styles from "./PracticeWithoutTuner.module.css";
 
 export function PracticeWithoutTuner() {
   const navigate = useNavigate();
@@ -64,45 +72,49 @@ export function PracticeWithoutTuner() {
   const seconds = Math.floor((remainingMs % 60000) / 1000);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>練習 (10分)</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-900">
-          <p className="font-medium">この練習では市販のチューナーを使用しないでください。</p>
-          <p className="mt-1">
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>練習 (10分)</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent className={styles.content}>
+        <div className={styles.warningBox}>
+          <p>この練習では市販のチューナーを使用しないでください。</p>
+          <p>
             視覚的なピッチフィードバックは用いず、ペアの聴覚のみを頼りに B♭ メジャー / C マイナー / F7
             の和音を 10 分間練習してください。
           </p>
         </div>
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">残り時間</p>
-          <p className="text-6xl font-bold tabular-nums">
+        <div className={styles.timerWrap}>
+          <IonText color="medium">
+            <p>残り時間</p>
+          </IonText>
+          <p className={styles.timerValue}>
             {String(minutes).padStart(2, "0")}:
             {String(seconds).padStart(2, "0")}
           </p>
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium">根音再生 (任意)</p>
-          <p className="mb-2 text-xs text-muted-foreground">
-            音を確かめたい時だけトグルで根音を鳴らせます。常時再生する必要はありません。
-          </p>
-          <div className="flex flex-wrap gap-2">
+          <p className={styles.sectionTitle}>根音再生 (任意)</p>
+          <IonText color="medium">
+            <p className={styles.hint}>
+              音を確かめたい時だけトグルで根音を鳴らせます。常時再生する必要はありません。
+            </p>
+          </IonText>
+          <div className={styles.chordButtons}>
             {CHORD_KEYS.map((c) => (
-              <Button
+              <IonButton
                 key={c}
-                size="sm"
-                variant={c === selectedChord ? "default" : "outline"}
+                size="small"
+                fill={c === selectedChord ? "solid" : "outline"}
                 onClick={() => setSelectedChord(c)}
               >
                 {CHORD_LABELS[c]}
-              </Button>
+              </IonButton>
             ))}
           </div>
-          <div className="mt-2">
+          <div className={styles.togglesWrap}>
             <RootPlaybackToggle
               key={selectedChord}
               frequencyHz={getRootFreqHz(CHORD_ROOT_KEY[selectedChord], instruments)}
@@ -112,11 +124,11 @@ export function PracticeWithoutTuner() {
         </div>
 
         {!isRunning && remainingMs > 0 && (
-          <Button onClick={start} className="w-full">
+          <IonButton expand="block" onClick={start}>
             タイマー再開
-          </Button>
+          </IonButton>
         )}
-      </CardContent>
-    </Card>
+      </IonCardContent>
+    </IonCard>
   );
 }

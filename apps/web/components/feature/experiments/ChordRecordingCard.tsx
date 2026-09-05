@@ -1,8 +1,12 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonButton,
+  IonText,
+} from "@ionic/react";
 import {
   COUNTDOWN_MS,
   RECORD_MS,
@@ -17,6 +21,8 @@ import {
 import { useRecordingWithAnalysis } from "@/lib/hooks/experiments/useRecordingWithAnalysis";
 import type { Pitch } from "@chordlens/core/types";
 import type { ChordPartAssignments } from "@/lib/experiments/types";
+
+import styles from "./ChordRecordingCard.module.css";
 
 type Stage = "idle" | "countdown" | "recording" | "review" | "submitting";
 
@@ -202,83 +208,81 @@ export function ChordRecordingCard(props: Props) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{CHORD_LABELS[chord]}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-900">
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>{CHORD_LABELS[chord]}</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent className={styles.content}>
+        <div className={styles.assignmentBox}>
           <p>
-            <span className="font-medium">メンバー A の担当音：</span>
+            <span className={styles.assignmentLabel}>メンバー A の担当音：</span>
             {assignment.memberA}
 
               <br />
 
-            <span className="font-medium">メンバー B の担当音：</span>
+            <span className={styles.assignmentLabel}>メンバー B の担当音：</span>
             {assignment.memberB}
           </p>
-          <p className="mt-1 text-xs">
+          <p>
             根音 ({rootKey}) はシステムが再生します。
             ピッチが多少不安定でも、音を外していなければやり直さないでください。
           </p>
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+        {error && <div className={styles.errorBox}>{error}</div>}
 
         {stage === "idle" && (
-          <Button onClick={beginCountdown} className="w-full">
+          <IonButton expand="block" onClick={beginCountdown}>
             録音を開始
-          </Button>
+          </IonButton>
         )}
 
         {(stage === "countdown" || stage === "recording") && (
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              {stage === "countdown" ? "カウントダウン" : "録音中..."}
-            </p>
-            <p className="text-5xl font-bold tabular-nums">
+          <div className={styles.countdownWrap}>
+            <IonText color="medium">
+              <p>{stage === "countdown" ? "カウントダウン" : "録音中..."}</p>
+            </IonText>
+            <p className={styles.countdownValue}>
               {(remainMs / 1000).toFixed(1)}s
             </p>
             {stage === "recording" && (
-              <p className="mt-2 text-sm text-red-600">● Recording</p>
+              <IonText color="danger">
+                <p>● Recording</p>
+              </IonText>
             )}
           </div>
         )}
 
         {stage === "review" && pendingResult && (
-          <div className="space-y-3">
-            <p className="text-sm">
+          <div className={styles.reviewGroup}>
+            <p>
               録音が完了しました。聴き直して問題なければ「採用」を、
               音を外したなどの失敗があれば「やり直し」を押してください。
             </p>
             {previewUrl && (
-              <audio src={previewUrl} controls className="w-full" />
+              <audio
+                src={previewUrl}
+                controls
+                className={styles.audioPreview}
+              />
             )}
-            <div className="flex gap-2">
-              <Button onClick={handleAccept} className="flex-1">
+            <div className={styles.buttonRow}>
+              <IonButton expand="block" onClick={handleAccept}>
                 この録音を採用
-              </Button>
-              <Button
-                onClick={handleRetry}
-                variant="outline"
-                className="flex-1"
-              >
+              </IonButton>
+              <IonButton expand="block" fill="outline" onClick={handleRetry}>
                 やり直し
-              </Button>
+              </IonButton>
             </div>
           </div>
         )}
 
         {stage === "submitting" && (
-          <p className="text-center text-sm text-muted-foreground">
-            アップロード中…
-          </p>
+          <IonText color="medium">
+            <p className={styles.centerText}>アップロード中…</p>
+          </IonText>
         )}
-      </CardContent>
-    </Card>
+      </IonCardContent>
+    </IonCard>
   );
 }
