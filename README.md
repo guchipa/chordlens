@@ -42,8 +42,8 @@
 | **Build Tool**       | ![Vite](https://img.shields.io/badge/Vite_6-646CFF?style=for-the-badge&logo=vite&logoColor=white)                                                                                                                                |
 | **Language**         | ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)                                                                                                                |
 | **UI Library**       | ![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)                                                                                                                           |
-| **Styling**          | ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)                                                                                                        |
-| **UI Components**    | ![shadcn/ui](https://img.shields.io/badge/shadcn/ui-000000?style=for-the-badge&logo=shadcnui&logoColor=white) ![Radix UI](https://img.shields.io/badge/Radix_UI-161618?style=for-the-badge&logo=radixui&logoColor=white)         |
+| **Styling**          | ![CSS Modules](https://img.shields.io/badge/CSS_Modules-000000?style=for-the-badge&logo=cssmodules&logoColor=white)                                                                                                              |
+| **UI Components**    | ![Ionic React](https://img.shields.io/badge/Ionic_React_9-3880FF?style=for-the-badge&logo=ionic&logoColor=white)                                                                                                                 |
 | **Form Management**  | ![React Hook Form](https://img.shields.io/badge/React_Hook_Form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white)      |
 | **Audio Processing** | ![Web Audio API](https://img.shields.io/badge/Web_Audio_API-E34F26?style=for-the-badge&logo=html5&logoColor=white)                                                                                                               |
 | **Testing**          | ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white) ![Testing Library](https://img.shields.io/badge/Testing_Library-E33332?style=for-the-badge&logo=testing-library&logoColor=white) |
@@ -91,8 +91,7 @@ chordlens/
 │       ├── components/
 │       │   ├── feature/      # 機能コンポーネント
 │       │   ├── feedback/     # 視覚フィードバック（バー、円形、ストロボ等）
-│       │   ├── layout/       # レイアウトコンポーネント
-│       │   └── ui/           # shadcn/ui プリミティブ
+│       │   └── layout/       # レイアウトコンポーネント
 │       ├── lib/              # Web 依存ロジック
 │       │   ├── hooks/        # カスタムフック（Web Audio API 使用）
 │       │   ├── store/        # Jotai atoms（localStorage 永続化）

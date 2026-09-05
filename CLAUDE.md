@@ -23,10 +23,12 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
    インターフェースを定義し、`apps/web/lib/` に実装を置いて注入する
    (例: `KeyValueStorage` ← localStorage 実装は `apps/web/lib/presets.ts`)。
 4. 新しいロジックはまず core に置けないか検討する(モバイル移行を見据えるため)。
+5. UI は Ionic React。Tailwind / shadcn は撤去済みで再導入しない。スタイルは Ionic
+   ユーティリティクラスと CSS Modules のみ。
 
 ## import 規約
 
-- `apps/web` 内: `@/*` エイリアス (`apps/web/` がルート)。例: `@/components/ui/button`
+- `apps/web` 内: `@/*` エイリアス (`apps/web/` がルート)。例: `@/components/feature/PitchList`
 - core のモジュール: `@chordlens/core/<path>`。例: `@chordlens/core/audio_analysis/justAnalyze`
 - core 内部: 相対パス
 
@@ -48,6 +50,9 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
 - コアロジックのテスト → `packages/core/__tests__/` (Node 環境、DOM モック不可)
 - コンポーネント・ブラウザ依存のテスト → `apps/web/__tests__/` (jsdom、
   Web Audio API のモックは `apps/web/vitest.setup.ts`)
+- Ionic の Web Components は jsdom でシャドウ DOM を描画せず、`ionChange` 等は
+  `apps/web/__tests__/helpers/ionic.ts` のヘルパーで発火する。Ionic 要素を含む
+  スナップショットテストは OOM するため禁止(詳細はヘルパーのコメント参照)。
 
 ## ドメイン知識の要点
 

@@ -10,8 +10,7 @@ ChordLensのUIコンポーネント構造と各コンポーネントの責務に
 components/
 ├── feature/      # 機能コンポーネント（ドメインロジックを含む）
 ├── feedback/     # フィードバック表示（視覚化に特化）
-├── layout/       # レイアウト（ヘッダー、フッター、ドロワー）
-└── ui/           # UIプリミティブ（shadcn/ui）
+└── layout/       # レイアウト（ヘッダー、フッター、ドロワー）
 ```
 
 ---
@@ -62,17 +61,26 @@ components/
 
 ---
 
-## 5. UI Primitives (`components/ui/`)
+## 5. UI ライブラリ (Ionic React)
 
-[shadcn/ui](https://ui.shadcn.com/) をベースにした再利用可能なUI部品です。Radix UIをラップしており、アクセシビリティ（A11y）に配慮されています。
+[Ionic React](https://ionicframework.com/docs/react) 9 を使用しています。Web Components ベースで
+アクセシビリティ（A11y）に配慮されており、`apps/web/components/` の各コンポーネントが直接
+Ionic コンポーネントを組み合わせて構築します（`components/ui/` のような共通プリミティブ層は持たない）。
+
+- **画面構成**: `IonMenu` によるサイドメニュー構成（設定パネルを内包し、`IonMenuButton` で開閉）
+- **スタイリング**: Ionic ユーティリティクラス（`ion-padding`, `ion-text-center` 等）+
+  CSS Modules（コンポーネントごとの `*.module.css`）
+- **配色**: `src/globals.css` の Ionic 色変数（`--ion-color-*`）で定義。現行の slate 配色を踏襲し、
+  OS のダーク設定に追従する
+- **アイコン**: [ionicons](https://ionic.io/ionicons)
 
 **主要なコンポーネント**:
-- `Button`: ボタン
-- `Input`, `Select`, `Slider`, `Switch`: フォーム要素
-- `Dialog`, `Sheet` (Drawer): モーダル・オーバーレイ
-- `Accordion`: 折りたたみ表示
-- `Card`: コンテンツコンテナ
-- `Table`: データ表示
+- `IonButton`: ボタン
+- `IonInput`, `IonSelect`, `IonRange`, `IonToggle`, `IonCheckbox`: フォーム要素
+- `IonModal`, `IonAlert`, `IonToast`: モーダル・オーバーレイ
+- `IonAccordion`: 折りたたみ表示
+- `IonCard`: コンテンツコンテナ
+- `IonList`, `IonItem`: データ・リスト表示
 
 ---
 
@@ -88,7 +96,7 @@ components/
 ## 7. コンポーネント設計の指針
 
 1. **Atomic Designの意識**:
-   - `ui/` = Atoms
+   - Ionic React コンポーネント = Atoms
    - `feedback/` = Molecules
    - `feature/` = Organisms
    - `layout/` = Templates

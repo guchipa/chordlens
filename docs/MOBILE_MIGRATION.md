@@ -65,14 +65,14 @@ chordlens/
 | 録音 | `lib/hooks/experiments/useMediaRecorder.ts` (MediaRecorder) | expo-av / react-native-audio-recorder |
 | Firebase | `lib/firebase/*` (firebase JS SDK) | firebase JS SDK は RN 対応 (永続化層のみ調整) / @react-native-firebase |
 | ルーティング | react-router-dom | React Navigation / expo-router |
-| UI | Radix UI + Tailwind (DOM 前提) | RN コンポーネントで再実装 (NativeWind で Tailwind 記法は維持可) |
+| UI | Ionic React (Web Components) | Capacitor ではそのまま利用可。RN の場合は再実装 |
 | PWA / Service Worker | vite-plugin-pwa | 不要 (ネイティブアプリのため) |
 
 ## 4. 技術スタック候補の比較
 
 | 観点 | React Native (Expo) | Capacitor |
 |------|--------------------|-----------| 
-| UI 資産の再利用 | 再実装が必要 (コアロジックは共有可) | 既存 Web UI をほぼそのまま利用 |
+| UI 資産の再利用 | 再実装が必要 (コアロジックは共有可) | 既存 Web UI をほぼそのまま利用。Ionic React をそのまま利用可 |
 | 音声処理 | react-native-audio-api (AnalyserNode 互換) or ネイティブ実装。低レイテンシ | WebView 内の Web Audio API。実質 Web 版と同じ挙動 |
 | レイテンシ・パフォーマンス | ◎ (ネイティブ) | △ (WebView 依存。iOS WKWebView の getUserMedia は 14.3+) |
 | ストア審査・ネイティブ機能 | ◎ | ○ |
@@ -94,6 +94,11 @@ chordlens/
 - [x] コアロジックの `packages/core` への分離 (DOM lib なしで型チェック)
 - [x] `KeyValueStorage` / `SpectrumSource` インターフェース定義
 - [x] presets / ログ CSV のコア・Web バインディング分割
+
+### Phase 1.5: Web UI の Ionic React 化 — ✅ 完了 (2026-09)
+- [x] `apps/web` の UI ライブラリを shadcn/ui (Radix + Tailwind) から Ionic React 9 に全面移行
+- [x] Tailwind / shadcn / Radix UI の依存を撤去し、スタイリングを Ionic ユーティリティクラス +
+      CSS Modules に統一
 
 ### Phase 1: Web 側の adapter 完全化
 - [ ] `useAudioContext` を `SpectrumSource` 実装 (`WebAudioSpectrumSource`) として切り出し、

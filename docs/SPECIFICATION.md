@@ -84,8 +84,8 @@ graph TD
 | **ビルド/開発**       | Vite 6                  | 開発サーバー・バンドル          |
 | **ルーティング**      | React Router 6          | SPAルーティング                 |
 | **UI ライブラリ**     | React 19                | コンポーネントベースUI構築      |
-| **スタイリング**      | Tailwind CSS 4          | ユーティリティファーストCSS     |
-| **UI コンポーネント** | shadcn/ui (Radix UI)    | アクセシブルなプリミティブ      |
+| **スタイリング**      | Ionic CSS ユーティリティ + CSS Modules | コンポーネントスタイリング |
+| **UI コンポーネント** | Ionic React 9           | アクセシブルなプリミティブ      |
 | **フォーム管理**      | React Hook Form + Zod   | バリデーション付きフォーム      |
 | **音声処理**          | Web Audio API           | リアルタイム音声入力・FFT解析   |
 | **状態管理**          | Jotai + React Hooks     | アトミック状態管理・ローカル状態 |
@@ -118,8 +118,7 @@ chordlens/                    # プロジェクトルート (monorepo)
 │   ├── components/          # Reactコンポーネント
 │   │   ├── feature/         # 機能コンポーネント
 │   │   ├── feedback/        # 視覚フィードバック
-│   │   ├── layout/          # レイアウト
-│   │   └── ui/              # shadcn/ui プリミティブ
+│   │   └── layout/          # レイアウト
 │   ├── lib/                 # Web 依存ロジック (hooks / store / firebase)
 │   ├── public/              # 静的ファイル
 │   ├── __tests__/           # コンポーネントテスト (Vitest, jsdom)
@@ -751,7 +750,8 @@ timestamp,elapsedMs,sessionId,pitchName,pitchIsRoot,deviation,centDeviation,a4Fr
 
 ### 4.1.1. レスポンシブデザイン
 
-- **モバイルファースト設計**: Tailwind CSSのレスポンシブクラス（`sm:`, `md:`, `lg:`）を使用
+- **モバイルファースト設計**: Ionic のレイアウトコンポーネント（`IonGrid`/`IonRow`/`IonCol`）と
+  ブレークポイント付きユーティリティクラス（`ion-hide-md-down` 等）を使用
 - **対応画面サイズ**:
     - スマートフォン（320px～）
     - タブレット（768px～）
@@ -759,7 +759,7 @@ timestamp,elapsedMs,sessionId,pitchName,pitchIsRoot,deviation,centDeviation,a4Fr
 
 ### 4.1.2. アクセシビリティ
 
-- **WAI-ARIA準拠**: shadcn/ui（Radix UI）による自動的なARIA属性付与
+- **WAI-ARIA準拠**: Ionic React コンポーネントによる自動的なARIA属性付与
 - **キーボード操作**: すべてのフォーム要素がTabキーで操作可能
 - **フォーカス管理**: 視覚的なフォーカスインジケーター実装
 
@@ -817,7 +817,7 @@ timestamp,elapsedMs,sessionId,pitchName,pitchIsRoot,deviation,centDeviation,a4Fr
 ### 4.3.3. 依存関係のセキュリティ
 
 - **定期的な更新**: pnpm audit による脆弱性チェック
-- **信頼性の高いライブラリ**: Vite, React, Radix UIなどの実績あるライブラリを使用
+- **信頼性の高いライブラリ**: Vite, React, Ionic Reactなどの実績あるライブラリを使用
 
 ### 4.3.4. XSS対策
 
@@ -1022,10 +1022,8 @@ timestamp,elapsedMs,sessionId,pitchName,pitchIsRoot,deviation,centDeviation,a4Fr
 
 ### 6.2.1. Selectコンポーネントのリセット動作
 
-- **問題**: フォーム送信後、Selectコンポーネントが視覚的に未選択状態にならない
-- **原因**: Radix UI Selectの内部状態が`undefined`へのリセットに対応していない
-- **回避策**: 現在は`key`プロップを使用して強制的に再マウント（実装済み）
-- **影響**: 軽微（機能的には問題なし、視覚的な違和感のみ）
+- **解消済み (Ionic 移行)**: Radix UI Select 特有の問題であり、`IonSelect` への移行に伴い
+  `key`プロップによる強制再マウントの回避策は不要になった
 
 ### 6.2.2. モバイルデバイスでのマイク使用
 
@@ -1052,7 +1050,7 @@ timestamp,elapsedMs,sessionId,pitchName,pitchIsRoot,deviation,centDeviation,a4Fr
 4. **倍音表示**: スペクトラムビジュアライザーの追加
 5. **プリセットのインポート/エクスポート**: JSON形式でのプリセット共有機能
 6. **追加のフィードバック形式**: ストロボ、数値表示、波形表示など（コンポーネントは存在するが未実装）
-7. **ダークモード対応**: Tailwind CSSのダークモード機能の活用
+7. **ダークモード対応**: 実装済み（`@ionic/react/css/palettes/dark.system.css` によりOS設定に自動追従）
 
 # 7. 開発ガイド
 
@@ -1310,14 +1308,13 @@ pnpm exec tsc --noEmit
 
 ### 7.6.3. スタイリング
 
-- **Tailwind CSS**: ユーティリティクラスを優先
+- **Ionic ユーティリティクラス + CSS Modules**: Tailwind は使用しない
 - **カスタムCSS**: 必要最小限に留める
-- **レスポンシブ**: `sm:`, `md:`, `lg:`プレフィックスを活用
+- **レスポンシブ**: `IonGrid`/`IonRow`/`IonCol` とブレークポイント付きユーティリティクラスを活用
 
 ### 7.6.4. ファイル構成
 
 - **feature/**: ビジネスロジックを含むコンポーネント
-- **ui/**: shadcn/uiプリミティブ（自動生成）
 - **lib/**: 純粋関数とユーティリティ
 - ****tests**/**: テストファイル（コンポーネントと同名）
 
@@ -1398,7 +1395,7 @@ localStorageを使用して構成音リストを保存・復元できるよう�
 | **根音（ルート）** | 和音の基準となる音。コードネームの元になる。                           |
 | **倍音**           | 基音の整数倍の周波数を持つ音。楽器の音色を決定。                       |
 | **AnalyserNode**   | Web Audio APIのノード。FFT解析を行う。                                 |
-| **shadcn/ui**      | Radix UIベースのReactコンポーネントライブラリ。アクセシビリティ重視。  |
+| **Ionic React**    | Web Components ベースのReactコンポーネントライブラリ。アクセシビリティ重視。 |
 | **Zod**            | TypeScript-firstのスキーマバリデーションライブラリ。                   |
 | **SSG**            | Static Site Generation。ビルド時にHTMLを生成する手法。                 |
 | **PWA**            | Progressive Web App。ネイティブアプリのような体験を提供するWebアプリ。 |
@@ -1410,8 +1407,8 @@ localStorageを使用して構成音リストを保存・復元できるよう�
 - [Vite Documentation](https://vitejs.dev/)
 - [React Documentation](https://react.dev/)
 - [Web Audio API Specification](https://www.w3.org/TR/webaudio/)
-- [shadcn/ui Documentation](https://ui.shadcn.com/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Ionic React Documentation](https://ionicframework.com/docs/react)
+- [ionicons Documentation](https://ionic.io/ionicons)
 - [Zod Documentation](https://zod.dev/)
 
 ## 9.2. 音響理論
