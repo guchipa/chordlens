@@ -57,8 +57,8 @@ describe("AnalysisControl", () => {
     expect(stopProcessing).toHaveBeenCalled();
   });
 
-  it("disables the button when the pitch list is empty and not processing", () => {
-    render(
+  it("disables the button when the pitch list is empty and not processing", async () => {
+    const { container } = render(
       <AnalysisControl
         isProcessing={false}
         startProcessing={startProcessing}
@@ -66,6 +66,10 @@ describe("AnalysisControl", () => {
         isPitchListEmpty={true}
       />
     );
-    expect(screen.getByText("解析開始")).toBeDisabled();
+    // Stencil のカスタム要素は非同期にアップグレードされるため、
+    // customElements.whenDefined を待ってから disabled 属性の反映を確認する
+    await customElements.whenDefined("ion-button");
+    const button = container.querySelector("ion-button");
+    expect(button).toHaveAttribute("disabled");
   });
 });

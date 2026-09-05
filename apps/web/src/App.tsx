@@ -1,5 +1,14 @@
-import { useState } from "react";
 import { useAtomValue } from "jotai";
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonMenuButton,
+  IonTitle,
+  IonContent,
+  IonText,
+} from "@ionic/react";
 
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
 import { useChordFollow } from "@/lib/hooks/useChordFollow";
@@ -11,6 +20,8 @@ import { CentDisplay } from "@/components/feature/CentDisplay";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { ExperimentModePanel } from "@/components/feature/experiment/ExperimentModePanel";
+
+import styles from "./App.module.css";
 
 import {
   pitchListAtom,
@@ -27,8 +38,6 @@ import {
 } from "@/lib/store";
 
 export function App() {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
   const currentPitchList = useAtomValue(pitchListAtom);
   const evalRangeCents = useAtomValue(evalRangeCentsAtom);
   const a4Freq = useAtomValue(a4FreqAtom);
@@ -69,59 +78,64 @@ export function App() {
   useChordFollow({ active: isProcessing, audioNodesRef });
 
   return (
-    <div
-      className="flex flex-col min-h-screen bg-gray-50"
-      style={{ overflowY: "auto", height: "100%" }}
-    >
-      <SettingsDrawer
-        isOpen={isSettingsOpen}
-        onOpen={() => setIsSettingsOpen(true)}
-        onClose={() => setIsSettingsOpen(false)}
-      />
+    <>
+      <SettingsDrawer />
+      <IonPage id="main-content">
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonMenuButton aria-label="設定を開く" />
+            </IonButtons>
+            <IonTitle>和音チューナー</IonTitle>
+          </IonToolbar>
+        </IonHeader>
 
-      <main className="container mx-auto flex grow flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
-        {experimentMode && (
-          <ExperimentModePanel
-            isProcessing={isProcessing}
-            analysisResult={analysisResult}
-            centDeviations={centDeviations}
-            peakSearchDebug={peakSearchDebug}
-            comparisonResults={comparisonResults}
-          />
-        )}
+        <IonContent className="ion-padding">
+          <div className={styles.main}>
+            {experimentMode && (
+              <ExperimentModePanel
+                isProcessing={isProcessing}
+                analysisResult={analysisResult}
+                centDeviations={centDeviations}
+                peakSearchDebug={peakSearchDebug}
+                comparisonResults={comparisonResults}
+              />
+            )}
 
-        <MainHeader />
+            <MainHeader />
 
-        <AnalysisControl
-          isProcessing={isProcessing}
-          startProcessing={startProcessing}
-          stopProcessing={stopProcessing}
-          isPitchListEmpty={currentPitchList.length === 0}
-        />
-        {isProcessing && (
-          <p className="mt-4 font-medium text-blue-600">
-            マイク入力からの解析中...
-          </p>
-        )}
+            <AnalysisControl
+              isProcessing={isProcessing}
+              startProcessing={startProcessing}
+              stopProcessing={stopProcessing}
+              isPitchListEmpty={currentPitchList.length === 0}
+            />
+            {isProcessing && (
+              <IonText color="tertiary">
+                <p>マイク入力からの解析中...</p>
+              </IonText>
+            )}
 
-        <UnifiedFeedback
-          feedbackType={feedbackType}
-          analysisData={currentPitchList.map((pitch, index) => ({
-            pitch,
-            deviation: analysisResult?.[index] ?? null,
-          }))}
-          evalRangeCents={evalRangeCents}
-          a4Freq={a4Freq}
-          holdEnabled={holdEnabled}
-        />
+            <UnifiedFeedback
+              feedbackType={feedbackType}
+              analysisData={currentPitchList.map((pitch, index) => ({
+                pitch,
+                deviation: analysisResult?.[index] ?? null,
+              }))}
+              evalRangeCents={evalRangeCents}
+              a4Freq={a4Freq}
+              holdEnabled={holdEnabled}
+            />
 
-        <CentDisplay
-          pitchList={currentPitchList}
-          a4Freq={a4Freq}
-          title="和音情報"
-        />
-      </main>
-      <AppFooter />
-    </div>
+            <CentDisplay
+              pitchList={currentPitchList}
+              a4Freq={a4Freq}
+              title="和音情報"
+            />
+          </div>
+        </IonContent>
+        <AppFooter />
+      </IonPage>
+    </>
   );
 }

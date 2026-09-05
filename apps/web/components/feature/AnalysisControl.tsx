@@ -1,6 +1,6 @@
-"use client";
+import { IonButton } from "@ionic/react";
 
-import { Button } from "@/components/ui/button";
+import styles from "./AnalysisControl.module.css";
 
 interface AnalysisControlProps {
   isProcessing: boolean;
@@ -11,16 +11,15 @@ interface AnalysisControlProps {
 
 export const AnalysisControl: React.FC<AnalysisControlProps> = ({ isProcessing, startProcessing, stopProcessing, isPitchListEmpty }) => {
   return (
-    <div className="mt-6 flex w-full max-w-lg justify-center">
-      <Button
-        onClick={isProcessing ? stopProcessing : startProcessing}
-        variant={isProcessing ? "destructive" : "default"}
-        size="lg"
-        className="w-full sm:w-auto sm:min-w-[240px]"
-        disabled={isPitchListEmpty && !isProcessing}
-      >
-        {isProcessing ? "解析停止" : "解析開始"}
-      </Button>
-    </div>
+    <IonButton
+      className={styles.button}
+      expand="block"
+      size="large"
+      color={isProcessing ? "danger" : "primary"}
+      onClick={isProcessing ? stopProcessing : startProcessing}
+      disabled={isPitchListEmpty && !isProcessing}
+    >
+      {isProcessing ? "解析停止" : "解析開始"}
+    </IonButton>
   );
 };

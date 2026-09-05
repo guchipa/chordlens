@@ -25,6 +25,10 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     css: false,
+    // WSL のメモリが少ない環境 (約 3.7GB) で並列ワーカーが OOM を起こし
+    // WSL ごと落ちるため、テストは単一プロセスで直列実行する
+    fileParallelism: false,
+    maxWorkers: 1,
     server: {
       // @ionic/react (経由の @lit/react) は既定では Node の "externalized" 依存として
       // Node 自身の ESM ローダーで解決されてしまい、上の resolve.conditions が効かず
