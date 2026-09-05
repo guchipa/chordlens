@@ -1,3 +1,18 @@
+/* Ionic React 必須 CSS + 推奨ユーティリティ (タスク①: Ionic React 基盤導入) */
+@import "@ionic/react/css/core.css";
+@import "@ionic/react/css/normalize.css";
+@import "@ionic/react/css/structure.css";
+@import "@ionic/react/css/typography.css";
+@import "@ionic/react/css/padding.css";
+@import "@ionic/react/css/float-elements.css";
+@import "@ionic/react/css/text-alignment.css";
+@import "@ionic/react/css/text-transformation.css";
+@import "@ionic/react/css/flex-utils.css";
+@import "@ionic/react/css/display.css";
+/* OS のダーク設定に追従する Ionic 既定ダークパレット */
+@import "@ionic/react/css/palettes/dark.system.css";
+
+/* Tailwind / shadcn は移行完了まで残す (最終タスクで撤去)。新規コードからは使用しない */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -11,6 +26,102 @@
 
 body {
   font-family: var(--font-geist-sans);
+}
+
+/* Ionic テーマ変数: 配色は現行 shadcn slate を踏襲 */
+:root {
+  --ion-font-family: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --ion-color-primary: #0f172a;
+  --ion-color-primary-rgb: 15, 23, 42;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #0d1425;
+  --ion-color-primary-tint: #272e3f;
+
+  --ion-color-secondary: #f1f5f9;
+  --ion-color-secondary-rgb: 241, 245, 249;
+  --ion-color-secondary-contrast: #0f172a;
+  --ion-color-secondary-contrast-rgb: 15, 23, 42;
+  --ion-color-secondary-shade: #d4d8db;
+  --ion-color-secondary-tint: #f2f6fa;
+
+  --ion-color-tertiary: #3b82f6;
+  --ion-color-tertiary-rgb: 59, 130, 246;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #3472d8;
+  --ion-color-tertiary-tint: #4f8ff7;
+
+  --ion-color-success: #22c55e;
+  --ion-color-success-rgb: 34, 197, 94;
+  --ion-color-success-contrast: #000000;
+  --ion-color-success-contrast-rgb: 0, 0, 0;
+  --ion-color-success-shade: #1ead53;
+  --ion-color-success-tint: #38cb6e;
+
+  --ion-color-warning: #eab308;
+  --ion-color-warning-rgb: 234, 179, 8;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #ce9e07;
+  --ion-color-warning-tint: #ecbb21;
+
+  --ion-color-danger: #ef4444;
+  --ion-color-danger-rgb: 239, 68, 68;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #d23c3c;
+  --ion-color-danger-tint: #f15757;
+
+  --ion-color-medium: #64748b;
+  --ion-color-medium-rgb: 100, 116, 139;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-contrast-rgb: 255, 255, 255;
+  --ion-color-medium-shade: #58667a;
+  --ion-color-medium-tint: #748297;
+
+  --ion-color-light: #f8fafc;
+  --ion-color-light-rgb: 248, 250, 252;
+  --ion-color-light-contrast: #000000;
+  --ion-color-light-contrast-rgb: 0, 0, 0;
+  --ion-color-light-shade: #dadcde;
+  --ion-color-light-tint: #f9fbfc;
+
+  --ion-color-dark: #0f172a;
+  --ion-color-dark-rgb: 15, 23, 42;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-contrast-rgb: 255, 255, 255;
+  --ion-color-dark-shade: #0d1425;
+  --ion-color-dark-tint: #272e3f;
+
+  --ion-background-color: #f8fafc;
+  --ion-text-color: #0f172a;
+  --ion-border-color: #e2e8f0;
+  --ion-item-background: #ffffff;
+  --ion-card-background: #ffffff;
+  --ion-toolbar-background: #ffffff;
+}
+
+/* ダークモードは OS 設定に追従 (dark.system.css が prefers-color-scheme: dark で
+   Ionic 既定のダークパレットを当てる)。それに加え、現行 shadcn の配色に寄せて
+   primary を明るい slate に反転し、背景・テキスト・枠線系を slate-950/900 系に上書きする */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-color-primary: #e2e8f0;
+    --ion-color-primary-rgb: 226, 232, 240;
+    --ion-color-primary-contrast: #0f172a;
+    --ion-color-primary-contrast-rgb: 15, 23, 42;
+    --ion-color-primary-shade: #c7ccd3;
+    --ion-color-primary-tint: #e5eaf2;
+
+    --ion-background-color: #020617;
+    --ion-text-color: #f8fafc;
+    --ion-border-color: #1e293b;
+    --ion-item-background: #0f172a;
+    --ion-card-background: #0f172a;
+    --ion-toolbar-background: #0f172a;
+  }
 }
 
 @theme inline {
@@ -123,6 +234,12 @@ body {
 }
 
 @layer base {
+  /* 元の shadcn グローバルルールをそのまま維持する。
+     ion-* カスタム要素は Shadow DOM でスタイルがカプセル化されており、
+     border-color/outline-color のみを設定するこのルール (幅・スタイルは未指定) は
+     シャドウ境界を越えて内部の実要素に影響しないため、Ionic 側との実害のある競合は
+     確認されなかった (既存の bare `border` ユーティリティ利用箇所が多数あるため、
+     ion-* を除外するとむしろ既存の枠線色が壊れる)。 */
   * {
     @apply border-border outline-ring/50;
   }

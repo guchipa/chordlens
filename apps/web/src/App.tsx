@@ -69,7 +69,10 @@ export function App() {
   useChordFollow({ active: isProcessing, audioNodesRef });
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div
+      className="flex flex-col min-h-screen bg-gray-50"
+      style={{ overflowY: "auto", height: "100%" }}
+    >
       <SettingsDrawer
         isOpen={isSettingsOpen}
         onOpen={() => setIsSettingsOpen(true)}

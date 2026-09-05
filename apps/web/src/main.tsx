@@ -5,6 +5,7 @@ import {
   RouterProvider,
   Outlet,
 } from "react-router-dom";
+import { IonApp, setupIonicReact } from "@ionic/react";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
 import "./globals.css";
@@ -20,12 +21,14 @@ import { CompletePage } from "./routes/experiments/CompletePage";
 import { IneligiblePage } from "./routes/experiments/IneligiblePage";
 import { InvalidPage } from "./routes/experiments/InvalidPage";
 
+setupIonicReact();
+
 function RootLayout() {
   return (
-    <>
+    <IonApp>
       <Outlet />
       <UpdateNotification />
-    </>
+    </IonApp>
   );
 }
 

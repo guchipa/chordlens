@@ -53,3 +53,37 @@ if (typeof globalThis.navigator !== "undefined") {
     unobserve: vi.fn(),
     disconnect: vi.fn(),
   }));
+
+// Ionic (@ionic/react) が内部で prefers-color-scheme 判定や
+// レスポンシブ挙動の分岐に window.matchMedia を参照するため jsdom 用にモックする
+if (typeof window !== "undefined" && !window.matchMedia) {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(), // deprecated だが古い実装が参照することがある
+      removeListener: vi.fn(), // deprecated
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
+
+// IonModal 等のオーバーレイ系コンポーネントが参照する IntersectionObserver をモックする
+(globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = vi
+  .fn()
+  .mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+    takeRecords: vi.fn().mockReturnValue([]),
+  }));
+
+// IonSelect/IonModal 等が内部でフォーカス移動時に scrollIntoView を呼ぶが jsdom は未実装のため no-op にする
+if (typeof HTMLElement !== "undefined" && !HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+}
