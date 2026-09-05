@@ -1,14 +1,14 @@
-"use client";
-
 import React, { useMemo, useState } from "react";
 import type { PeakSearchDebug } from "@chordlens/core/types";
-import { Card } from "@/components/ui/card";
 import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
+    IonCard,
+    IonAccordionGroup,
+    IonAccordion,
+    IonItem,
+    IonLabel,
+} from "@ionic/react";
+
+import styles from "./PeakSearchBinsPanel.module.css";
 
 function clamp01(v: number) {
     return Math.max(0, Math.min(1, v));
@@ -105,12 +105,12 @@ const BinGraph: React.FC<BinGraphProps> = ({ debug, evalThresholdDb, width = 560
     }, [evalThresholdDb, height, maxDb, minDb]);
 
     return (
-        <div className="w-full overflow-x-auto">
+        <div className={styles.svgWrapper}>
             <svg
                 width={width}
                 height={height}
                 viewBox={`0 0 ${width} ${height}`}
-                className="rounded-md bg-white border"
+                className={styles.svg}
                 role="img"
                 aria-label="ピーク探索範囲スペクトル"
             >
@@ -180,33 +180,34 @@ export const PeakSearchBinsPanel: React.FC<{
     const [open, setOpen] = useState<string | undefined>("bins");
 
     return (
-        <Card className="w-full max-w-4xl p-4">
-            <Accordion
-                type="single"
-                collapsible
+        <IonCard className={styles.card}>
+            <IonAccordionGroup
                 value={open}
-                onValueChange={(v) => setOpen(v || undefined)}
+                onIonChange={(e: CustomEvent<{ value: string | string[] | undefined }>) => {
+                    const value = e.detail.value;
+                    setOpen(Array.isArray(value) ? value[0] : value);
+                }}
             >
-                <AccordionItem value="bins">
-                    <AccordionTrigger>
-                        ピーク探索範囲（ビン列）の可視化
-                    </AccordionTrigger>
-                    <AccordionContent>
+                <IonAccordion value="bins">
+                    <IonItem slot="header">
+                        <IonLabel>ピーク探索範囲（ビン列）の可視化</IonLabel>
+                    </IonItem>
+                    <div slot="content" className="ion-padding">
                         {!isProcessing && (
-                            <div className="text-sm text-muted-foreground">
+                            <div className={styles.emptyText}>
                                 解析開始後に、各構成音の探索範囲スペクトルを表示します。
                             </div>
                         )}
 
                         {isProcessing && (!peakSearchDebug || peakSearchDebug.length === 0) && (
-                            <div className="text-sm text-muted-foreground">
+                            <div className={styles.emptyText}>
                                 デバッグ情報を準備中…（root未設定/構成音なしの場合は表示されません）
                             </div>
                         )}
 
                         {peakSearchDebug && peakSearchDebug.length > 0 && (
-                            <div className="flex flex-col gap-4">
-                                <div className="text-xs text-muted-foreground">
+                            <div className={styles.entries}>
+                                <div className={styles.legend}>
                                     青: 期待周波数 / 橙: 推定ピーク（補間後） / 灰: 音量しきい値
                                 </div>
 
@@ -214,10 +215,10 @@ export const PeakSearchBinsPanel: React.FC<{
                                     const key = `${d.pitch.pitchName}${d.pitch.octaveNum}`;
                                     const title = `${d.pitch.pitchName}${d.pitch.octaveNum}`;
                                     return (
-                                        <div key={key} className="space-y-2">
-                                            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                                                <div className="font-medium">{title}</div>
-                                                <div className="text-xs text-muted-foreground">
+                                        <div key={key} className={styles.entry}>
+                                            <div className={styles.entryHeader}>
+                                                <div className={styles.entryTitle}>{title}</div>
+                                                <div className={styles.entryMeta}>
                                                     bins: {d.bins.length} / range: {formatHz(d.range.minFreqHz)} – {formatHz(d.range.maxFreqHz)} / peak: {formatHz(d.peak.freqHz)} ({d.peak.db.toFixed(1)} dB)
                                                 </div>
                                             </div>
@@ -227,9 +228,9 @@ export const PeakSearchBinsPanel: React.FC<{
                                 })}
                             </div>
                         )}
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-        </Card>
+                    </div>
+                </IonAccordion>
+            </IonAccordionGroup>
+        </IonCard>
     );
 };

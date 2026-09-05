@@ -1,0 +1,21 @@
+.card {
+  width: 100%;
+  margin-inline: 0;
+}
+
+.statusItem {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.hintItem {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+}
