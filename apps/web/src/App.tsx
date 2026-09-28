@@ -17,7 +17,6 @@ import { AppFooter } from "@/components/layout/AppFooter";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
 import { CentDisplay } from "@/components/feature/CentDisplay";
-import { MainHeader } from "@/components/layout/MainHeader";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { ExperimentModePanel } from "@/components/feature/experiment/ExperimentModePanel";
 
@@ -102,20 +101,6 @@ export function App() {
               />
             )}
 
-            <MainHeader />
-
-            <AnalysisControl
-              isProcessing={isProcessing}
-              startProcessing={startProcessing}
-              stopProcessing={stopProcessing}
-              isPitchListEmpty={currentPitchList.length === 0}
-            />
-            {isProcessing && (
-              <IonText color="tertiary">
-                <p>マイク入力からの解析中...</p>
-              </IonText>
-            )}
-
             <UnifiedFeedback
               feedbackType={feedbackType}
               analysisData={currentPitchList.map((pitch, index) => ({
@@ -125,6 +110,13 @@ export function App() {
               evalRangeCents={evalRangeCents}
               a4Freq={a4Freq}
               holdEnabled={holdEnabled}
+            />
+
+            <AnalysisControl
+              isProcessing={isProcessing}
+              startProcessing={startProcessing}
+              stopProcessing={stopProcessing}
+              isPitchListEmpty={currentPitchList.length === 0}
             />
 
             <CentDisplay
