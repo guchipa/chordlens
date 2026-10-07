@@ -1,0 +1,12 @@
+.fieldNote {
+  display: block;
+  padding: 0 1rem 0.75rem;
+}
+
+.accordionGroup {
+  margin-top: 0.5rem;
+}
+
+.accordionContent {
+  padding: 0.5rem 0;
+}

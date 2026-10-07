@@ -1,7 +1,7 @@
-"use client";
-
 import React from "react";
 import { PITCH_COLOR_MAP } from "@chordlens/core/constants";
+
+import styles from "./StroboFeedback.module.css";
 
 interface StroboFeedbackProps {
   pitchName: string;
@@ -27,19 +27,19 @@ export const StroboFeedback: React.FC<StroboFeedbackProps> = ({
   const stripeWidth = 40; // px
 
   return (
-    <div className="flex items-center gap-3 w-full">
+    <div className={styles.container}>
       {/* 音名ラベル */}
-      <div className="text-sm font-medium text-muted-foreground min-w-12 text-center">
+      <div className={styles.pitchLabel}>
         {pitchName}
       </div>
 
       {/* 横長のストロボディスプレイ */}
-      <div className="relative flex-1 h-16 border-2 border-gray-300 dark:border-gray-700 rounded overflow-hidden bg-gray-100 dark:bg-gray-900">
+      <div className={styles.display}>
         {deviation !== null ? (
           <>
             {/* スクロールする縞模様 */}
             <div
-              className="absolute inset-0 flex"
+              className={styles.stripes}
               style={{
                 animation: isInTune
                   ? "none"
@@ -50,16 +50,15 @@ export const StroboFeedback: React.FC<StroboFeedbackProps> = ({
               {Array.from({ length: 2 }).map((_, setIndex) => (
                 <div
                   key={setIndex}
-                  className="flex"
+                  className={styles.stripeSet}
                   style={{ minWidth: `${stripeCount * stripeWidth}px` }}
                 >
                   {Array.from({ length: stripeCount }).map((_, i) => (
                     <div
                       key={i}
-                      className="shrink-0"
+                      className={styles.stripe}
                       style={{
                         width: `${stripeWidth}px`,
-                        height: "100%",
                         backgroundColor: i % 2 === 0 ? color : "transparent",
                         opacity: i % 2 === 0 ? 0.7 : 1,
                       }}
@@ -70,27 +69,27 @@ export const StroboFeedback: React.FC<StroboFeedbackProps> = ({
             </div>
 
             {/* 中央の基準線 */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-0.5 h-full bg-white/80 shadow-lg" />
+            <div className={styles.centerLine}>
+              <div className={styles.centerLineBar} />
             </div>
           </>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+          <div className={styles.emptyMessage}>
             音を検出していません
           </div>
         )}
       </div>
 
       {/* 状態インジケーター */}
-      <div className="min-w-20 text-xs text-center">
+      <div className={styles.status}>
         {deviation === null ? (
-          <span className="text-muted-foreground">--</span>
+          <span className={styles.statusMuted}>--</span>
         ) : isInTune ? (
-          <span className="text-green-600 dark:text-green-400 font-semibold">
+          <span className={styles.statusInTune}>
             ✓ 合致
           </span>
         ) : (
-          <span className="text-muted-foreground">
+          <span className={styles.statusMuted}>
             {deviation > 0 ? "↑ 高い" : "↓ 低い"}
           </span>
         )}

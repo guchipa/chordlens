@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
 import { PresetManager } from "@/components/feature/PresetManager";
 import { pitchListAtom } from "@/lib/store/pitchListAtoms";
@@ -48,6 +48,12 @@ describe("PresetManager", () => {
     );
   };
 
+  // "保存" テキストの最寄りの ion-button を取得する。
+  // ion-button には暗黙の button ロールが付かない (jsdom は Stencil の
+  // shadow DOM を描画しない) ため getByRole は使えない。
+  const getSaveButton = () =>
+    screen.getByText("保存").closest("ion-button") as Element;
+
   it("renders preset manager card", () => {
     renderWithJotai(mockPitchList);
 
@@ -57,19 +63,26 @@ describe("PresetManager", () => {
     ).toBeDefined();
   });
 
-  it("shows save button", () => {
+  it("shows save button", async () => {
     renderWithJotai(mockPitchList);
 
-    const saveButton = screen.getByRole("button", { name: /保存/i });
-    expect(saveButton).toBeDefined();
-    expect(saveButton.hasAttribute("disabled")).toBe(false);
+    // Stencil のカスタム要素は非同期にアップグレードされるため、
+    // customElements.whenDefined を待ってから disabled 属性の反映を確認する
+    await customElements.whenDefined("ion-button");
+    const saveButton = getSaveButton();
+    expect(saveButton).not.toBeNull();
+    expect(saveButton).not.toHaveAttribute("disabled");
   });
 
-  it("disables save button when pitch list is empty", () => {
+  it("disables save button when pitch list is empty", async () => {
     renderWithJotai([]);
 
-    const saveButton = screen.getByRole("button", { name: /保存/i });
-    expect(saveButton.hasAttribute("disabled")).toBe(true);
+    await customElements.whenDefined("ion-button");
+    // disabled 属性への反映は Stencil 側の再レンダーを挟むため、
+    // whenDefined の直後では未反映のことがある。waitFor でポーリングする
+    await waitFor(() => {
+      expect(getSaveButton()).toHaveAttribute("disabled");
+    });
   });
 
   it("shows empty state when no presets exist", () => {

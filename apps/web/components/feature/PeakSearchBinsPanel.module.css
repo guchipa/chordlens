@@ -1,0 +1,54 @@
+.card {
+  width: 100%;
+  margin-inline: 0;
+}
+
+.emptyText {
+  font-size: 0.875rem;
+  color: var(--ion-color-medium);
+}
+
+.legend {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.entryHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.entryTitle {
+  font-weight: 500;
+}
+
+.entryMeta {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.svgWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.svg {
+  border-radius: 8px;
+  background: var(--ion-card-background);
+  border: 1px solid var(--ion-border-color);
+}

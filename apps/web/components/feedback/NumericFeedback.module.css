@@ -1,0 +1,97 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--ion-border-color);
+  border-radius: 0.5rem;
+  background: var(--ion-card-background);
+}
+
+.pitchLabel {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ion-color-medium);
+}
+
+.centRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 280px;
+  justify-content: center;
+}
+
+.centValue {
+  font-size: 4.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: color 300ms ease;
+}
+
+.centValueInTune {
+  color: var(--ion-color-success);
+}
+
+.centValueClose {
+  color: var(--ion-color-warning);
+}
+
+.centValueFar {
+  color: var(--ion-color-danger);
+}
+
+.centUnit {
+  font-size: 1.5rem;
+  color: var(--ion-color-medium);
+}
+
+.directionRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.directionIcon {
+  font-size: 1.875rem;
+  opacity: 0.2;
+  transition: opacity 150ms ease;
+}
+
+.directionIconActive {
+  opacity: 1;
+}
+
+.checkIcon {
+  font-size: 1.5rem;
+  font-weight: 600;
+  opacity: 0.2;
+  transition: opacity 150ms ease;
+}
+
+.checkIconActive {
+  opacity: 1;
+  color: var(--ion-color-success);
+}
+
+.statusText {
+  font-size: 0.875rem;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.statusTextInTune {
+  color: var(--ion-color-success);
+  font-weight: 600;
+}
+
+.emptyMessage {
+  min-width: 280px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: var(--ion-color-medium);
+}

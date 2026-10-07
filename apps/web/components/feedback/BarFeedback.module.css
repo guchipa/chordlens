@@ -1,0 +1,95 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  width: 100%;
+  border: 1px solid var(--ion-border-color);
+  border-radius: 0.5rem;
+  background: var(--ion-card-background);
+}
+
+.pitchLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.track {
+  position: relative;
+  height: 3rem;
+  width: 100%;
+  background: var(--ion-color-light);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.centerLine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--ion-color-medium);
+  z-index: 10;
+}
+
+.toleranceRange {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 45%;
+  width: 10%;
+  background: rgba(var(--ion-color-success-rgb), 0.15);
+}
+
+.equalMarker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--ion-color-tertiary);
+  z-index: 10;
+}
+
+.bar {
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  border-radius: 0.25rem;
+  max-width: 50%;
+  transition: all 150ms ease;
+}
+
+.indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0.25rem;
+  background: var(--ion-text-color);
+  transition: all 150ms ease;
+  z-index: 20;
+}
+
+.emptyMessage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.statusRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.inTune {
+  color: var(--ion-color-success);
+  font-weight: 600;
+}

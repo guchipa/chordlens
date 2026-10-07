@@ -1,0 +1,38 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  width: 100%;
+  border: 1px solid var(--ion-border-color);
+  border-radius: 0.5rem;
+  background: var(--ion-card-background);
+}
+
+.pitchLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.canvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--ion-border-color);
+  border-radius: 0.5rem;
+}
+
+.status {
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.statusMuted {
+  color: var(--ion-color-medium);
+}
+
+.statusInTune {
+  color: var(--ion-color-success);
+  font-weight: 600;
+}

@@ -1,0 +1,99 @@
+.container {
+  width: 100%;
+  margin-inline: 0;
+  border: 1px solid var(--ion-border-color);
+  border-radius: 8px;
+  background: var(--ion-card-background);
+  overflow: hidden;
+}
+
+.header {
+  padding: 0.75rem 1rem;
+  background: var(--ion-color-light);
+  border-bottom: 1px solid var(--ion-border-color);
+}
+
+.title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ion-text-color);
+}
+
+.subtitle {
+  margin: 0.125rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  font-size: 0.875rem;
+  border-collapse: collapse;
+}
+
+.headerRow {
+  border-bottom: 1px solid var(--ion-border-color);
+}
+
+.th {
+  padding: 0.5rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ion-color-medium);
+}
+
+.thRight {
+  padding: 0.5rem 1rem;
+  text-align: right;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ion-color-medium);
+}
+
+.row {
+  border-bottom: 1px solid var(--ion-border-color);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.pitchCell {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-family: ui-monospace, "Geist Mono Variable", monospace;
+  color: var(--ion-text-color);
+}
+
+.valueCell {
+  padding: 0.5rem 1rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "Geist Mono Variable", monospace;
+}
+
+.ok {
+  color: var(--ion-color-success);
+  font-weight: 600;
+}
+
+.close {
+  color: var(--ion-color-warning);
+  font-weight: 600;
+}
+
+.off {
+  color: var(--ion-color-danger);
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--ion-color-medium);
+}

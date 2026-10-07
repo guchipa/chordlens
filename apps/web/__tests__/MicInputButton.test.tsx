@@ -68,9 +68,7 @@ describe("MicInputButton", () => {
 
     const clickMic = async () => {
         await act(async () => {
-            fireEvent.click(
-                screen.getByRole("button", { name: "マイクで入力" })
-            );
+            fireEvent.click(screen.getByLabelText("マイクで入力"));
         });
     };
 
@@ -114,10 +112,11 @@ describe("MicInputButton", () => {
         });
         expect(onDetect).not.toHaveBeenCalled();
         // 処理が終わればもう一度試せる
+        await customElements.whenDefined("ion-button");
         await waitFor(() => {
-            expect(
-                screen.getByRole("button", { name: "マイクで入力" })
-            ).toBeEnabled();
+            expect(screen.getByLabelText("マイクで入力")).not.toHaveAttribute(
+                "disabled"
+            );
         });
     });
 
@@ -134,10 +133,11 @@ describe("MicInputButton", () => {
         });
         expect(mocks.detectNotes).not.toHaveBeenCalled();
         expect(onDetect).not.toHaveBeenCalled();
+        await customElements.whenDefined("ion-button");
         await waitFor(() => {
-            expect(
-                screen.getByRole("button", { name: "マイクで入力" })
-            ).toBeEnabled();
+            expect(screen.getByLabelText("マイクで入力")).not.toHaveAttribute(
+                "disabled"
+            );
         });
     });
 

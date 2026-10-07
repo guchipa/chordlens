@@ -25,8 +25,8 @@ ChordLensは、マイク入力からリアルタイムで和音の純正律評�
 | **ビルド** | Vite 6 | 開発サーバー・バンドル |
 | **ルーティング** | React Router 6 | SPAルーティング |
 | **UI** | React 19 | コンポーネントベースUI |
-| **スタイリング** | Tailwind CSS 4 | ユーティリティファーストCSS |
-| **コンポーネント** | shadcn/ui (Radix UI) | アクセシブルなUIプリミティブ |
+| **スタイリング** | Ionic CSS ユーティリティ + CSS Modules | コンポーネントスタイリング |
+| **コンポーネント** | Ionic React 9 (Web Components) | アクセシブルなUIプリミティブ |
 | **状態管理** | Jotai | 軽量なアトミック状態管理 |
 | **フォーム** | React Hook Form + Zod | バリデーション付きフォーム |
 | **音声処理** | Web Audio API | リアルタイム音声入力・FFT解析 |
@@ -46,7 +46,6 @@ graph TB
         A2[Feature Components<br/>apps/web/components/feature/]
         A3[Feedback Components<br/>apps/web/components/feedback/]
         A4[Layout Components<br/>apps/web/components/layout/]
-        A5[UI Primitives<br/>apps/web/components/ui/]
     end
 
     subgraph State["状態管理層 (Jotai Store) — apps/web"]
@@ -76,7 +75,6 @@ graph TB
     end
 
     A1 --> A2 & A3 & A4
-    A2 & A3 & A4 --> A5
     A1 & A2 & A3 --> B1 & B2 & B3
     A1 & A2 --> C1 & C4
     C1 --> C2 & C3
@@ -147,11 +145,10 @@ chordlens/
 │       │   ├── main.tsx
 │       │   ├── App.tsx
 │       │   └── routes/experiments/  # 評価実験フロー
-│       ├── components/
+│       ├── components/          # 各コンポーネントに `*.module.css` を併置 (CSS Modules)
 │       │   ├── feature/         # 機能コンポーネント
 │       │   ├── feedback/        # 視覚フィードバック（メーター、バー、円形）
-│       │   ├── layout/          # ヘッダー・フッター・ドロワー
-│       │   └── ui/              # shadcn/ui プリミティブ
+│       │   └── layout/          # ヘッダー・フッター・ドロワー
 │       ├── lib/                 # Web 依存のロジック
 │       │   ├── hooks/           # カスタムフック（Web Audio API 使用）
 │       │   ├── audio/           # NoteDetector の生成 (factory)・PCM キャプチャ・録音ユーティリティ

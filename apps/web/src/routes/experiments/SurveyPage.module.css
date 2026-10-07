@@ -1,0 +1,24 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--ion-color-medium);
+}
+
+.errorBox {
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  background: rgba(var(--ion-color-danger-rgb), 0.1);
+  color: var(--ion-color-danger);
+}

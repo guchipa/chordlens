@@ -1,8 +1,6 @@
-"use client";
-
 /**
  * ExperimentModePanel - 実験モード機能をまとめたパネル
- * 
+ *
  * 責務:
  * - 実験モードバナー表示
  * - ログ記録機能（useLogRecorder）
@@ -12,10 +10,14 @@
 
 import { useMemo, useRef } from "react";
 import { useAtomValue } from "jotai";
+import { IonCard, IonCardTitle, IonCardContent } from "@ionic/react";
 import { useLogRecorder } from "@/lib/hooks/useLogRecorder";
 import { LogExportButton } from "@/components/feature/LogExportButton";
 import { PeakSearchBinsPanel } from "@/components/feature/PeakSearchBinsPanel";
 import { AlgorithmComparisonPanel } from "@/components/feature/AlgorithmComparisonPanel";
+
+import styles from "./ExperimentModePanel.module.css";
+
 import {
     pitchListAtom,
     evalRangeCentsAtom,
@@ -121,12 +123,16 @@ export function ExperimentModePanel({
     return (
         <>
             {/* 実験モードバナー */}
-            <div className="w-full max-w-2xl bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <h2 className="text-lg font-bold text-amber-900">🔬 実験モード</h2>
-                <p className="text-sm text-amber-700 mt-1">
-                    実験用機能が有効です。解析データをログ記録できます。
-                </p>
-            </div>
+            <IonCard className={styles.banner}>
+                <IonCardContent>
+                    <IonCardTitle className={styles.bannerTitle}>
+                        🔬 実験モード
+                    </IonCardTitle>
+                    <p>
+                        実験用機能が有効です。解析データをログ記録できます。
+                    </p>
+                </IonCardContent>
+            </IonCard>
 
             {/* ログコントロール */}
             <LogExportButton

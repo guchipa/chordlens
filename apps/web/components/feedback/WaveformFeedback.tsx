@@ -1,7 +1,7 @@
-"use client";
-
 import React, { useEffect, useRef } from "react";
 import { PITCH_COLOR_MAP } from "@chordlens/core/constants";
+
+import styles from "./WaveformFeedback.module.css";
 
 interface WaveformFeedbackProps {
   pitchName: string;
@@ -80,8 +80,8 @@ export const WaveformFeedback: React.FC<WaveformFeedbackProps> = ({
   const isInTune = deviation !== null && Math.abs(deviation) < 0.05;
 
   return (
-    <div className="flex flex-col gap-2 p-4 w-full border rounded-lg bg-card">
-      <div className="text-sm font-medium text-center text-muted-foreground">
+    <div className={styles.container}>
+      <div className={styles.pitchLabel}>
         {pitchName}
       </div>
 
@@ -89,18 +89,18 @@ export const WaveformFeedback: React.FC<WaveformFeedbackProps> = ({
         ref={canvasRef}
         width={400}
         height={120}
-        className="w-full h-auto border border-gray-300 dark:border-gray-700 rounded-lg"
+        className={styles.canvas}
       />
 
-      <div className="text-xs text-center">
+      <div className={styles.status}>
         {deviation === null ? (
-          <span className="text-muted-foreground">--</span>
+          <span className={styles.statusMuted}>--</span>
         ) : isInTune ? (
-          <span className="text-green-600 dark:text-green-400 font-semibold">
+          <span className={styles.statusInTune}>
             ✓ チューニング完了
           </span>
         ) : (
-          <span className="text-muted-foreground">
+          <span className={styles.statusMuted}>
             {deviation > 0 ? "高い" : "低い"} (
             {Math.abs(deviation * 100).toFixed(1)}%)
           </span>

@@ -1,20 +1,25 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+} from "@ionic/react";
 
 export function CompletePage() {
   return (
-    <main className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>実験お疲れ様でした</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+    <main>
+      <IonCard>
+        <IonCardHeader>
+          <IonCardTitle>実験お疲れ様でした</IonCardTitle>
+        </IonCardHeader>
+        <IonCardContent>
           <p>ご協力ありがとうございました。</p>
           <p>
             すべての録音・解析データ・アンケート回答が送信されました。
             このタブは閉じていただいて問題ありません。
           </p>
-        </CardContent>
-      </Card>
+        </IonCardContent>
+      </IonCard>
     </main>
   );
 }

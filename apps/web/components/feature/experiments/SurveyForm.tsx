@@ -1,21 +1,5 @@
-"use client";
-
-import { useFormContext } from "react-hook-form";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { useFormContext, Controller } from "react-hook-form";
+import { IonItem, IonSelect, IonSelectOption, IonInput, IonNote } from "@ionic/react";
 
 const FIVE_LABELS: Record<number, string> = {
   1: "1: まったくそう思わない",
@@ -32,33 +16,32 @@ export function FivePointField({
   name: string;
   label: string;
 }) {
-  const form = useFormContext();
+  const { control } = useFormContext();
   return (
-    <FormField
-      control={form.control}
+    <Controller
+      control={control}
       name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <Select
-            onValueChange={(v) => field.onChange(Number(v))}
-            value={field.value ? String(field.value) : ""}
-          >
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="5段階で選択" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
+      render={({ field, fieldState }) => (
+        <>
+          <IonItem lines="none">
+            <IonSelect
+              label={label}
+              labelPlacement="stacked"
+              placeholder="5段階で選択"
+              value={field.value ?? undefined}
+              onIonChange={(e) => field.onChange(Number(e.detail.value))}
+            >
               {[1, 2, 3, 4, 5].map((n) => (
-                <SelectItem key={n} value={String(n)}>
+                <IonSelectOption key={n} value={n}>
                   {FIVE_LABELS[n]}
-                </SelectItem>
+                </IonSelectOption>
               ))}
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
+            </IonSelect>
+          </IonItem>
+          {fieldState.error?.message && (
+            <IonNote color="danger">{fieldState.error.message}</IonNote>
+          )}
+        </>
       )}
     />
   );
@@ -71,24 +54,27 @@ export function FreeTextField({
   name: string;
   label: string;
 }) {
-  const form = useFormContext();
+  const { control } = useFormContext();
   return (
-    <FormField
-      control={form.control}
+    <Controller
+      control={control}
       name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <Input
+      render={({ field, fieldState }) => (
+        <>
+          <IonItem lines="none">
+            <IonInput
+              label={label}
+              labelPlacement="stacked"
               type="text"
-              value={(field.value as string | undefined) ?? ""}
-              onChange={(e) => field.onChange(e.target.value)}
               placeholder="任意"
+              value={(field.value as string | undefined) ?? ""}
+              onIonInput={(e) => field.onChange(e.detail.value)}
             />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
+          </IonItem>
+          {fieldState.error?.message && (
+            <IonNote color="danger">{fieldState.error.message}</IonNote>
+          )}
+        </>
       )}
     />
   );

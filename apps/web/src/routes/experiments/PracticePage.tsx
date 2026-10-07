@@ -3,6 +3,8 @@ import { useExperimentSession } from "@/lib/hooks/experiments/useExperimentSessi
 import { PracticeWithTuner } from "@/components/feature/experiments/PracticeWithTuner";
 import { PracticeWithoutTuner } from "@/components/feature/experiments/PracticeWithoutTuner";
 
+import styles from "./PracticePage.module.css";
+
 export function PracticePage() {
   const { session, setPhase } = useExperimentSession();
   useEffect(() => {
@@ -12,7 +14,7 @@ export function PracticePage() {
   if (!session) return null;
 
   return (
-    <main className="space-y-4">
+    <main className={styles.page}>
       {session.condition === "with" ? (
         <PracticeWithTuner />
       ) : (

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAtomValue } from "jotai";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { IonText } from "@ionic/react";
 import {
   ChordRecordingCard,
   type ChordRecordingResult,
@@ -18,6 +19,8 @@ import {
   fftSizeAtom,
   smoothingTimeConstantAtom,
 } from "@/lib/store";
+
+import styles from "./RecordingSession.module.css";
 
 interface Props {
   phase: "test1" | "test2";
@@ -55,7 +58,7 @@ export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
 
   if (!session || !session.partAssignment || !session.chordPitches) {
     return (
-      <div className="rounded-md bg-yellow-50 p-4 text-sm">
+      <div className={styles.warningBox}>
         セッション情報が見つかりません。最初から始めてください。
       </div>
     );
@@ -161,17 +164,21 @@ export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
 
   if (!chord) {
     return (
-      <p className="text-center text-sm text-muted-foreground">
-        全ての和音が完了しました。次のページへ移動します…
-      </p>
+      <IonText color="medium">
+        <p className={styles.centerText}>
+          全ての和音が完了しました。次のページへ移動します…
+        </p>
+      </IonText>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {chordIndex + 1} / {CHORD_KEYS.length} 和音目
-      </p>
+    <div className={styles.container}>
+      <IonText color="medium">
+        <p>
+          {chordIndex + 1} / {CHORD_KEYS.length} 和音目
+        </p>
+      </IonText>
       <ChordRecordingCard
         key={`${phase}-${chord}`}
         chord={chord}
@@ -187,13 +194,15 @@ export function RecordingSession({ phase, nextPath, doneStatus }: Props) {
         onRetry={handleRetry}
       />
       {submitting && (
-        <p className="text-center text-sm text-muted-foreground">
-          完了処理中…
-        </p>
+        <IonText color="medium">
+          <p className={styles.centerText}>完了処理中…</p>
+        </IonText>
       )}
-      <p className="text-center text-xs text-muted-foreground">
-        ※ ピッチが多少悪くてもやり直さないでください。明確に音を外した場合のみ「やり直し」を選んでください。
-      </p>
+      <IonText color="medium">
+        <p className={styles.centerText}>
+          ※ ピッチが多少悪くてもやり直さないでください。明確に音を外した場合のみ「やり直し」を選んでください。
+        </p>
+      </IonText>
     </div>
   );
 }

@@ -1,0 +1,9 @@
+.banner {
+  width: 100%;
+  margin-inline: 0;
+  background: rgba(var(--ion-color-warning-rgb), 0.15);
+}
+
+.bannerTitle {
+  font-size: 1.05rem;
+}

@@ -1,0 +1,98 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.pitchLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 3rem;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.display {
+  position: relative;
+  flex: 1;
+  height: 4rem;
+  border: 2px solid var(--ion-border-color);
+  border-radius: 0.25rem;
+  overflow: hidden;
+  background: var(--ion-color-light);
+}
+
+.stripes {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.stripeSet {
+  display: flex;
+}
+
+.stripe {
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.centerLine {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.centerLineBar {
+  width: 2px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.emptyMessage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.status {
+  min-width: 5rem;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.statusMuted {
+  color: var(--ion-color-medium);
+}
+
+.statusInTune {
+  color: var(--ion-color-success);
+  font-weight: 600;
+}
+
+@keyframes strobeScrollLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes strobeScrollRight {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}

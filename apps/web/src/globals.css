@@ -1,7 +1,16 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
+/* Ionic React 必須 CSS + 推奨ユーティリティ (タスク①: Ionic React 基盤導入) */
+@import "@ionic/react/css/core.css";
+@import "@ionic/react/css/normalize.css";
+@import "@ionic/react/css/structure.css";
+@import "@ionic/react/css/typography.css";
+@import "@ionic/react/css/padding.css";
+@import "@ionic/react/css/float-elements.css";
+@import "@ionic/react/css/text-alignment.css";
+@import "@ionic/react/css/text-transformation.css";
+@import "@ionic/react/css/flex-utils.css";
+@import "@ionic/react/css/display.css";
+/* OS のダーク設定に追従する Ionic 既定ダークパレット */
+@import "@ionic/react/css/palettes/dark.system.css";
 
 :root {
   --font-geist-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
@@ -13,151 +22,99 @@ body {
   font-family: var(--font-geist-sans);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
+/* Ionic テーマ変数: 配色は移行前の slate 配色を踏襲 */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --ion-font-family: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --ion-color-primary: #0f172a;
+  --ion-color-primary-rgb: 15, 23, 42;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #0d1425;
+  --ion-color-primary-tint: #272e3f;
+
+  --ion-color-secondary: #f1f5f9;
+  --ion-color-secondary-rgb: 241, 245, 249;
+  --ion-color-secondary-contrast: #0f172a;
+  --ion-color-secondary-contrast-rgb: 15, 23, 42;
+  --ion-color-secondary-shade: #d4d8db;
+  --ion-color-secondary-tint: #f2f6fa;
+
+  --ion-color-tertiary: #3b82f6;
+  --ion-color-tertiary-rgb: 59, 130, 246;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #3472d8;
+  --ion-color-tertiary-tint: #4f8ff7;
+
+  --ion-color-success: #22c55e;
+  --ion-color-success-rgb: 34, 197, 94;
+  --ion-color-success-contrast: #000000;
+  --ion-color-success-contrast-rgb: 0, 0, 0;
+  --ion-color-success-shade: #1ead53;
+  --ion-color-success-tint: #38cb6e;
+
+  --ion-color-warning: #eab308;
+  --ion-color-warning-rgb: 234, 179, 8;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #ce9e07;
+  --ion-color-warning-tint: #ecbb21;
+
+  --ion-color-danger: #ef4444;
+  --ion-color-danger-rgb: 239, 68, 68;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #d23c3c;
+  --ion-color-danger-tint: #f15757;
+
+  --ion-color-medium: #64748b;
+  --ion-color-medium-rgb: 100, 116, 139;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-contrast-rgb: 255, 255, 255;
+  --ion-color-medium-shade: #58667a;
+  --ion-color-medium-tint: #748297;
+
+  --ion-color-light: #f8fafc;
+  --ion-color-light-rgb: 248, 250, 252;
+  --ion-color-light-contrast: #000000;
+  --ion-color-light-contrast-rgb: 0, 0, 0;
+  --ion-color-light-shade: #dadcde;
+  --ion-color-light-tint: #f9fbfc;
+
+  --ion-color-dark: #0f172a;
+  --ion-color-dark-rgb: 15, 23, 42;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-contrast-rgb: 255, 255, 255;
+  --ion-color-dark-shade: #0d1425;
+  --ion-color-dark-tint: #272e3f;
+
+  --ion-background-color: #f8fafc;
+  --ion-text-color: #0f172a;
+  --ion-border-color: #e2e8f0;
+  --ion-item-background: #ffffff;
+  --ion-card-background: #ffffff;
+  --ion-toolbar-background: #ffffff;
 }
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
-}
+/* ダークモードは OS 設定に追従 (dark.system.css が prefers-color-scheme: dark で
+   Ionic 既定のダークパレットを当てる)。それに加え、移行前の配色に寄せて
+   primary を明るい slate に反転し、背景・テキスト・枠線系を slate-950/900 系に上書きする */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-color-primary: #e2e8f0;
+    --ion-color-primary-rgb: 226, 232, 240;
+    --ion-color-primary-contrast: #0f172a;
+    --ion-color-primary-contrast-rgb: 15, 23, 42;
+    --ion-color-primary-shade: #c7ccd3;
+    --ion-color-primary-tint: #e5eaf2;
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes strobeScrollLeft {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-50%);
+    --ion-background-color: #020617;
+    --ion-text-color: #f8fafc;
+    --ion-border-color: #1e293b;
+    --ion-item-background: #0f172a;
+    --ion-card-background: #0f172a;
+    --ion-toolbar-background: #0f172a;
   }
 }
 
-@keyframes strobeScrollRight {
-  from {
-    transform: translateX(-50%);
-  }
-
-  to {
-    transform: translateX(0);
-  }
-}

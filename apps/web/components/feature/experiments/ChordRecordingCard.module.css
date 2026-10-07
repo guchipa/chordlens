@@ -1,0 +1,63 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.assignmentBox {
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  background: rgba(var(--ion-color-tertiary-rgb), 0.12);
+  color: var(--ion-text-color);
+}
+
+.assignmentBox p + p {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.assignmentLabel {
+  font-weight: 500;
+}
+
+.centerText {
+  text-align: center;
+}
+
+.errorBox {
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  background: rgba(var(--ion-color-danger-rgb), 0.1);
+  color: var(--ion-color-danger);
+}
+
+.countdownWrap {
+  text-align: center;
+}
+
+.countdownValue {
+  font-size: 3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.reviewGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.audioPreview {
+  width: 100%;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.buttonRow > * {
+  flex: 1;
+}
