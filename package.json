@@ -6,6 +6,7 @@
   "packageManager": "pnpm@11.5.0",
   "scripts": {
     "dev": "pnpm --filter @chordlens/web dev",
+    "dev:mobile": "pnpm --filter @chordlens/web dev:mobile",
     "build": "pnpm --filter @chordlens/web build",
     "preview": "pnpm --filter @chordlens/web preview",
     "test": "pnpm -r test",
