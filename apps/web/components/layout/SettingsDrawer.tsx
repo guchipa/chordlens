@@ -16,6 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useBackButtonClose } from "@/lib/hooks/useBackButtonClose";
 import { useSwipeDrawer } from "@/lib/hooks/useSwipeDrawer";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
@@ -39,6 +40,8 @@ export function SettingsDrawer({
     }
   };
 
+  // 戻る操作 (ブラウザ/Android の戻る) でドロワーを閉じる
+  useBackButtonClose(isOpen, onClose);
   const swipe = useSwipeDrawer({ isOpen, onClose });
 
   return (
