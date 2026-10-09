@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { useBackButtonClose } from "@/lib/hooks/useBackButtonClose";
 import { useSwipeDrawer } from "@/lib/hooks/useSwipeDrawer";
+import { canUseEdgeSwipe } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 
@@ -42,7 +43,12 @@ export function SettingsDrawer({
 
   // 戻る操作 (ブラウザ/Android の戻る) でドロワーを閉じる
   useBackButtonClose(isOpen, onClose);
-  const swipe = useSwipeDrawer({ isOpen, onClose });
+  const swipe = useSwipeDrawer({
+    isOpen,
+    onClose,
+    onOpen,
+    edgeOpenEnabled: canUseEdgeSwipe(),
+  });
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>

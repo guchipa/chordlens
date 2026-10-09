@@ -154,12 +154,13 @@ chordlens/
 │       │   ├── layout/          # ヘッダー・フッター・ドロワー
 │       │   └── ui/              # shadcn/ui プリミティブ
 │       ├── lib/                 # Web 依存のロジック
-│       │   ├── hooks/           # カスタムフック（Web Audio API 使用、useSwipeDrawer などの UI ジェスチャも）
+│       │   ├── hooks/           # カスタムフック（Web Audio API 使用、useSwipeDrawer・useBackButtonClose などの UI ジェスチャ/履歴制御も）
 │       │   ├── audio/           # NoteDetector の生成 (factory)・PCM キャプチャ・録音ユーティリティ
 │       │   ├── store/           # Jotai atoms（localStorage 永続化）
 │       │   ├── experiments/     # 評価実験ロジック
 │       │   ├── firebase/        # Firebase 連携
 │       │   ├── presets.ts       # プリセット管理の Web バインディング
+│       │   ├── platform.ts      # プラットフォーム判定 (iOS / PWA standalone / 左端スワイプ可否)
 │       │   ├── screenWakeLock.ts # ScreenWakeLock の Web 実装（Screen Wake Lock API）
 │       │   └── utils/exportLog.ts  # CSV ダウンロード（Web バインディング）
 │       ├── functions/           # Cloudflare Pages Functions (client-log API)
