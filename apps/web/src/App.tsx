@@ -4,11 +4,9 @@ import { useAtomValue } from "jotai";
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
 import { useChordFollow } from "@/lib/hooks/useChordFollow";
 
-import { AppFooter } from "@/components/layout/AppFooter";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
 import { CentDisplay } from "@/components/feature/CentDisplay";
-import { MainHeader } from "@/components/layout/MainHeader";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { ExperimentModePanel } from "@/components/feature/experiment/ExperimentModePanel";
 
@@ -69,14 +67,19 @@ export function App() {
   useChordFollow({ active: isProcessing, audioNodesRef });
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <SettingsDrawer
-        isOpen={isSettingsOpen}
-        onOpen={() => setIsSettingsOpen(true)}
-        onClose={() => setIsSettingsOpen(false)}
-      />
+    <div className="flex min-h-dvh flex-col bg-gray-50">
+      <header className="sticky top-0 z-40 border-b bg-gray-50/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <div className="flex h-14 items-center gap-1 px-2">
+          <SettingsDrawer
+            isOpen={isSettingsOpen}
+            onOpen={() => setIsSettingsOpen(true)}
+            onClose={() => setIsSettingsOpen(false)}
+          />
+          <h1 className="text-lg font-bold text-gray-800">和音チューナー</h1>
+        </div>
+      </header>
 
-      <main className="container mx-auto flex grow flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
+      <main className="mx-auto flex w-full max-w-2xl grow flex-col items-stretch gap-4 px-3 pt-3 pb-[calc(8.5rem+env(safe-area-inset-bottom))] sm:px-6">
         {experimentMode && (
           <ExperimentModePanel
             isProcessing={isProcessing}
@@ -85,20 +88,6 @@ export function App() {
             peakSearchDebug={peakSearchDebug}
             comparisonResults={comparisonResults}
           />
-        )}
-
-        <MainHeader />
-
-        <AnalysisControl
-          isProcessing={isProcessing}
-          startProcessing={startProcessing}
-          stopProcessing={stopProcessing}
-          isPitchListEmpty={currentPitchList.length === 0}
-        />
-        {isProcessing && (
-          <p className="mt-4 font-medium text-blue-600">
-            マイク入力からの解析中...
-          </p>
         )}
 
         <UnifiedFeedback
@@ -118,7 +107,13 @@ export function App() {
           title="和音情報"
         />
       </main>
-      <AppFooter />
+
+      <AnalysisControl
+        isProcessing={isProcessing}
+        startProcessing={startProcessing}
+        stopProcessing={stopProcessing}
+        isPitchListEmpty={currentPitchList.length === 0}
+      />
     </div>
   );
 }

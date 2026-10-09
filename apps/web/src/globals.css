@@ -127,8 +127,15 @@ body {
     @apply border-border outline-ring/50;
   }
 
+  html,
+  body {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior-y: none;
   }
 }
 

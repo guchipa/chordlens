@@ -56,8 +56,7 @@ components/
 
 | コンポーネント | 責務 |
 |----------------|------|
-| **MainHeader** | アプリケーションタイトル、GitHubリンク、設定ボタンの配置。 |
-| **AppFooter** | フッター情報の表示。 |
+| **AppFooter** | 著作権表示と GitHub リンク。設定ドロワー末尾に配置。 |
 | **SettingsDrawer** | モバイル対応の設定画面スライドインメニュー。`SettingsForm` を内包する。 |
 
 ---

@@ -6,10 +6,12 @@ import { PitchList } from "@/components/feature/PitchList";
 import { SettingsForm } from "@/components/feature/SettingsForm";
 import { PresetManager } from "@/components/feature/PresetManager";
 import { FeedbackTypeSelector } from "@/components/feature/FeedbackTypeSelector";
+import { AppFooter } from "@/components/layout/AppFooter";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -41,15 +43,18 @@ export function SettingsDrawer({
         <Button
           variant="ghost"
           size="icon"
-          className="fixed top-4 left-4 z-50 bg-background/50 backdrop-blur-sm hover:bg-accent"
+          className="size-11 shrink-0"
           aria-label="設定を開く"
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="size-6" />
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-full max-w-sm overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="text-xl">設定</SheetTitle>
+          <SheetDescription>
+            設定した和音の純正律からのズレをリアルタイムで解析します。
+          </SheetDescription>
         </SheetHeader>
         <div className="space-y-8 py-4">
           <ChordFollowToggle />
@@ -59,6 +64,7 @@ export function SettingsDrawer({
           <FeedbackTypeSelector />
           <SettingsForm />
         </div>
+        <AppFooter />
       </SheetContent>
     </Sheet>
   );
