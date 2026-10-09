@@ -28,6 +28,8 @@ components/
 | **AnalysisResult** | **[廃止予定]** 旧形式の解析結果表示。現在は `UnifiedFeedback` に移行中。 | `analysisResult` |
 | **SettingsForm** | 音声解析の設定。数値入力は `inputMode` 指定・44px 高・16px フォント、A4 周波数は −/＋ ステッパー (430-450Hz にクランプ)。高度な設定はアコーディオン。 | `audioSettingsAtoms` |
 | **CentDisplay** | 解析結果の数値詳細表示。構成音ごとの行に音名・音程・平均律との差と、平均律/純正律の再生トグル (`aria-pressed`, 44px 高) を並べる。 | `analysisResult` |
+| **FeedbackTypeSwitch** | メイン画面のフィードバックカードヘッダに置く 3 分割のセグメント (`role=radiogroup`, 各 44px 高、ラベルは `FEEDBACK_TYPE_LABELS`)。`feedbackTypeAtom` を設定ドロワーの FeedbackTypeSelector と共有 (同じ localStorage 永続化)。 | `feedbackTypeAtom` |
+| **UnifiedFeedback** | フィードバック形式 (メーター/バー/サークル) の描画。カードのヘッダに FeedbackTypeSwitch を置き、カード上の横スワイプ (`useSwipeNav`、60px またはフリング、`touch-action: pan-y`、左端 24px 起点は無視) で前後の形式へ移動。切替時はカード本体が左右からスライドイン (reduced-motion では無効)。 | `feedbackTypeAtom` |
 | **PresetManager** | プリセットの保存・読み込み・削除機能 (設定ドロワー内)。一覧は共有 atom `presetsAtom` で、保存・削除後に `refreshPresetsAtom` で再読み込みする。 | `presetsAtom`, `refreshPresetsAtom`, `localStorage` |
 | **PresetSwitcher** | メイン画面の下部固定バー (AnalysisControl の `topSlot`) に置く、プリセットの横スクロールチップ列 (スナップ・スクロールバー非表示・44px 高)。タップで確認なしに即 `loadPresetAtom`。現在の構成音と一致するチップを `aria-pressed` で強調し、各チップに構成音 (根音は太字) を併記。プリセット 0 件のときは設定ドロワーを開くヒントを表示。 | `presetsAtom`, `pitchListAtom`, `loadPresetAtom` |
 | **PresetList** | 保存されたプリセットの一覧表示。 | `presets` |

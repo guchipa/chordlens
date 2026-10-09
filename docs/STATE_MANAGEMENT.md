@@ -71,6 +71,8 @@ apps/web/lib/store/
 |--------|----|------------|-------------|
 | `feedbackTypeAtom` | `Meter \| Bar \| Circle` | `"meter"` | `feedbackType` |
 
+メイン画面の `FeedbackTypeSwitch` / カードの横スワイプと、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。
+
 **カスタムストレージロジック**:
 `localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes`）を行い、無効な値はデフォルト値にフォールバックします。
 

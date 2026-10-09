@@ -22,7 +22,8 @@ interface TunerMeterProps {
     deviation: number | null;
   }>;
   /** メーターのタイトル */
-  title?: string;
+  /** カードヘッダに表示する内容 (文字列、または形式切替などの要素) */
+  title?: React.ReactNode;
   /** 根音の音名（例: "C4"） */
   rootPitchName?: string;
   /** A4の基準周波数（デフォルト: 442Hz） */
@@ -113,7 +114,11 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="px-4 pt-3 pb-0">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title || "Tuner"}</CardTitle>
+        {typeof title === "string" || title == null ? (
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title || "Tuner"}</CardTitle>
+        ) : (
+          title
+        )}
       </CardHeader>
       <CardContent className="flex flex-col items-center px-3 pb-3 pt-1">
         <div className="flex w-full aspect-[2/1] overflow-hidden">
