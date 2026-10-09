@@ -47,6 +47,7 @@ chordlens/
 | `KeyValueStorage` | 設定・プリセットの永続化 | `localStorage` (`apps/web/lib/presets.ts`) | MMKV / AsyncStorage |
 | `SpectrumSource` | マイク入力とスペクトル取得 | `AudioContext` + `AnalyserNode` (`apps/web/lib/hooks/audio/useAudioContext.ts` が同等機能) | react-native-audio-api / native モジュール + `core/audio_analysis/fft.ts` |
 | `NoteDetector` | 構成音検出 (音名の集合を返す) | `HarmonicNoteDetector` (core) を `apps/web/lib/audio/noteDetectorFactory.ts` が生成 | 実装は core にありプラットフォーム非依存。生成時に A4・サンプルレートを注入するだけでよい |
+| `ScreenWakeLock` | 解析中の画面スリープ抑止 | Screen Wake Lock API (`apps/web/lib/screenWakeLock.ts`、`lib/hooks/useWakeLock.ts` から利用。可視復帰時の再取得は実装側) | expo-keep-awake / `@capacitor-community/keep-awake` |
 
 ## 3. プラットフォーム依存ポイントの全リスト
 
@@ -61,6 +62,7 @@ chordlens/
 | 解析ループ | `useSpectrumAnalysis.ts` (requestAnimationFrame) | RN でも rAF は利用可。精度が必要なら setInterval / ネイティブコールバック |
 | 設定の永続化 | `lib/store/*` (jotai `atomWithStorage` → localStorage) | `createJSONStorage` に MMKV 等を注入 (jotai 自体は RN 対応) |
 | プリセット永続化 | `lib/presets.ts` (localStorage) | `KeyValueStorage` 実装を注入するだけ |
+| 画面スリープ抑止 | `lib/screenWakeLock.ts` (navigator.wakeLock) | `ScreenWakeLock` 実装に置換 (keep-awake 系プラグイン) |
 | CSV ダウンロード | `lib/utils/exportLog.ts` (Blob + `<a download>`) | `expo-file-system` + Share API 等 |
 | 録音 | `lib/hooks/experiments/useMediaRecorder.ts` (MediaRecorder) | expo-av / react-native-audio-recorder |
 | Firebase | `lib/firebase/*` (firebase JS SDK) | firebase JS SDK は RN 対応 (永続化層のみ調整) / @react-native-firebase |

@@ -123,7 +123,8 @@ chordlens/
 │       │   ├── adapters/        # プラットフォーム抽象インターフェース
 │       │   │   ├── storage.ts              # KeyValueStorage（localStorage 等の抽象）
 │       │   │   ├── audio.ts                # SpectrumSource（音声入力の抽象）
-│       │   │   └── noteDetection.ts        # NoteDetector（構成音検出の抽象・実装は audio_analysis 側）
+│       │   │   ├── noteDetection.ts        # NoteDetector（構成音検出の抽象・実装は audio_analysis 側）
+│       │   │   └── wakeLock.ts             # ScreenWakeLock（画面スリープ抑止の抽象）
 │       │   ├── presets/         # プリセット管理コア（ストレージ注入式）
 │       │   ├── logging/         # ログ CSV 変換
 │       │   ├── utils/           # emaHold（EMA + ホールド平滑化）
@@ -159,6 +160,7 @@ chordlens/
 │       │   ├── experiments/     # 評価実験ロジック
 │       │   ├── firebase/        # Firebase 連携
 │       │   ├── presets.ts       # プリセット管理の Web バインディング
+│       │   ├── screenWakeLock.ts # ScreenWakeLock の Web 実装（Screen Wake Lock API）
 │       │   └── utils/exportLog.ts  # CSV ダウンロード（Web バインディング）
 │       ├── functions/           # Cloudflare Pages Functions (client-log API)
 │       ├── public/              # 静的ファイル

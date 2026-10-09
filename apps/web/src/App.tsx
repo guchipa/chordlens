@@ -3,6 +3,7 @@ import { useAtomValue } from "jotai";
 
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
 import { useChordFollow } from "@/lib/hooks/useChordFollow";
+import { useWakeLock } from "@/lib/hooks/useWakeLock";
 
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
@@ -67,6 +68,9 @@ export function App() {
   // 構成音の自動追従ループ (トグルは SettingsDrawer 内、状態は Jotai atom)。
   // 解析実行中のみ、チューナー本体の音声グラフを共有して推定を行う
   useChordFollow({ active: isProcessing, audioNodesRef });
+
+  // 解析中は画面スリープを抑止する (実験フローは別ルートのため対象外)
+  useWakeLock(isProcessing);
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">
