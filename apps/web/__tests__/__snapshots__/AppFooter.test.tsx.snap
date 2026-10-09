@@ -3,13 +3,13 @@
 exports[`AppFooter > renders correctly 1`] = `
 <div>
   <footer
-    class="w-full bg-white border-t"
+    class="w-full border-t"
   >
     <div
-      class="container mx-auto py-5 px-4 text-center text-sm text-gray-600"
+      class="py-2 text-center text-xs text-gray-600"
     >
       <div
-        class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-2"
+        class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 "
       >
         <p>
           © 
@@ -17,7 +17,7 @@ exports[`AppFooter > renders correctly 1`] = `
            Hinata Moriguchi
         </p>
         <a
-          class="inline-flex items-center gap-1.5 hover:text-gray-900 transition-colors"
+          class="inline-flex min-h-11 items-center gap-1.5 hover:text-gray-900 transition-colors"
           href="https://github.com/guchipa/chordlens"
           rel="noopener noreferrer"
           target="_blank"

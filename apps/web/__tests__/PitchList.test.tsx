@@ -28,7 +28,7 @@ describe("PitchList", () => {
     renderWithJotai([]);
     expect(
       screen.getByText(
-        "まだ評価する音がありません。上のフォームから追加してください。"
+        "まだ評価する音がありません。下のフォームから追加してください。"
       )
     ).toBeInTheDocument();
   });
@@ -43,7 +43,7 @@ describe("PitchList", () => {
     const { store } = renderWithJotai(mockPitchList);
 
     // 削除ボタンをクリック（最初の要素を削除）
-    fireEvent.click(screen.getAllByRole("button", { name: "" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "C4 を削除" }));
 
     // Jotai storeから要素が削除されていることを確認
     const updatedList = store.get(pitchListAtom);

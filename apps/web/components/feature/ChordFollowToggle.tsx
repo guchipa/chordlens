@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsSection } from "@/components/layout/SettingsSection";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -52,39 +52,36 @@ export function ChordFollowToggle() {
     const label = statusLabel(status);
 
     return (
-        <Card className="w-full max-w-lg">
-            <CardHeader>
-                <CardTitle>構成音の自動検出</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                        <Switch
-                            id="chord-follow-switch"
-                            checked={enabled}
-                            onCheckedChange={handleToggle}
-                        />
-                        <Label htmlFor="chord-follow-switch" className="cursor-pointer">
-                            自動追従モード
-                        </Label>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                        解析の実行中に、演奏した和音から構成音を自動で推定し、
-                        リストに反映します。楽器音を検出したときだけ推定を行います。
+        <SettingsSection title="構成音の自動検出">
+            <div className="space-y-1">
+                <Label
+                    htmlFor="chord-follow-switch"
+                    className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 text-base"
+                >
+                    自動追従モード
+                    <Switch
+                        id="chord-follow-switch"
+                        size="touch"
+                        checked={enabled}
+                        onCheckedChange={handleToggle}
+                    />
+                </Label>
+                <p className="text-xs text-gray-500">
+                    解析の実行中に、演奏した和音から構成音を自動で推定し、
+                    リストに反映します。楽器音を検出したときだけ推定を行います。
+                </p>
+                {enabled && label && (
+                    <p className="text-sm text-blue-600">{label}</p>
+                )}
+                {enabled && !label && (
+                    <p className="text-sm text-gray-500">
+                        解析を開始すると追従が始まります
                     </p>
-                    {enabled && label && (
-                        <p className="text-sm text-blue-600">{label}</p>
-                    )}
-                    {enabled && !label && (
-                        <p className="text-sm text-gray-500">
-                            解析を開始すると追従が始まります
-                        </p>
-                    )}
-                    {error && (
-                        <p className="text-sm font-medium text-red-600">{error}</p>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+                )}
+                {error && (
+                    <p className="text-sm font-medium text-red-600">{error}</p>
+                )}
+            </div>
+        </SettingsSection>
     );
 }

@@ -2,13 +2,7 @@
 
 import { useAtom, useSetAtom } from "jotai";
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SettingsSection } from "@/components/layout/SettingsSection";
 import { Button } from "@/components/ui/button";
 import { PresetSaveDialog } from "@/components/feature/PresetSaveDialog";
 import { PresetList } from "@/components/feature/PresetList";
@@ -58,46 +52,40 @@ export function PresetManager() {
 
   if (!localStorageAvailable) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>プリセット機能</CardTitle>
-          <CardDescription>
-            localStorageが利用できないため、プリセット機能は使用できません。
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <SettingsSection
+        title="プリセット機能"
+        description="localStorageが利用できないため、プリセット機能は使用できません。"
+      >
+        <p className="text-muted-foreground text-sm">
+          この環境では保存・読み込みができません。
+        </p>
+      </SettingsSection>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>プリセット</CardTitle>
-              <CardDescription>
-                構成音リストを保存・読み込みできます
-              </CardDescription>
-            </div>
-            <Button
-              onClick={handleSaveClick}
-              disabled={pitchList.length === 0}
-              size="sm"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              保存
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <SettingsSection
+        title="プリセット"
+        description="構成音リストを保存・読み込みできます"
+      >
+        <div className="space-y-3">
+          <Button
+            onClick={handleSaveClick}
+            disabled={pitchList.length === 0}
+            variant="outline"
+            className="h-11 w-full bg-background"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            現在の構成音を保存
+          </Button>
           <PresetList
             presets={presets}
             onLoad={handleLoadPreset}
             onDelete={handleDeletePreset}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsSection>
 
       <PresetSaveDialog
         open={saveDialogOpen}

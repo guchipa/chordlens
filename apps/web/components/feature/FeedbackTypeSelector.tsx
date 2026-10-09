@@ -3,12 +3,9 @@
 import { useAtom } from "jotai";
 import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  SettingsSection,
+  SELECT_TOUCH,
+} from "@/components/layout/SettingsSection";
 import {
   Select,
   SelectContent,
@@ -28,14 +25,8 @@ export function FeedbackTypeSelector() {
   const [feedbackType, setFeedbackType] = useAtom(feedbackTypeAtom);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>フィードバック形式</CardTitle>
-        <CardDescription>
-          {FEEDBACK_TYPE_DESCRIPTIONS[feedbackType]}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
+    <SettingsSection title="フィードバック形式">
+      <div className="space-y-2">
         <Label htmlFor="feedback-type" className="sr-only">
           フィードバック形式
         </Label>
@@ -43,18 +34,21 @@ export function FeedbackTypeSelector() {
           value={feedbackType}
           onValueChange={(value) => setFeedbackType(value as FeedbackType)}
         >
-          <SelectTrigger id="feedback-type">
+          <SelectTrigger id="feedback-type" className={SELECT_TOUCH}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {FEEDBACK_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
+              <SelectItem key={type} value={type} className="min-h-11 text-base">
                 {FEEDBACK_TYPE_LABELS[type]}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-      </CardContent>
-    </Card>
+        <p className="text-muted-foreground text-xs">
+          {FEEDBACK_TYPE_DESCRIPTIONS[feedbackType]}
+        </p>
+      </div>
+    </SettingsSection>
   );
 }

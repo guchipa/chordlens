@@ -22,11 +22,11 @@ components/
 
 | コンポーネント | 責務 | 依存するState/Hook |
 |----------------|------|--------------------|
-| **PitchSettingForm** | 構成音の入力フォーム。音名・オクターブ・根音を選択して追加する。 | `pitchListAtom`, `addOrUpdatePitchAtom` |
-| **PitchList** | 現在設定されている構成音の一覧表示。削除や根音変更、プリセット操作のトリガー。 | `pitchListAtom`, `removePitchAtom`, `rootEstimation` |
+| **PitchSettingForm** | 構成音の入力フォーム。12 音のワンタップグリッド (`aria-pressed`, 44px 高) とオクターブのセグメント (`OCTAVE_NUM_LIST`)、マイク入力、根音/計測対象のタップ行 (44px 以上) で追加する。 | `pitchListAtom`, `addOrUpdatePitchAtom` |
+| **PitchList** | 現在設定されている構成音のチップ一覧 (削除は 44px の `×`、`aria-label="C4 を削除"`)。根音推定・全クリア (44px)。設定ドロワーの先頭に配置。 | `pitchListAtom`, `removePitchAtom`, `rootEstimation` |
 | **AnalysisControl** | 解析の開始・停止ボタン。解析中の状態表示。マイク取得失敗時はインラインの閉じられるエラーバナー (`error`, `onDismissError`) を表示。 | `useAudioAnalysis` (`error`, `dismissError`) |
 | **AnalysisResult** | **[廃止予定]** 旧形式の解析結果表示。現在は `UnifiedFeedback` に移行中。 | `analysisResult` |
-| **SettingsForm** | 音声解析や表示の設定パネル。 | `audioSettingsAtoms` |
+| **SettingsForm** | 音声解析の設定。数値入力は `inputMode` 指定・44px 高・16px フォント、A4 周波数は −/＋ ステッパー (430-450Hz にクランプ)。高度な設定はアコーディオン。 | `audioSettingsAtoms` |
 | **CentDisplay** | 解析結果の数値詳細表示。構成音ごとの行に音名・音程・平均律との差と、平均律/純正律の再生トグル (`aria-pressed`, 44px 高) を並べる。 | `analysisResult` |
 | **PresetManager** | プリセットの保存・読み込み・削除機能。 | `localStorage` |
 | **PresetList** | 保存されたプリセットの一覧表示。 | `presets` |
@@ -57,7 +57,8 @@ components/
 | コンポーネント | 責務 |
 |----------------|------|
 | **AppFooter** | 著作権表示と GitHub リンク。設定ドロワー末尾に配置。 |
-| **SettingsDrawer** | モバイル対応の設定画面スライドインメニュー。`SettingsForm` を内包する。 |
+| **SettingsDrawer** | 設定画面の左スライドインシート (スマホでは全幅、ヘッダーはタイトル+44px の閉じるボタンで sticky、`env(safe-area-inset-*)` 対応)。セクション順: 現在の評価対象音 → 音の追加 → プリセット → 構成音の自動検出 → フィードバック形式 → 解析設定 (高度な設定) → フッター。 |
+| **SettingsSection** | ドロワー用の軽量セクション (小さな見出し + 淡い背景のグループ)。`TAP_ROW` / `FIELD_TOUCH` / `SELECT_TOUCH` のタッチ向け共通クラスも提供。 |
 
 ---
 
@@ -67,7 +68,7 @@ components/
 
 **主要なコンポーネント**:
 - `Button`: ボタン
-- `Input`, `Select`, `Slider`, `Switch`: フォーム要素
+- `Input`, `Select`, `Slider`, `Switch`: フォーム要素。`Checkbox` の `touch` プロップと `Switch` の `size="touch"` は 44px のタップ領域を持つ (設定ドロワー用。既定の見た目は実験フロー向けに不変)
 - `Dialog`, `Sheet` (Drawer): モーダル・オーバーレイ
 - `Accordion`: 折りたたみ表示
 - `Card`: コンテンツコンテナ

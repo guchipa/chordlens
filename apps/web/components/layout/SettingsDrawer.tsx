@@ -49,22 +49,27 @@ export function SettingsDrawer({
           <Menu className="size-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-full max-w-sm overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-xl">設定</SheetTitle>
-          <SheetDescription>
+      <SheetContent
+        side="left"
+        className="w-full gap-0 overflow-hidden p-0 sm:max-w-sm"
+      >
+        <SheetHeader className="bg-background border-b px-4 pt-[calc(env(safe-area-inset-top)+0.25rem)] pr-16 pb-1">
+          <SheetTitle className="text-lg leading-11">設定</SheetTitle>
+          <SheetDescription className="sr-only">
             設定した和音の純正律からのズレをリアルタイムで解析します。
           </SheetDescription>
         </SheetHeader>
-        <div className="space-y-8 py-4">
-          <ChordFollowToggle />
-          <PitchSettingForm />
-          <PitchList />
+        <div className="flex-1 space-y-5 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <div className="space-y-3">
+            <PitchList />
+            <PitchSettingForm />
+          </div>
           <PresetManager />
+          <ChordFollowToggle />
           <FeedbackTypeSelector />
           <SettingsForm />
+          <AppFooter />
         </div>
-        <AppFooter />
       </SheetContent>
     </Sheet>
   );
