@@ -18,8 +18,6 @@ const VELOCITY_WINDOW_MS = 100;
 const SETTLE_MS = 220;
 const SETTLE_EASING = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 
-/** 左端スワイプ開きの検知領域 (px) */
-const EDGE_ZONE_PX = 22;
 
 /** スワイプ開始を無視する要素 (スライダー・入力系は横操作を優先する) */
 const IGNORE_SELECTOR =
@@ -244,32 +242,27 @@ export function useSwipeDrawer({
 
   // ---- 開く: 画面左端からの右スワイプ (window イベント) ----
 
-  // ジェスチャ中に isOpen が変わる (ドラッグで開く) ため、リスナーは isOpen に依存させず
-  // 開始時に isOpenRef で判定する
+  // 開始は左端ゾーン要素の pointerdown (edgeZoneProps)。移動・終了はゾーンへの
+  // ポインタキャプチャ経由で window に届く。ジェスチャ中に isOpen が変わる (ドラッグで開く)
+  // ため、リスナーは isOpen に依存させない
+  const onEdgePointerDown = (e: ReactPointerEvent<HTMLElement>) => {
+    // マウスは対象外 (タッチ/ペンのみ)
+    if (e.pointerType === "mouse" || !e.isPrimary || isOpenRef.current) return;
+    gestureRef.current = {
+      id: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      originX: e.clientX,
+      kind: "open",
+      dragging: false,
+      width: 0,
+      samples: [{ t: e.timeStamp, x: e.clientX }],
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
   useEffect(() => {
     if (!edgeOpenEnabled) return;
-    // 横スワイプをブラウザ側のパン/オーバースクロールに奪われ pointercancel になるのを防ぐ
-    // (縦スクロールはそのまま可能。ピンチズームは無効になる)
-    const root = document.documentElement;
-    const prevTouchAction = root.style.touchAction;
-    root.style.touchAction = "pan-y";
-
-    const down = (e: PointerEvent) => {
-      // マウスは対象外 (タッチ/ペンのみ)
-      if (e.pointerType === "mouse" || !e.isPrimary) return;
-      if (isOpenRef.current || e.clientX > EDGE_ZONE_PX) return;
-      gestureRef.current = {
-        id: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-        originX: e.clientX,
-        kind: "open",
-        dragging: false,
-        width: 0,
-        samples: [{ t: e.timeStamp, x: e.clientX }],
-      };
-    };
-
     const move = (e: PointerEvent) => {
       const g = gestureRef.current;
       if (!g || g.kind !== "open" || g.id !== e.pointerId) return;
@@ -284,7 +277,6 @@ export function useSwipeDrawer({
           onOpenRef.current?.();
         });
         g.width = elRef.current?.getBoundingClientRect().width ?? 0;
-        document.documentElement.setPointerCapture?.(e.pointerId);
       }
       edgeXRef.current = e.clientX;
       trackSample(g, e.timeStamp, e.clientX);
@@ -310,13 +302,10 @@ export function useSwipeDrawer({
     const upHandler = (e: PointerEvent) => up(e, false);
     const cancelHandler = (e: PointerEvent) => up(e, true);
 
-    window.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", upHandler);
     window.addEventListener("pointercancel", cancelHandler);
     return () => {
-      root.style.touchAction = prevTouchAction;
-      window.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", upHandler);
       window.removeEventListener("pointercancel", cancelHandler);
@@ -330,6 +319,14 @@ export function useSwipeDrawer({
     ref,
     /** true の間は Radix のアニメーション (animate-in/out) を無効化する */
     holdAnimation: isOpen ? hold : closedBySwipe,
+    /**
+     * 左端ゾーン要素に展開する。ゾーンだけに touch-action: pan-y を掛けることで、
+     * 画面全体のピンチズームを妨げずに横スワイプをブラウザに奪われないようにする
+     */
+    edgeZoneProps: {
+      onPointerDown: onEdgePointerDown,
+      style: { touchAction: "pan-y" as const },
+    },
     /** SheetContent に展開する */
     contentProps: {
       onPointerDown,

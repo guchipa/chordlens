@@ -21,6 +21,7 @@ import { useSwipeDrawer } from "@/lib/hooks/useSwipeDrawer";
 import { canUseEdgeSwipe } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
+import { createPortal } from "react-dom";
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -43,14 +44,31 @@ export function SettingsDrawer({
 
   // 戻る操作 (ブラウザ/Android の戻る) でドロワーを閉じる
   useBackButtonClose(isOpen, onClose);
+  const edgeOpenEnabled = canUseEdgeSwipe();
   const swipe = useSwipeDrawer({
     isOpen,
     onClose,
     onOpen,
-    edgeOpenEnabled: canUseEdgeSwipe(),
+    edgeOpenEnabled,
   });
 
   return (
+    <>
+      {edgeOpenEnabled &&
+        // ヘッダー (sticky + backdrop-blur) の外に出すため body へポータルする。
+        // アプリバーと下部バーは避け、ドロワー表示中は操作を受けない
+        createPortal(
+          <div
+            aria-hidden
+            data-slot="edge-swipe-zone"
+            {...swipe.edgeZoneProps}
+            className={cn(
+              "fixed left-0 z-30 w-[22px] top-[calc(3.5rem+env(safe-area-inset-top))] bottom-[calc(8.5rem+env(safe-area-inset-bottom))]",
+              isOpen && "pointer-events-none",
+            )}
+          />,
+          document.body,
+        )}
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button
@@ -91,5 +109,6 @@ export function SettingsDrawer({
         </div>
       </SheetContent>
     </Sheet>
+    </>
   );
 }
