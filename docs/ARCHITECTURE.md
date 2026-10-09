@@ -124,7 +124,8 @@ chordlens/
 │       │   │   ├── storage.ts              # KeyValueStorage（localStorage 等の抽象）
 │       │   │   ├── audio.ts                # SpectrumSource（音声入力の抽象）
 │       │   │   ├── noteDetection.ts        # NoteDetector（構成音検出の抽象・実装は audio_analysis 側）
-│       │   │   └── wakeLock.ts             # ScreenWakeLock（画面スリープ抑止の抽象）
+│       │   │   ├── wakeLock.ts             # ScreenWakeLock（画面スリープ抑止の抽象）
+│       │   │   └── appLifecycle.ts         # AppLifecycle（前面/背面遷移の抽象。解析の自動停止に使う）
 │       │   ├── presets/         # プリセット管理コア（ストレージ注入式。削除の取り消し用 restorePreset を含む）、pitchListEquals（構成音リストの同一判定）
 │       │   ├── undo/            # listOps（「元に戻す」用の removeAt / insertAt。純関数）
 │       │   ├── gestures/        # swipeIntent（横スワイプの確定判定・隣接項目の取得。純関数）
@@ -164,6 +165,7 @@ chordlens/
 │       │   ├── presets.ts       # プリセット管理の Web バインディング
 │       │   ├── platform.ts      # プラットフォーム判定 (iOS / PWA standalone / 左端スワイプ可否)
 │       │   ├── screenWakeLock.ts # ScreenWakeLock の Web 実装（Screen Wake Lock API）
+│       │   ├── appLifecycle.ts  # AppLifecycle の Web 実装（visibilitychange / pagehide / pageshow）
 │       │   └── utils/exportLog.ts  # CSV ダウンロード（Web バインディング）
 │       ├── functions/           # Cloudflare Pages Functions (client-log API)
 │       ├── public/              # 静的ファイル
@@ -350,6 +352,7 @@ graph TD
 | **useSpectrumAnalysis** | スペクトル解析ループ、評価結果の算出 |
 | **usePitchList** | 構成音リストの操作（追加、削除、プリセット） |
 | **useChordFollow** | 構成音の自動追従（ストリーミング解析） |
+| **useAutoStopOnHidden** | メインアプリ専用。解析中に背面へ回ったら `stopProcessing` で自動停止し、`autoStopped` を立てる（前面復帰しても自動再開しない。次の開始で解除）。`AppLifecycle` を注入可。実験フローでは使わない |
 
 ### 7.2. 音声解析関数
 

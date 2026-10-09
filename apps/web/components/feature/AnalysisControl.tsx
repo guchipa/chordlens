@@ -12,6 +12,8 @@ interface AnalysisControlProps {
   /** マイク取得失敗などのエラー (指定時は開始ボタンの上にバナー表示) */
   error?: string | null;
   onDismissError?: () => void;
+  /** バックグラウンド移行で自動停止した直後 (状態表示行に案内を出す。次の開始で親が false に戻す) */
+  autoStopped?: boolean;
   /** 状態表示行の上に置く追加コンテンツ (プリセット切替など) */
   topSlot?: React.ReactNode;
 }
@@ -20,7 +22,7 @@ interface AnalysisControlProps {
  * 画面下部に固定される解析の開始/停止バー。
  * 親指が届く位置に置き、状態表示行は常に同じ高さでレイアウトシフトを起こさない。
  */
-export const AnalysisControl: React.FC<AnalysisControlProps> = ({ isProcessing, startProcessing, stopProcessing, isPitchListEmpty, error = null, onDismissError, topSlot }) => {
+export const AnalysisControl: React.FC<AnalysisControlProps> = ({ isProcessing, startProcessing, stopProcessing, isPitchListEmpty, error = null, onDismissError, autoStopped = false, topSlot }) => {
   const disabled = isPitchListEmpty && !isProcessing;
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +74,10 @@ export const AnalysisControl: React.FC<AnalysisControlProps> = ({ isProcessing, 
               </span>
               <span className="font-medium text-gray-800">マイク入力を解析中</span>
             </>
+          ) : autoStopped ? (
+            <span className="font-medium text-amber-700">
+              バックグラウンドに移ったため解析を停止しました
+            </span>
           ) : disabled ? (
             "設定から評価する音を追加してください"
           ) : (

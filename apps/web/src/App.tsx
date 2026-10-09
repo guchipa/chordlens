@@ -4,6 +4,7 @@ import { useAtomValue } from "jotai";
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
 import { useChordFollow } from "@/lib/hooks/useChordFollow";
 import { useWakeLock } from "@/lib/hooks/useWakeLock";
+import { useAutoStopOnHidden } from "@/lib/hooks/useAutoStopOnHidden";
 
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
@@ -71,6 +72,10 @@ export function App() {
   // 解析実行中のみ、チューナー本体の音声グラフを共有して推定を行う
   useChordFollow({ active: isProcessing, audioNodesRef });
 
+  // 背面へ回ったら解析 (マイク) を止める。前面復帰時は自動再開せず、案内を出して次の「解析開始」を待つ。
+  // isProcessing に従うため、WakeLock・構成音の自動追従も同時に止まり、再取得もされない
+  const { autoStopped, clearAutoStopped } = useAutoStopOnHidden({ isProcessing, stopProcessing });
+
   // 解析中は画面スリープを抑止する (実験フローは別ルートのため対象外)
   useWakeLock(isProcessing);
 
@@ -118,11 +123,15 @@ export function App() {
 
       <AnalysisControl
         isProcessing={isProcessing}
-        startProcessing={startProcessing}
+        startProcessing={() => {
+          clearAutoStopped();
+          void startProcessing();
+        }}
         stopProcessing={stopProcessing}
         isPitchListEmpty={currentPitchList.length === 0}
         error={error}
         onDismissError={dismissError}
+        autoStopped={autoStopped}
         topSlot={<PresetSwitcher onOpenSettings={() => setIsSettingsOpen(true)} />}
       />
       <Toaster />

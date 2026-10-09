@@ -24,7 +24,7 @@ components/
 |----------------|------|--------------------|
 | **PitchSettingForm** | 構成音の入力フォーム。12 音のワンタップグリッド (`aria-pressed`, 44px 高) とオクターブのセグメント (`OCTAVE_NUM_LIST`)、マイク入力と同じ行の「C4 を追加」ボタン (選択中の音名を表示、スクロール不要・追加後は aria-live で「追加しました」を表示) で追加する。根音/計測対象のタップ行 (44px 以上) はその下に置く。 | `pitchListAtom`, `addOrUpdatePitchAtom` |
 | **PitchList** | 現在設定されている構成音のチップ一覧 (削除は 44px の `×`、`aria-label="C4 を削除"`)。根音推定・全クリア (44px)。設定ドロワーの先頭に配置。 | `pitchListAtom`, `removePitchAtom`, `rootEstimation` |
-| **AnalysisControl** | 解析の開始・停止ボタン。解析中の状態表示。`topSlot` に PresetSwitcher を載せる (固定バー全体の高さは約 12rem。`App.tsx` の下余白と SettingsDrawer の左端ゾーンの `bottom` が同値に依存)。マイク取得失敗時はインラインの閉じられるエラーバナー (`error`, `onDismissError`) を表示。 | `useAudioAnalysis` (`error`, `dismissError`) |
+| **AnalysisControl** | 解析の開始・停止ボタン。解析中の状態表示。`topSlot` に PresetSwitcher を載せる (固定バー全体の高さは約 12rem。`App.tsx` の下余白と SettingsDrawer の左端ゾーンの `bottom` が同値に依存)。マイク取得失敗時はインラインの閉じられるエラーバナー (`error`, `onDismissError`) を表示。`autoStopped` が true (背面移行で自動停止した直後) のとき、状態表示行に「バックグラウンドに移ったため解析を停止しました」を出し、開始ボタンはそのまま押せる (`App.tsx` が `useAutoStopOnHidden` の結果を渡し、開始タップで解除)。実測した高さを CSS 変数 `--bottom-bar-h` に公開し Toaster の位置に使う。 | `useAudioAnalysis` (`error`, `dismissError`) |
 | **AnalysisResult** | **[廃止予定]** 旧形式の解析結果表示。現在は `UnifiedFeedback` に移行中。 | `analysisResult` |
 | **SettingsForm** | 音声解析の設定。数値入力は `inputMode` 指定・44px 高・16px フォント、A4 周波数は −/＋ ステッパー (430-450Hz にクランプ)。高度な設定はアコーディオン。 | `audioSettingsAtoms` |
 | **CentDisplay** | 解析結果の数値詳細表示。構成音ごとの行に音名・音程・平均律との差と、平均律/純正律の再生トグル (`aria-pressed`, 44px 高) を並べる。 | `analysisResult` |

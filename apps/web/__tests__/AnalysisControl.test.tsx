@@ -68,4 +68,33 @@ describe("AnalysisControl", () => {
     );
     expect(screen.getByText("解析開始")).toBeDisabled();
   });
+
+  it("自動停止後は案内を表示し、開始ボタンは押せる。解析中は案内を出さない", () => {
+    const { rerender } = render(
+      <AnalysisControl
+        isProcessing={false}
+        startProcessing={startProcessing}
+        stopProcessing={stopProcessing}
+        isPitchListEmpty={false}
+        autoStopped
+      />
+    );
+    expect(
+      screen.getByText("バックグラウンドに移ったため解析を停止しました")
+    ).toBeInTheDocument();
+    expect(screen.getByText("解析開始").closest("button")).not.toBeDisabled();
+
+    rerender(
+      <AnalysisControl
+        isProcessing={true}
+        startProcessing={startProcessing}
+        stopProcessing={stopProcessing}
+        isPitchListEmpty={false}
+        autoStopped
+      />
+    );
+    expect(
+      screen.queryByText("バックグラウンドに移ったため解析を停止しました")
+    ).toBeNull();
+  });
 });
