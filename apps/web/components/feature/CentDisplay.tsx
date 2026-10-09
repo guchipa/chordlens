@@ -2,15 +2,8 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Volume2, Square } from "lucide-react";
 import type { Pitch } from "@chordlens/core/types";
 import { getEqualJustDiff, getEqualFrequencies, getJustFrequencies } from "@chordlens/core/audio_analysis/calcJustFreq";
 import { PITCH_NAME_LIST } from "@chordlens/core/constants";
@@ -153,64 +146,68 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
     }
   }, [pitchList, a4Freq, playToneContinuous]);
 
+  const renderToggle = (index: number, kind: "equal" | "just") => {
+    const playing = playingState.get(`${kind}-${index}`) === true;
+    const label = kind === "equal" ? "平均律" : "純正律";
+    const onClick = kind === "equal" ? toggleEqual : toggleJust;
+    return (
+      <Button
+        type="button"
+        variant={playing ? "default" : "outline"}
+        aria-pressed={playing}
+        aria-label={`${pitchList[index].pitchName}${pitchList[index].octaveNum} ${label}を${playing ? "停止" : "再生"}`}
+        onClick={() => onClick(index)}
+        className="h-11 flex-1 gap-2 text-base"
+      >
+        {playing ? <Square className="size-4 fill-current" /> : <Volume2 className="size-4" />}
+        {label}
+      </Button>
+    );
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+      <CardHeader className="px-4 pt-3 pb-0">
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>音名</TableHead>
-              <TableHead>音程</TableHead>
-              <TableHead className="text-right">セント差</TableHead>
-              <TableHead className="text-center">再生</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pitchList.map((pitch, index) => {
-              const interval = calculateInterval(pitchList, index);
-              const intervalName = INTERVAL_NAMES[interval] || "?";
-              const centValue = equalJustDiff[index];
+      <CardContent className="px-4 pb-1 pt-1">
+        <ul className="divide-y">
+          {pitchList.map((pitch, index) => {
+            const interval = calculateInterval(pitchList, index);
+            const intervalName = INTERVAL_NAMES[interval] || "?";
+            const centValue = equalJustDiff[index];
 
-              return (
-                <TableRow key={`${pitch.pitchName}-${pitch.octaveNum}-${index}`}>
-                  <TableCell className="font-medium">
-                    {pitch.pitchName}
-                    {pitch.octaveNum}
-                  </TableCell>
-                  <TableCell>{intervalName}</TableCell>
-                  <TableCell className="text-right">
-                    {centValue !== undefined
-                      ? `${centValue >= 0 ? "+" : ""}${centValue.toFixed(CENT_DIGIT_NUM)}`
-                      : "---"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex gap-1 justify-center">
-                      <Button
-                        size="sm"
-                        variant={playingState.get(`equal-${index}`) ? "default" : "outline"}
-                        onClick={() => toggleEqual(index)}
-                        title="平均律を再生/停止"
-                      >
-                        平
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={playingState.get(`just-${index}`) ? "default" : "outline"}
-                        onClick={() => toggleJust(index)}
-                        title="純正律を再生/停止"
-                      >
-                        純
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+            return (
+              <li
+                key={`${pitch.pitchName}-${pitch.octaveNum}-${index}`}
+                className="flex flex-col gap-2 py-3"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-bold tabular-nums">
+                      {pitch.pitchName}
+                      {pitch.octaveNum}
+                    </span>
+                    <span className="text-sm text-muted-foreground">{intervalName}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-muted-foreground">平均律との差 </span>
+                    <span className="text-base font-semibold tabular-nums">
+                      {centValue !== undefined
+                        ? `${centValue >= 0 ? "+" : ""}${centValue.toFixed(CENT_DIGIT_NUM)}`
+                        : "---"}
+                    </span>
+                    <span className="text-xs text-muted-foreground"> ¢</span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {renderToggle(index, "equal")}
+                  {renderToggle(index, "just")}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </CardContent>
     </Card>
   );

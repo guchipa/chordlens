@@ -24,10 +24,10 @@ components/
 |----------------|------|--------------------|
 | **PitchSettingForm** | 構成音の入力フォーム。音名・オクターブ・根音を選択して追加する。 | `pitchListAtom`, `addOrUpdatePitchAtom` |
 | **PitchList** | 現在設定されている構成音の一覧表示。削除や根音変更、プリセット操作のトリガー。 | `pitchListAtom`, `removePitchAtom`, `rootEstimation` |
-| **AnalysisControl** | 解析の開始・停止ボタン。解析中の状態表示。 | `useAudioAnalysis` |
+| **AnalysisControl** | 解析の開始・停止ボタン。解析中の状態表示。マイク取得失敗時はインラインの閉じられるエラーバナー (`error`, `onDismissError`) を表示。 | `useAudioAnalysis` (`error`, `dismissError`) |
 | **AnalysisResult** | **[廃止予定]** 旧形式の解析結果表示。現在は `UnifiedFeedback` に移行中。 | `analysisResult` |
 | **SettingsForm** | 音声解析や表示の設定パネル。 | `audioSettingsAtoms` |
-| **CentDisplay** | 解析結果の数値詳細表示。和音名やセント差分を表形式で出す。 | `analysisResult` |
+| **CentDisplay** | 解析結果の数値詳細表示。構成音ごとの行に音名・音程・平均律との差と、平均律/純正律の再生トグル (`aria-pressed`, 44px 高) を並べる。 | `analysisResult` |
 | **PresetManager** | プリセットの保存・読み込み・削除機能。 | `localStorage` |
 | **PresetList** | 保存されたプリセットの一覧表示。 | `presets` |
 | **LogExportButton** | 実験モード用。解析ログの特定期間記録とCSVエクスポート。 | `useLogRecorder` |
@@ -43,7 +43,7 @@ components/
 |----------------|------|-------|
 | **UnifiedFeedback** | フィードバック表示のコンテナ。設定に応じて以下のコンポーネントを切り替える。 | `feedbackType`, `analysisData` |
 | **MeterFeedback** | アナログメーター風の表示。針の角度でズレを表現。ホールド機能に対応。 | `deviation`, `pitch` |
-| **BarFeedback** | シンプルなバーグラフ表示。複数の音をコンパクトに並べるのに適している。 | `deviation`, `pitch` |
+| **BarFeedback** | シンプルなバーグラフ表示。1 つのカード内に音ごとの行 (左に音名、右にバー) と共通の目盛り凡例を並べる。 | `deviation`, `pitch` |
 | **CircleFeedback** | 12音を円周状に配置し、和音の形（Geometry）を可視化。 | `pitchList`, `deviations` |
 | **NumericFeedback** | シンプルな数値のみの表示。デバッグや精密確認用。 | `centDeviation` |
 | **WaveformFeedback** | **[実験的]** 波形表示。 | `analyserNode` |

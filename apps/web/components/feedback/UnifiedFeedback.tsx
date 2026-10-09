@@ -8,6 +8,7 @@ import { BarFeedback } from "./BarFeedback";
 // import { WaveformFeedback } from "./WaveformFeedback";
 import type { FeedbackType } from "@chordlens/core/constants";
 import type { Pitch } from "@chordlens/core/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CircleFeedback } from "./CircleFeedback";
 
 interface UnifiedFeedbackProps {
@@ -81,22 +82,36 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
   // バー表示も横長なので縦に並べる
   if (feedbackType === "bar") {
     return (
-      <div className="flex flex-col gap-3 w-full max-w-4xl mx-auto">
-        {analysisData.map((data) => {
-          const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
-          const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="px-4 pt-3 pb-0">
+          <CardTitle className="text-sm font-medium text-muted-foreground">バー</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2 px-3 pb-3 pt-2">
+          {analysisData.map((data) => {
+            const key = `${data.pitch.pitchName}-${data.pitch.octaveNum}`;
+            const pitchName = `${data.pitch.pitchName}${data.pitch.octaveNum}`;
 
-          return (
-            <BarFeedback
-              key={key}
-              pitchName={pitchName}
-              deviation={data.deviation}
-              rootPitchName={rootPitchName}
-              a4Freq={a4Freq}
-            />
-          );
-        })}
-      </div>
+            return (
+              <BarFeedback
+                key={key}
+                pitchName={pitchName}
+                deviation={data.deviation}
+                rootPitchName={rootPitchName}
+                a4Freq={a4Freq}
+              />
+            );
+          })}
+          {/* 全バー共通の目盛り凡例 (バー列に揃える) */}
+          <div
+            aria-hidden="true"
+            className="ml-[4.5rem] flex justify-between text-xs text-muted-foreground"
+          >
+            <span>← 低い</span>
+            <span>合っている</span>
+            <span>高い →</span>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -108,9 +123,14 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
     }));
 
     return (
-      <div className="flex justify-center w-full px-4">
-        <CircleFeedback analysisData={circleData} className="w-full max-w-3xl" />
-      </div>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="px-4 pt-3 pb-0">
+          <CardTitle className="text-sm font-medium text-muted-foreground">円形</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center px-3 pb-3 pt-1">
+          <CircleFeedback analysisData={circleData} className="w-full max-w-[360px]" />
+        </CardContent>
+      </Card>
     );
   }
 

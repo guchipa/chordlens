@@ -36,12 +36,21 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
   const isClose = deviation !== null && Math.abs(deviation) < 0.2;
 
   return (
-    <div className="flex flex-col gap-2 p-4 w-full border rounded-lg bg-card">
-      <div className="text-sm font-medium text-center text-muted-foreground">
-        {pitchName}
+    <div className="flex items-center gap-2 w-full">
+      <div className="flex w-16 shrink-0 items-center justify-end gap-1 text-base font-semibold tabular-nums">
+        {isInTune && (
+          <span
+            className="text-green-600 dark:text-green-400"
+            role="img"
+            aria-label="合っています"
+          >
+            ✓
+          </span>
+        )}
+        <span>{pitchName}</span>
       </div>
 
-      <div className="relative h-12 w-full bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden">
+      <div className="relative h-8 grow bg-gray-200 dark:bg-gray-800 rounded-md overflow-hidden">
         {/* 中央ライン */}
         <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-400 dark:bg-gray-600 z-10" />
 
@@ -69,7 +78,7 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
           <>
             {/* バー */}
             <div
-              className="absolute top-1 bottom-1 rounded transition-all duration-150"
+              className="absolute top-1 bottom-1 rounded-sm transition-all duration-150"
               style={{
                 backgroundColor: isInTune
                   ? "#22c55e"
@@ -94,21 +103,9 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
 
         {deviation === null && (
           <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
-            音を検出していません
+            未検出
           </div>
         )}
-      </div>
-
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>低い</span>
-        <span
-          className={
-            isInTune ? "text-green-600 dark:text-green-400 font-semibold" : ""
-          }
-        >
-          {deviation === null ? "--" : isInTune ? "✓" : "調整中"}
-        </span>
-        <span>高い</span>
       </div>
     </div>
   );

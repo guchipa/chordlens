@@ -99,10 +99,12 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
 
   return (
     <svg
-      viewBox="0 0 600 600"
+      viewBox="144 144 312 312"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       style={{ width: '100%', height: 'auto' }}
+      role="img"
+      aria-label="音名ごとのずれを示す円形メーター"
     >
       <g className="layer" display="inline">
         {/* 背景の外側の円 */}
@@ -202,7 +204,7 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
             y={pos.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            fontSize="20"
+            fontSize="22"
             fontWeight="bold"
             fill="#000000"
           >
