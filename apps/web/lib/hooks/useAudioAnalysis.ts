@@ -23,6 +23,7 @@ export function useAudioAnalysis({
   peakSearchDebugFps,
 }: UseAudioAnalysisProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // AudioContext管理
   const {
@@ -62,13 +63,14 @@ export function useAudioAnalysis({
 
   const startProcessing = useCallback(async () => {
     if (isProcessing) return;
+    setError(null);
 
     const success = await initialize();
     if (success) {
       startLoop();
       setIsProcessing(true);
     } else {
-      alert("マイクへのアクセスを許可してください。");
+      setError("マイクにアクセスできません。ブラウザの設定でマイクの使用を許可してください。");
     }
   }, [isProcessing, initialize, startLoop]);
 
@@ -79,8 +81,13 @@ export function useAudioAnalysis({
     setIsProcessing(false);
   }, [stopLoop, cleanup, clearResults]);
 
+  const dismissError = useCallback(() => setError(null), []);
+
   return {
     isProcessing,
+    /** マイク取得失敗などのエラーメッセージ (次回の開始時にクリアされる) */
+    error,
+    dismissError,
     analysisResult,
     centDeviations,
     peakSearchDebug,

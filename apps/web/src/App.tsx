@@ -41,6 +41,8 @@ export function App() {
 
   const {
     isProcessing,
+    error,
+    dismissError,
     analysisResult,
     centDeviations,
     peakSearchDebug,
@@ -113,6 +115,8 @@ export function App() {
         startProcessing={startProcessing}
         stopProcessing={stopProcessing}
         isPitchListEmpty={currentPitchList.length === 0}
+        error={error}
+        onDismissError={dismissError}
       />
     </div>
   );

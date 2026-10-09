@@ -136,7 +136,7 @@ export function PitchSettingForm() {
                   <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
                     オクターブ
                   </FormLabel>
-                  <div className="flex items-center gap-2 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 flex-1">
                     <Select
                       onValueChange={(val) => field.onChange(Number(val))}
                       value={field.value ? field.value.toString() : undefined}
