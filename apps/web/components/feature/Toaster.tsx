@@ -37,7 +37,7 @@ export function Toaster() {
       // トースト操作の pointerdown/focus は document まで伝えず、ドロワーを開いたまま「元に戻す」を押せるようにする
       onPointerDown={(e) => e.stopPropagation()}
       onFocus={(e) => e.stopPropagation()}
-      className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-3 bottom-[calc(var(--bottom-bar-h,10rem)+0.5rem)]"
+      className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-3 bottom-[calc(var(--bottom-bar-h,10rem)+0.5rem)] [html[data-drawer-open]_&]:bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.5rem)]"
     >
       {toast && (
         <div

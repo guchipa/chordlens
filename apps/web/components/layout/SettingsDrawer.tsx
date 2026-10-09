@@ -22,6 +22,7 @@ import { canUseEdgeSwipe } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import { createPortal } from "react-dom";
+import { useEffect } from "react";
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -44,6 +45,15 @@ export function SettingsDrawer({
 
   // 戻る操作 (ブラウザ/Android の戻る) でドロワーを閉じる
   useBackButtonClose(isOpen, onClose);
+  // ドロワー表示中は下部固定バーが隠れるため、Toaster が画面下端へ寄せられるよう
+  // <html> に目印を付ける (CSS だけで参照できる。atom を介さない)
+  useEffect(() => {
+    if (!isOpen) return;
+    const root = document.documentElement;
+    root.setAttribute("data-drawer-open", "");
+    return () => root.removeAttribute("data-drawer-open");
+  }, [isOpen]);
+
   const edgeOpenEnabled = canUseEdgeSwipe();
   const swipe = useSwipeDrawer({
     isOpen,

@@ -66,3 +66,17 @@ describe("Toaster", () => {
     expect(screen.queryByText("second")).toBeNull();
   });
 });
+
+describe("Toaster とドロワー", () => {
+  it("ドロワー表示中は画面下端寄せ用の変種クラスを持つ (html[data-drawer-open] 基準)", () => {
+    cleanup();
+    render(
+      <Provider store={createStore()}>
+        <Toaster />
+      </Provider>,
+    );
+    const region = screen.getByRole("status");
+    expect(region.className).toContain("[html[data-drawer-open]_&]:bottom-");
+    expect(region.className).toContain("var(--bottom-bar-h");
+  });
+});
