@@ -3,7 +3,7 @@ import { resolveSwipeIntent } from "@chordlens/core/gestures/swipeIntent";
 
 /** 向きを判定するまでの移動量 (px) */
 const AXIS_LOCK_PX = 8;
-/** SettingsDrawer の左端スワイプゾーン幅 (22px) より少し広く取り、ここから始まる操作は無視する */
+/** 画面左端から始まる操作は無視する (iOS Safari / Android の OS の戻るジェスチャとの誤判定を避ける) */
 const EDGE_IGNORE_PX = 24;
 
 /** スワイプ開始を無視する要素 (操作系は通常のタップ・スクロールを優先) */
@@ -28,7 +28,7 @@ interface Gesture {
  * 横スワイプで「次/前」へ移動するジェスチャ (フィードバック形式の切替用)。
  * - 距離 60px 以上、または素早いフリングで確定 (判定は core の `resolveSwipeIntent`)
  * - 縦方向が優勢ならジェスチャを破棄し、縦スクロールは妨げない (touch-action: pan-y)
- * - 画面左端 (設定ドロワーのスワイプゾーン) から始まる操作は無視する
+ * - 画面左端 (OS の戻るジェスチャ領域) から始まる操作は無視する
  * 要素の追従はせず、確定時にのみ切り替える (切替の演出は呼び出し側)。
  */
 export function useSwipeNav({ onNext, onPrev, enabled = true }: UseSwipeNavOptions) {

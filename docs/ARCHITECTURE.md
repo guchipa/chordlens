@@ -163,7 +163,6 @@ chordlens/
 │       │   ├── experiments/     # 評価実験ロジック
 │       │   ├── firebase/        # Firebase 連携
 │       │   ├── presets.ts       # プリセット管理の Web バインディング
-│       │   ├── platform.ts      # プラットフォーム判定 (iOS / PWA standalone / 左端スワイプ可否)
 │       │   ├── screenWakeLock.ts # ScreenWakeLock の Web 実装（Screen Wake Lock API）
 │       │   ├── appLifecycle.ts  # AppLifecycle の Web 実装（visibilitychange / pagehide / pageshow）
 │       │   └── utils/exportLog.ts  # CSV ダウンロード（Web バインディング）
