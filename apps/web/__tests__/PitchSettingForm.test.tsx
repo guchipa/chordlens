@@ -61,14 +61,10 @@ describe("PitchSettingForm", () => {
   it("submits the form with the correct data", async () => {
     const { store } = renderWithJotai();
 
-    // 音名を選択
-    const pitchNameSelect = screen.getAllByRole("combobox")[0];
-    fireEvent.click(pitchNameSelect);
-
-    await waitFor(() => {
-      const cOption = screen.getByRole("option", { name: "C" });
-      fireEvent.click(cOption);
-    });
+    // 音名をワンタップで選択
+    const cButton = screen.getByRole("button", { name: "C" });
+    fireEvent.click(cButton);
+    expect(cButton).toHaveAttribute("aria-pressed", "true");
 
     // 送信ボタンをクリック
     const submitButton = screen.getByRole("button", {
@@ -89,6 +85,26 @@ describe("PitchSettingForm", () => {
       expect(addedPitch).toBeDefined();
       expect(addedPitch?.enabled).toBe(true);
     });
-    // Radix Select の操作を含み並列実行時に 5s の既定タイムアウトを超えることがある
-  }, 15000);
+  });
+
+  it("changes the octave via the segmented control", async () => {
+    const { store } = renderWithJotai();
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    fireEvent.click(screen.getByRole("button", { name: "3" }));
+    fireEvent.click(screen.getByRole("button", { name: /設定した音を追加/ }));
+    await waitFor(() => {
+      expect(
+        store.get(pitchListAtom).find(
+          (p) => p.pitchName === "A" && p.octaveNum === 3
+        )
+      ).toBeDefined();
+    });
+  });
+
+  it("disables submit until a note name is chosen", () => {
+    renderWithJotai();
+    expect(
+      screen.getByRole("button", { name: /設定した音を追加/ })
+    ).toBeDisabled();
+  });
 });
