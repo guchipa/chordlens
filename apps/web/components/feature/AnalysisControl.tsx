@@ -11,13 +11,15 @@ interface AnalysisControlProps {
   /** マイク取得失敗などのエラー (指定時は開始ボタンの上にバナー表示) */
   error?: string | null;
   onDismissError?: () => void;
+  /** 状態表示行の上に置く追加コンテンツ (プリセット切替など) */
+  topSlot?: React.ReactNode;
 }
 
 /**
  * 画面下部に固定される解析の開始/停止バー。
  * 親指が届く位置に置き、状態表示行は常に同じ高さでレイアウトシフトを起こさない。
  */
-export const AnalysisControl: React.FC<AnalysisControlProps> = ({ isProcessing, startProcessing, stopProcessing, isPitchListEmpty, error = null, onDismissError }) => {
+export const AnalysisControl: React.FC<AnalysisControlProps> = ({ isProcessing, startProcessing, stopProcessing, isPitchListEmpty, error = null, onDismissError, topSlot }) => {
   const disabled = isPitchListEmpty && !isProcessing;
 
   return (
@@ -39,6 +41,7 @@ export const AnalysisControl: React.FC<AnalysisControlProps> = ({ isProcessing, 
             </button>
           </div>
         )}
+        {topSlot}
         <p
           role="status"
           className="flex h-5 items-center justify-center gap-2 text-sm text-muted-foreground"

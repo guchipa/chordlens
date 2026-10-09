@@ -24,11 +24,12 @@ components/
 |----------------|------|--------------------|
 | **PitchSettingForm** | 構成音の入力フォーム。12 音のワンタップグリッド (`aria-pressed`, 44px 高) とオクターブのセグメント (`OCTAVE_NUM_LIST`)、マイク入力と同じ行の「C4 を追加」ボタン (選択中の音名を表示、スクロール不要・追加後は aria-live で「追加しました」を表示) で追加する。根音/計測対象のタップ行 (44px 以上) はその下に置く。 | `pitchListAtom`, `addOrUpdatePitchAtom` |
 | **PitchList** | 現在設定されている構成音のチップ一覧 (削除は 44px の `×`、`aria-label="C4 を削除"`)。根音推定・全クリア (44px)。設定ドロワーの先頭に配置。 | `pitchListAtom`, `removePitchAtom`, `rootEstimation` |
-| **AnalysisControl** | 解析の開始・停止ボタン。解析中の状態表示。マイク取得失敗時はインラインの閉じられるエラーバナー (`error`, `onDismissError`) を表示。 | `useAudioAnalysis` (`error`, `dismissError`) |
+| **AnalysisControl** | 解析の開始・停止ボタン。解析中の状態表示。`topSlot` に PresetSwitcher を載せる (固定バー全体の高さは約 12rem。`App.tsx` の下余白と SettingsDrawer の左端ゾーンの `bottom` が同値に依存)。マイク取得失敗時はインラインの閉じられるエラーバナー (`error`, `onDismissError`) を表示。 | `useAudioAnalysis` (`error`, `dismissError`) |
 | **AnalysisResult** | **[廃止予定]** 旧形式の解析結果表示。現在は `UnifiedFeedback` に移行中。 | `analysisResult` |
 | **SettingsForm** | 音声解析の設定。数値入力は `inputMode` 指定・44px 高・16px フォント、A4 周波数は −/＋ ステッパー (430-450Hz にクランプ)。高度な設定はアコーディオン。 | `audioSettingsAtoms` |
 | **CentDisplay** | 解析結果の数値詳細表示。構成音ごとの行に音名・音程・平均律との差と、平均律/純正律の再生トグル (`aria-pressed`, 44px 高) を並べる。 | `analysisResult` |
-| **PresetManager** | プリセットの保存・読み込み・削除機能。 | `localStorage` |
+| **PresetManager** | プリセットの保存・読み込み・削除機能 (設定ドロワー内)。一覧は共有 atom `presetsAtom` で、保存・削除後に `refreshPresetsAtom` で再読み込みする。 | `presetsAtom`, `refreshPresetsAtom`, `localStorage` |
+| **PresetSwitcher** | メイン画面の下部固定バー (AnalysisControl の `topSlot`) に置く、プリセットの横スクロールチップ列 (スナップ・スクロールバー非表示・44px 高)。タップで確認なしに即 `loadPresetAtom`。現在の構成音と一致するチップを `aria-pressed` で強調し、各チップに構成音 (根音は太字) を併記。プリセット 0 件のときは設定ドロワーを開くヒントを表示。 | `presetsAtom`, `pitchListAtom`, `loadPresetAtom` |
 | **PresetList** | 保存されたプリセットの一覧表示。 | `presets` |
 | **LogExportButton** | 実験モード用。解析ログの特定期間記録とCSVエクスポート。 | `useLogRecorder` |
 | **AnalysisControl** | 解析の開始/停止を制御するボタン。 | `startProcessing`, `stopProcessing` |

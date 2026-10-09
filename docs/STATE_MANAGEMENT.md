@@ -54,6 +54,15 @@ apps/web/lib/store/
 | `loadPresetAtom` | Action | プリセットからリストを一括読み込み |
 | `setRootAtom` | Action | 指定した音を根音（ルート）に設定 |
 
+### 2.2b. Preset Atoms (`presetAtoms.ts`)
+
+保存済みプリセット一覧を設定ドロワーとメイン画面で共有します。永続化は `lib/presets.ts` (localStorage)。
+
+| Atom名 | 役割 | 説明 |
+|--------|------|------|
+| `presetsAtom` | State | 保存済みプリセット (`PitchPreset[]`) の読み込みキャッシュ |
+| `refreshPresetsAtom` | Action | localStorage から再読み込み (マウント時・保存/削除後に呼ぶ) |
+
 ### 2.3. Feedback Atoms (`feedbackAtoms.ts`)
 
 視覚フィードバックの表示形式を管理します。

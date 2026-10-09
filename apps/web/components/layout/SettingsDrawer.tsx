@@ -63,7 +63,7 @@ export function SettingsDrawer({
             data-slot="edge-swipe-zone"
             {...swipe.edgeZoneProps}
             className={cn(
-              "fixed left-0 z-30 w-[22px] top-[calc(3.5rem+env(safe-area-inset-top))] bottom-[calc(8.5rem+env(safe-area-inset-bottom))]",
+              "fixed left-0 z-30 w-[22px] top-[calc(3.5rem+env(safe-area-inset-top))] bottom-[calc(12rem+env(safe-area-inset-bottom))]",
               isOpen && "pointer-events-none",
             )}
           />,

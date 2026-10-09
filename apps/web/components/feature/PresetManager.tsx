@@ -1,35 +1,39 @@
 "use client";
 
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useState, useEffect } from "react";
 import { SettingsSection } from "@/components/layout/SettingsSection";
 import { Button } from "@/components/ui/button";
 import { PresetSaveDialog } from "@/components/feature/PresetSaveDialog";
 import { PresetList } from "@/components/feature/PresetList";
 import type { PitchPreset } from "@chordlens/core/types";
-import { getPresets, isLocalStorageAvailable } from "@/lib/presets";
+import { isLocalStorageAvailable } from "@/lib/presets";
 import { Save } from "lucide-react";
-import { pitchListAtom, loadPresetAtom } from "@/lib/store";
+import {
+  pitchListAtom,
+  loadPresetAtom,
+  presetsAtom,
+  refreshPresetsAtom,
+} from "@/lib/store";
 
 export function PresetManager() {
   const [pitchList] = useAtom(pitchListAtom);
   const loadPreset = useSetAtom(loadPresetAtom);
-  const [presets, setPresets] = useState<PitchPreset[]>([]);
+  const presets = useAtomValue(presetsAtom);
+  const refreshPresets = useSetAtom(refreshPresetsAtom);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [localStorageAvailable, setLocalStorageAvailable] = useState(true);
 
-  // プリセット一覧を読み込み
-  const loadPresets = () => {
-    setPresets(getPresets());
-  };
+  // 一覧は共有 atom (メイン画面の切替と同期)。保存・削除後は再読み込みする
+  const loadPresets = refreshPresets;
 
   useEffect(() => {
     // localStorageの可用性チェック
     setLocalStorageAvailable(isLocalStorageAvailable());
 
     // 初回読み込み
-    loadPresets();
-  }, []);
+    refreshPresets();
+  }, [refreshPresets]);
 
   const handleSaveClick = () => {
     if (pitchList.length === 0) {

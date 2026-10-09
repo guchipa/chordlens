@@ -7,6 +7,7 @@ import { useWakeLock } from "@/lib/hooks/useWakeLock";
 
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
+import { PresetSwitcher } from "@/components/feature/PresetSwitcher";
 import { CentDisplay } from "@/components/feature/CentDisplay";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { ExperimentModePanel } from "@/components/feature/experiment/ExperimentModePanel";
@@ -85,7 +86,7 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-2xl grow flex-col items-stretch gap-4 px-3 pt-3 pb-[calc(8.5rem+env(safe-area-inset-bottom))] sm:px-6">
+      <main className="mx-auto flex w-full max-w-2xl grow flex-col items-stretch gap-4 px-3 pt-3 pb-[calc(12rem+env(safe-area-inset-bottom))] sm:px-6">
         {experimentMode && (
           <ExperimentModePanel
             isProcessing={isProcessing}
@@ -121,6 +122,7 @@ export function App() {
         isPitchListEmpty={currentPitchList.length === 0}
         error={error}
         onDismissError={dismissError}
+        topSlot={<PresetSwitcher onOpenSettings={() => setIsSettingsOpen(true)} />}
       />
     </div>
   );
