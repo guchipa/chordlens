@@ -12,14 +12,14 @@ import { estimateRoot } from "@chordlens/core/audio_analysis/rootEstimation";
 // Jotai atoms
 import {
   pitchListAtom,
-  removePitchAtom,
-  clearPitchListAtom,
+  removePitchWithUndoAtom,
+  clearPitchListWithUndoAtom,
 } from "@/lib/store";
 
 export function PitchList() {
   const [currentPitchList, setCurrentPitchList] = useAtom(pitchListAtom);
-  const removePitch = useSetAtom(removePitchAtom);
-  const clearPitchList = useSetAtom(clearPitchListAtom);
+  const removePitch = useSetAtom(removePitchWithUndoAtom);
+  const clearPitchList = useSetAtom(clearPitchListWithUndoAtom);
 
   return (
     <SettingsSection title="現在の評価対象音">

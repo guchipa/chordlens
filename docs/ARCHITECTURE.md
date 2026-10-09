@@ -125,7 +125,8 @@ chordlens/
 │       │   │   ├── audio.ts                # SpectrumSource（音声入力の抽象）
 │       │   │   ├── noteDetection.ts        # NoteDetector（構成音検出の抽象・実装は audio_analysis 側）
 │       │   │   └── wakeLock.ts             # ScreenWakeLock（画面スリープ抑止の抽象）
-│       │   ├── presets/         # プリセット管理コア（ストレージ注入式）、pitchListEquals（構成音リストの同一判定）
+│       │   ├── presets/         # プリセット管理コア（ストレージ注入式。削除の取り消し用 restorePreset を含む）、pitchListEquals（構成音リストの同一判定）
+│       │   ├── undo/            # listOps（「元に戻す」用の removeAt / insertAt。純関数）
 │       │   ├── gestures/        # swipeIntent（横スワイプの確定判定・隣接項目の取得。純関数）
 │       │   ├── logging/         # ログ CSV 変換
 │       │   ├── utils/           # emaHold（EMA + ホールド平滑化）

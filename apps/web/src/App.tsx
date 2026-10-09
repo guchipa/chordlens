@@ -9,6 +9,7 @@ import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
 import { PresetSwitcher } from "@/components/feature/PresetSwitcher";
 import { CentDisplay } from "@/components/feature/CentDisplay";
+import { Toaster } from "@/components/feature/Toaster";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { ExperimentModePanel } from "@/components/feature/experiment/ExperimentModePanel";
 
@@ -124,6 +125,7 @@ export function App() {
         onDismissError={dismissError}
         topSlot={<PresetSwitcher onOpenSettings={() => setIsSettingsOpen(true)} />}
       />
+      <Toaster />
     </div>
   );
 }

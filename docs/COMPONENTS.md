@@ -31,8 +31,9 @@ components/
 | **FeedbackTypeSwitch** | メイン画面のフィードバックカードヘッダに置く 3 分割のセグメント (`role=radiogroup`, 各 44px 高、ラベルは `FEEDBACK_TYPE_LABELS`)。`feedbackTypeAtom` を設定ドロワーの FeedbackTypeSelector と共有 (同じ localStorage 永続化)。 | `feedbackTypeAtom` |
 | **UnifiedFeedback** | フィードバック形式 (メーター/バー/サークル) の描画。カードのヘッダに FeedbackTypeSwitch を置き、カード上の横スワイプ (`useSwipeNav`、60px またはフリング、`touch-action: pan-y`、左端 24px 起点は無視) で前後の形式へ移動。切替時はカード本体が左右からスライドイン (reduced-motion では無効)。 | `feedbackTypeAtom` |
 | **PresetManager** | プリセットの保存・読み込み・削除機能 (設定ドロワー内)。一覧は共有 atom `presetsAtom` で、保存・削除後に `refreshPresetsAtom` で再読み込みする。 | `presetsAtom`, `refreshPresetsAtom`, `localStorage` |
-| **PresetSwitcher** | メイン画面の下部固定バー (AnalysisControl の `topSlot`) に置く、プリセットの横スクロールチップ列 (スナップ・スクロールバー非表示・44px 高)。タップで確認なしに即 `loadPresetAtom`。現在の構成音と一致するチップを `aria-pressed` で強調し、各チップに構成音 (根音は太字) を併記。プリセット 0 件のときは設定ドロワーを開くヒントを表示。 | `presetsAtom`, `pitchListAtom`, `loadPresetAtom` |
-| **PresetList** | 保存されたプリセットの一覧表示。 | `presets` |
+| **PresetSwitcher** | メイン画面の下部固定バー (AnalysisControl の `topSlot`) に置く、プリセットの横スクロールチップ列 (スナップ・スクロールバー非表示・44px 高)。タップで確認なしに即 `loadPresetWithUndoAtom` (直前と内容が違えば「元に戻す」通知)。現在の構成音と一致するチップを `aria-pressed` で強調し、各チップに構成音 (根音は太字) を併記。プリセット 0 件のときは設定ドロワーを開くヒントを表示。 | `presetsAtom`, `pitchListAtom`, `loadPresetWithUndoAtom` |
+| **PresetList** | 保存されたプリセットの一覧表示。削除は確認なしで実行し、トーストの「元に戻す」で復元 (読み込みは従来どおり確認ダイアログ)。 | `presets`, `deletePresetWithUndoAtom` |
+| **Toaster** | 「元に戻す」付きの通知を 1 件だけ表示 (約 5 秒で自動消去、新しい通知が置き換え)。`App.tsx` に 1 つ置く。`aria-live="polite"` のリージョンを常設し、下部固定バーの真上 (`--bottom-bar-h` を AnalysisControl が実測して公開) に `z-60` で表示。設定ドロワー表示中も押せるよう pointerdown/focus を止めて Radix のモーダルが閉じないようにし、アクションは 44px 以上。 | `toastAtom`, `dismissToastAtom` |
 | **LogExportButton** | 実験モード用。解析ログの特定期間記録とCSVエクスポート。 | `useLogRecorder` |
 | **AnalysisControl** | 解析の開始/停止を制御するボタン。 | `startProcessing`, `stopProcessing` |
 

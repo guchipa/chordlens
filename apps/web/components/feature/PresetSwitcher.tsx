@@ -7,7 +7,7 @@ import type { Pitch } from "@chordlens/core/types";
 import { pitchListEquals } from "@chordlens/core/presets/pitchListEquals";
 import { cn } from "@/lib/utils";
 import {
-  loadPresetAtom,
+  loadPresetWithUndoAtom,
   pitchListAtom,
   presetsAtom,
   refreshPresetsAtom,
@@ -44,7 +44,7 @@ export function PresetSwitcher({ onOpenSettings, className }: PresetSwitcherProp
   const presets = useAtomValue(presetsAtom);
   const pitchList = useAtomValue(pitchListAtom);
   const refreshPresets = useSetAtom(refreshPresetsAtom);
-  const loadPreset = useSetAtom(loadPresetAtom);
+  const loadPreset = useSetAtom(loadPresetWithUndoAtom);
   const activeRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export function PresetSwitcher({ onOpenSettings, className }: PresetSwitcherProp
             ref={active ? activeRef : undefined}
             type="button"
             aria-pressed={active}
-            onClick={() => loadPreset(preset.pitchList)}
+            onClick={() => loadPreset(preset)}
             className={cn(
               "flex h-11 min-w-20 max-w-48 shrink-0 snap-start flex-col items-start justify-center rounded-lg border px-3 text-left leading-tight transition-colors",
               active

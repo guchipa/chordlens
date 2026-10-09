@@ -76,6 +76,16 @@ export function deletePreset(id: string): boolean {
 }
 
 /**
+ * 削除したプリセットを復元 (「元に戻す」用。id・名前・作成日時を保つ)
+ */
+export function restorePreset(preset: PitchPreset): SavePresetResult {
+  if (!isLocalStorageAvailable()) {
+    return { success: false, error: "localStorageが利用できません" };
+  }
+  return store.restorePreset(preset);
+}
+
+/**
  * 特定のプリセットを取得
  * @param id プリセットID
  */

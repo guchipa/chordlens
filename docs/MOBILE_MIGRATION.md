@@ -35,7 +35,8 @@ chordlens/
 |-----------|------|----------------|
 | `audio_analysis/` | FFT・SWIPE'・位相ボコーダ・純正律評価・根音推定 | そのまま利用可 |
 | `constants.ts` / `types.ts` | 定数・型・Zod スキーマ | そのまま利用可 |
-| `presets/presetStore.ts` | プリセット管理 (ストレージ注入式) | ストレージ adapter を実装して利用 |
+| `presets/presetStore.ts` | プリセット管理 (ストレージ注入式。`restorePreset` で削除の取り消し) | ストレージ adapter を実装して利用 |
+| `undo/listOps.ts` | 「元に戻す」用の配列操作 (`removeAt` / `insertAt`) | そのまま利用 (トースト UI は Snackbar 等で別実装) |
 | `logging/logCsv.ts` | ログの CSV 変換 | そのまま利用可 |
 | `utils/emaHold.ts` | EMA + ホールド平滑化 | そのまま利用可 |
 | `adapters/` | プラットフォーム抽象インターフェース | モバイル実装の契約 |

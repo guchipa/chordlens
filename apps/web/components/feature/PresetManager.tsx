@@ -50,10 +50,6 @@ export function PresetManager() {
     loadPreset(preset.pitchList);
   };
 
-  const handleDeletePreset = () => {
-    loadPresets();
-  };
-
   if (!localStorageAvailable) {
     return (
       <SettingsSection
@@ -86,7 +82,6 @@ export function PresetManager() {
           <PresetList
             presets={presets}
             onLoad={handleLoadPreset}
-            onDelete={handleDeletePreset}
           />
         </div>
       </SettingsSection>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -21,9 +22,26 @@ interface AnalysisControlProps {
  */
 export const AnalysisControl: React.FC<AnalysisControlProps> = ({ isProcessing, startProcessing, stopProcessing, isPitchListEmpty, error = null, onDismissError, topSlot }) => {
   const disabled = isPitchListEmpty && !isProcessing;
+  const barRef = useRef<HTMLDivElement>(null);
+
+  // 実際の高さ (エラーバナーの有無で変わる) を CSS 変数で公開し、トーストをバーの真上に置けるようにする
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const update = () => root.style.setProperty("--bottom-bar-h", `${el.offsetHeight}px`);
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--bottom-bar-h");
+    };
+  }, []);
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-white/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+    <div ref={barRef} className="fixed inset-x-0 bottom-0 z-40 border-t bg-white/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-2 px-3 pt-2">
         {error && (
           <div
