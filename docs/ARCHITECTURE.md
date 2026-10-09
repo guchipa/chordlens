@@ -154,7 +154,7 @@ chordlens/
 │       │   ├── layout/          # ヘッダー・フッター・ドロワー
 │       │   └── ui/              # shadcn/ui プリミティブ
 │       ├── lib/                 # Web 依存のロジック
-│       │   ├── hooks/           # カスタムフック（Web Audio API 使用）
+│       │   ├── hooks/           # カスタムフック（Web Audio API 使用、useSwipeDrawer などの UI ジェスチャも）
 │       │   ├── audio/           # NoteDetector の生成 (factory)・PCM キャプチャ・録音ユーティリティ
 │       │   ├── store/           # Jotai atoms（localStorage 永続化）
 │       │   ├── experiments/     # 評価実験ロジック

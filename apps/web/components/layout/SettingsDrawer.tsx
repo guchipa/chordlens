@@ -16,6 +16,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useSwipeDrawer } from "@/lib/hooks/useSwipeDrawer";
+import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 
 interface SettingsDrawerProps {
@@ -37,6 +39,8 @@ export function SettingsDrawer({
     }
   };
 
+  const swipe = useSwipeDrawer({ isOpen, onClose });
+
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
@@ -51,7 +55,13 @@ export function SettingsDrawer({
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-full gap-0 overflow-hidden p-0 sm:max-w-sm"
+        ref={swipe.ref}
+        {...swipe.contentProps}
+        className={cn(
+          "w-full gap-0 overflow-hidden p-0 sm:max-w-sm",
+          swipe.holdAnimation && "animate-none!",
+        )}
+        overlayClassName={swipe.holdAnimation ? "animate-none!" : undefined}
       >
         <SheetHeader className="bg-background border-b px-4 pt-[calc(env(safe-area-inset-top)+0.25rem)] pr-16 pb-1">
           <SheetTitle className="text-lg leading-11">設定</SheetTitle>
