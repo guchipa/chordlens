@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtom, useSetAtom } from "jotai";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,6 +27,7 @@ type PitchFormInput = z.input<typeof FormSchema>;
 export function PitchSettingForm() {
   const [currentPitchList] = useAtom(pitchListAtom);
   const addOrUpdatePitch = useSetAtom(addOrUpdatePitchAtom);
+  const [addedLabel, setAddedLabel] = useState<string | null>(null);
 
   const form = useForm<PitchFormInput, unknown, Pitch>({
     resolver: zodResolver(FormSchema),
@@ -73,6 +74,7 @@ export function PitchSettingForm() {
   const onSubmit = useCallback(
     (data: Pitch) => {
       addOrUpdatePitch(data);
+      setAddedLabel(`${data.pitchName}${data.octaveNum}`);
       form.reset({
         pitchName: undefined,
         octaveNum: 4,
@@ -108,7 +110,10 @@ export function PitchSettingForm() {
                         key={name}
                         type="button"
                         aria-pressed={selected}
-                        onClick={() => field.onChange(name)}
+                        onClick={() => {
+                          setAddedLabel(null);
+                          field.onChange(name);
+                        }}
                         className={cn(
                           "h-11 rounded-lg border text-base font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                           selected
@@ -164,12 +169,23 @@ export function PitchSettingForm() {
               </FormItem>
             )}
           />
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <MicInputButton onDetect={handleMicDetect} />
-            <span className="text-muted-foreground flex-1 text-sm">
-              マイクで鳴っている音を検出して追加
-            </span>
+            <Button
+              type="submit"
+              className="h-11 flex-1 text-base"
+              disabled={!isFormValid}
+            >
+              {isFormValid ? `${pitchName}${octaveNum} を追加` : "音を選んで追加"}
+            </Button>
           </div>
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-sm font-medium text-emerald-700 empty:hidden"
+          >
+            {addedLabel && `${addedLabel} を追加しました`}
+          </p>
           <div className="divide-y rounded-lg border bg-background px-3">
             <FormField
               control={form.control}
@@ -227,14 +243,14 @@ export function PitchSettingForm() {
               )}
             />
           </div>
+          <p className="text-muted-foreground text-xs">
+            マイクボタンは、鳴っている音を検出して追加します。
+          </p>
           {showRootWarning && (
             <p className="text-sm font-medium text-red-600">
               警告: 根音が設定されていません。解析には根音の指定が必要です。
             </p>
           )}
-          <Button type="submit" className="h-11 w-full text-base" disabled={!isFormValid}>
-            設定した音を追加
-          </Button>
         </form>
       </Form>
     </SettingsSection>

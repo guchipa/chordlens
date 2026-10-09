@@ -68,7 +68,7 @@ describe("PitchSettingForm", () => {
 
     // 送信ボタンをクリック
     const submitButton = screen.getByRole("button", {
-      name: /設定した音を追加/i,
+      name: /C4 を追加/,
     });
     fireEvent.click(submitButton);
 
@@ -84,6 +84,7 @@ describe("PitchSettingForm", () => {
       );
       expect(addedPitch).toBeDefined();
       expect(addedPitch?.enabled).toBe(true);
+      expect(screen.getByRole("status")).toHaveTextContent("C4 を追加しました");
     });
   });
 
@@ -91,7 +92,7 @@ describe("PitchSettingForm", () => {
     const { store } = renderWithJotai();
     fireEvent.click(screen.getByRole("button", { name: "A" }));
     fireEvent.click(screen.getByRole("button", { name: "3" }));
-    fireEvent.click(screen.getByRole("button", { name: /設定した音を追加/ }));
+    fireEvent.click(screen.getByRole("button", { name: "A3 を追加" }));
     await waitFor(() => {
       expect(
         store.get(pitchListAtom).find(
@@ -104,7 +105,7 @@ describe("PitchSettingForm", () => {
   it("disables submit until a note name is chosen", () => {
     renderWithJotai();
     expect(
-      screen.getByRole("button", { name: /設定した音を追加/ })
+      screen.getByRole("button", { name: /音を選んで追加/ })
     ).toBeDisabled();
   });
 });
