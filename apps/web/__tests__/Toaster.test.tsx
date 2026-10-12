@@ -79,4 +79,15 @@ describe("Toaster とドロワー", () => {
     expect(region.className).toContain("[html[data-drawer-open]_&]:bottom-");
     expect(region.className).toContain("var(--bottom-bar-h");
   });
+
+  it("アクション内で出した通知は閉じずに表示する", () => {
+    const { store, show } = setup();
+    show({
+      message: "削除しました",
+      actionLabel: "元に戻す",
+      onAction: () => store.set(showToastAtom, { message: "元に戻せませんでした" }),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "元に戻す" }));
+    expect(screen.getByText("元に戻せませんでした")).toBeInTheDocument();
+  });
 });

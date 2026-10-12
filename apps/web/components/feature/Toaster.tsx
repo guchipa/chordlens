@@ -49,8 +49,9 @@ export function Toaster() {
             <button
               type="button"
               onClick={() => {
-                toast.onAction?.();
+                // 先に閉じる (onAction 内で出したエラー通知などを消さないため)
                 dismiss();
+                toast.onAction?.();
               }}
               className="min-h-11 min-w-11 shrink-0 rounded-md px-3 font-semibold text-sky-300 hover:bg-white/10 active:bg-white/20"
             >
