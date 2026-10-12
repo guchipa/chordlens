@@ -132,6 +132,8 @@ export function App() {
         />
 
         <CentDisplay
+          // 自動追従中は構成音の数 (2〜4 音) が変わるため 4 行ぶんの高さを確保する
+          minRows={chordFollowEnabled ? 4 : 0}
           pitchList={currentPitchList}
           a4Freq={a4Freq}
           title="和音情報"

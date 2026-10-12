@@ -62,31 +62,41 @@ export const ChordHeader: React.FC<ChordHeaderProps> = ({ pitchList }) => {
   return (
     <div className="flex items-center gap-3 rounded-xl border bg-white px-4 py-2 shadow-sm">
       <div className="min-w-0 grow">
-        <div className="flex items-baseline gap-3">
-          <span
-            // 和音が変わるたびに再マウントして、変化に気づけるよう軽く出し直す
-            key={chordKey(pitchList)}
-            data-testid="chord-symbol"
-            className="animate-in fade-in zoom-in-95 truncate text-4xl leading-tight font-bold tracking-tight text-gray-900 duration-300 motion-reduce:animate-none"
-          >
-            {chord?.symbol ?? (chord ? `${chord.rootName} (?)` : "—")}
+        {/*
+          和音名は 1 行目に単独で置く。和音名の長さ (「C」〜「A + 短3度」) が変わっても
+          根音や状態の表示が横に動かないよう、それらは 2 行目に分ける
+        */}
+        <span
+          // 和音が変わるたびに再マウントして、変化に気づけるよう軽く出し直す
+          key={chordKey(pitchList)}
+          data-testid="chord-symbol"
+          className="animate-in fade-in zoom-in-95 block truncate text-4xl leading-tight font-bold tracking-tight text-gray-900 duration-300 motion-reduce:animate-none"
+        >
+          {chord?.symbol ?? (chord ? `${chord.rootName} (?)` : "—")}
+        </span>
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          {/* 根音の有無で状態表示が動かないよう、幅を固定して常に置く */}
+          <span data-testid="chord-root" className="w-[5.5rem] shrink-0 text-base whitespace-nowrap">
+            {root ? (
+              <>
+                根音 <span className="font-semibold text-gray-900">{`${root.pitchName}${root.octaveNum}`}</span>
+              </>
+            ) : (
+              "根音 —"
+            )}
           </span>
-          {root && (
-            <span className="shrink-0 text-base text-gray-600">
-              根音 <span className="font-semibold text-gray-900">{`${root.pitchName}${root.octaveNum}`}</span>
-            </span>
-          )}
+          <p role="status" className="flex min-w-0 items-center gap-1.5">
+            <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[status])} />
+            <span className="truncate">{STATUS_LABELS[status]}</span>
+          </p>
         </div>
-        <p role="status" className="flex items-center gap-1.5 text-sm text-gray-600">
-          <span aria-hidden="true" className={cn("size-2 rounded-full", STATUS_DOT[status])} />
-          {STATUS_LABELS[status]}
-        </p>
       </div>
       {followEnabled && (
         <Button
           type="button"
           variant={locked ? "default" : "outline"}
-          className="h-11 shrink-0 gap-1.5 px-3 text-sm"
+          // 「固定」「固定中」で幅が変わって和音名の領域が伸縮しないよう幅を固定する
+          className="h-11 w-[5.5rem] shrink-0 gap-1.5 px-3 text-sm"
           aria-pressed={locked}
           onClick={() => setLocked(!locked)}
         >

@@ -54,8 +54,17 @@ describe("ChordHeader", () => {
     expect(screen.getByRole("button", { name: "固定中" }).getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("根音がなければダッシュを出す", () => {
+  it("根音がなければダッシュを出し、根音の枠は残す (状態表示が横に動かない)", () => {
     setup([p("C", 4), p("E", 4)]);
     expect(screen.getByTestId("chord-symbol").textContent).toBe("—");
+    expect(screen.getByTestId("chord-root").textContent).toBe("根音 —");
+  });
+
+  it("和音名は根音・状態表示と別の行に置く (和音名の長さで他が動かない)", () => {
+    setup([p("A", 3, true), p("C", 4)]);
+    const symbol = screen.getByTestId("chord-symbol");
+    expect(symbol.textContent).toBe("A + 短3度");
+    expect(symbol.parentElement!.contains(screen.getByTestId("chord-root"))).toBe(true);
+    expect(symbol.nextElementSibling!.contains(screen.getByTestId("chord-root"))).toBe(true);
   });
 });

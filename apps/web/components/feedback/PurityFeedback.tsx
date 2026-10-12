@@ -24,6 +24,9 @@ const LEVEL_LABELS: Record<TuningLevel, string> = {
   off: "ずれています",
 };
 
+/** 内訳の最低枠数 (3↔4 音の変化で項目の位置が動かないようにする) */
+const MIN_CHIPS = 4;
+
 const RING_RADIUS = 80;
 const RING_STROKE = 16;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -106,14 +109,25 @@ export const PurityFeedback: React.FC<PurityFeedbackProps> = ({
           </div>
         </div>
 
-        <div role="status" className="flex min-h-14 flex-col items-center text-center">
+        <div role="status" className="flex min-h-14 w-full flex-col items-center text-center">
           <span className={cn("text-xl font-bold", shownLevel === "inTune" ? "text-green-600" : "text-gray-900")}>
             {shownLevel ? LEVEL_LABELS[shownLevel] : "音を待っています"}
           </span>
-          {advice && <span className="text-base font-semibold text-gray-700">{advice}</span>}
+          {/* 長い音程名 (増4度/減5度) でも折り返して高さが変わらないよう 1 行に収める */}
+          {advice && (
+            <span className="max-w-full truncate text-base font-semibold text-gray-700">{advice}</span>
+          )}
         </div>
 
-        <ul aria-label="構成音ごとの偏差 (左が低い声部)" className="flex w-full flex-wrap justify-center gap-1.5">
+        {/*
+          構成音の数が変わっても項目の位置と幅が動かないよう、声部レーンと同じく
+          最低 MIN_CHIPS 枠の固定グリッドに低い声部から並べる
+        */}
+        <ul
+          aria-label="構成音ごとの偏差 (左が低い声部)"
+          className="grid w-full gap-1.5"
+          style={{ gridTemplateColumns: `repeat(${Math.max(MIN_CHIPS, voices.length)}, minmax(0, 1fr))` }}
+        >
           {voices.map((v, i) => {
             const d = shown.deviations[i] ?? null;
             const lv = d === null ? null : tuningLevel(d);
@@ -123,12 +137,13 @@ export const PurityFeedback: React.FC<PurityFeedbackProps> = ({
                 key={v.key}
                 data-testid="purity-chip"
                 className={cn(
-                  "flex min-w-16 flex-col items-center rounded-lg border bg-gray-50 px-2 py-1",
-                  isWorst && "border-2 border-gray-900",
+                  // 枠線は常に 2px にし、最もずれた音の強調で高さが変わらないようにする
+                  "flex min-w-0 flex-col items-center rounded-lg border-2 bg-gray-50 px-1 py-1",
+                  isWorst ? "border-gray-900" : "border-gray-200",
                 )}
               >
                 <span
-                  className="rounded-full px-1.5 text-[11px] font-semibold text-white"
+                  className="max-w-full truncate rounded-full px-1.5 text-[11px] font-semibold text-white"
                   style={{ backgroundColor: v.role ? CHORD_ROLE_COLORS[v.role] : "#9ca3af" }}
                 >
                   {v.intervalLabel ?? "—"}
@@ -143,6 +158,14 @@ export const PurityFeedback: React.FC<PurityFeedbackProps> = ({
               </li>
             );
           })}
+          {Array.from({ length: Math.max(0, MIN_CHIPS - voices.length) }, (_, i) => (
+            <li
+              key={`empty-${i}`}
+              aria-hidden="true"
+              data-testid="purity-empty-chip"
+              className="rounded-lg border-2 border-dashed border-gray-200"
+            />
+          ))}
         </ul>
       </CardContent>
     </Card>

@@ -46,6 +46,11 @@ describe("既存形式の enhanced 表示 (メイン画面)", () => {
     expect(rows[1].textContent).toContain("長3度");
     expect(screen.getAllByTestId("bar-cents").map((c) => c.textContent)).toEqual(["+10c", "−15c", "±0c"]);
     expect(screen.getAllByTestId("bar-empty-row")).toHaveLength(1);
+    // 根音の行も他の行・空き行と同じ固定の高さにする
+    const heights = [...rows, ...screen.getAllByTestId("bar-empty-row")].map(
+      (el) => el.className.match(/h-\[\d+px\]/)?.[0]
+    );
+    expect(new Set(heights)).toEqual(new Set(["h-[52px]"]));
   });
 
   it("サークル: 5 度圏の並びにでき、中央に和音名を出す", () => {

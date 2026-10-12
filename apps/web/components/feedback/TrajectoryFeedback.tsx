@@ -31,6 +31,8 @@ const PLOT_RIGHT = W - 34;
 const PLOT_TOP = 18;
 const PLOT_BOTTOM = H - 6;
 const TRANSITION_COLOR = "#9ca3af";
+/** 凡例の最低枠数 (2 列 × 2 行) */
+const MIN_LEGEND_SLOTS = 4;
 
 const clamp1 = (v: number) => Math.max(-1, Math.min(1, v));
 const yOf = (deviation: number) =>
@@ -216,23 +218,34 @@ export const TrajectoryFeedback: React.FC<TrajectoryFeedbackProps> = ({
             )}
         </svg>
 
-        <ul aria-label="線の色 (役割)" className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-sm">
+        {/*
+          凡例は 2 列の固定グリッドにし、最低 2 行ぶん (4 声部) の枠を確保する。
+          流し込み (flex-wrap) だと声部の数や音程名の長さで行数が変わり、
+          カードの高さが変わって下の要素が上下する
+        */}
+        <ul
+          aria-label="線の色 (役割)"
+          className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 px-2 text-sm"
+        >
           {currentVoices.map((v) => (
-            <li key={v.key} className="flex items-center gap-1.5">
+            <li key={v.key} className="flex h-5 min-w-0 items-center gap-1.5">
               <span
                 aria-hidden="true"
-                className="inline-block h-1 w-4 rounded-full"
+                className="inline-block h-1 w-4 shrink-0 rounded-full"
                 style={{ backgroundColor: v.role ? CHORD_ROLE_COLORS[v.role] : TRANSITION_COLOR }}
               />
-              <span className="font-semibold">{v.intervalLabel ?? "—"}</span>
-              <span className="text-muted-foreground">{v.key}</span>
+              <span className="truncate font-semibold">{v.intervalLabel ?? "—"}</span>
+              <span className="shrink-0 text-muted-foreground">{v.key}</span>
             </li>
           ))}
-          <li className="flex items-center gap-1.5 text-muted-foreground">
-            <span aria-hidden="true" className="inline-block h-3 w-4 rounded-sm bg-gray-200" />
-            和音の切替中
-          </li>
+          {Array.from({ length: Math.max(0, MIN_LEGEND_SLOTS - currentVoices.length) }, (_, i) => (
+            <li key={`empty-${i}`} aria-hidden="true" className="h-5" />
+          ))}
         </ul>
+        <p className="mt-1 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <span aria-hidden="true" className="inline-block h-3 w-4 rounded-sm bg-gray-200" />
+          灰色の帯・破線は和音の切替中
+        </p>
       </CardContent>
     </Card>
   );

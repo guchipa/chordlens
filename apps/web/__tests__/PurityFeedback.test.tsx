@@ -57,4 +57,21 @@ describe("PurityFeedback", () => {
     expect(screen.getByTestId("purity-value").textContent).toBe("—");
     expect(screen.getByRole("status").textContent).toContain("音を待っています");
   });
+
+  it("内訳は最低 4 枠を確保し、枠線の太さは強調の有無で変えない", () => {
+    render(
+      <PurityFeedback
+        evalRangeCents={50}
+        holdEnabled={false}
+        analysisData={[
+          { pitch: p("C", 4, true), deviation: 0.01 },
+          { pitch: p("E", 4), deviation: 0.3 },
+        ]}
+      />
+    );
+    expect(screen.getAllByTestId("purity-empty-chip")).toHaveLength(2);
+    for (const chip of screen.getAllByTestId("purity-chip")) {
+      expect(chip.className).toContain("border-2");
+    }
+  });
 });

@@ -16,6 +16,12 @@ interface CentDisplayProps {
   pitchList: Pitch[];
   a4Freq: number;
   title?: string;
+  /**
+   * 最低この行数ぶんの高さを確保する (既定 0 = 確保しない)。
+   * 自動追従で構成音の数が変わるたびに高さが変わると、下までスクロールして
+   * いるときにスクロール位置が補正されて画面全体が跳ぶため、メイン画面で使う
+   */
+  minRows?: number;
 }
 
 /**
@@ -42,6 +48,7 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
   pitchList,
   a4Freq,
   title,
+  minRows = 0,
 }) => {
   const equalJustDiff = getEqualJustDiff(pitchList, a4Freq);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -192,6 +199,18 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
               </li>
             );
           })}
+          {/* 高さ確保用の見えない行 (実際の行と同じ構造で高さを揃える) */}
+          {Array.from({ length: Math.max(0, minRows - pitchList.length) }, (_, i) => (
+            <li
+              key={`placeholder-${i}`}
+              aria-hidden="true"
+              data-testid="cent-display-placeholder"
+              className="invisible flex flex-col gap-2 py-3"
+            >
+              <span className="text-xl font-bold">C4</span>
+              <span className="h-11" />
+            </li>
+          ))}
         </ul>
       </CardContent>
     </Card>

@@ -43,6 +43,9 @@ describe("TrajectoryFeedback", () => {
     expect(labels).toEqual(["C", "F"]);
     expect(screen.getAllByTestId("trajectory-transition")).toHaveLength(1);
     // 凡例は現在の和音の役割
-    expect(screen.getByRole("list", { name: "線の色 (役割)" }).textContent).toContain("長3度A4");
+    const legend = screen.getByRole("list", { name: "線の色 (役割)" });
+    expect(legend.textContent).toContain("長3度A4");
+    // 3 声部でも 2 列 × 2 行ぶんの枠を確保して高さを固定する
+    expect(legend.children).toHaveLength(4);
   });
 });

@@ -268,7 +268,17 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
             <circle cx="50" cy="50" r="3" fill="black" />
           </svg>
         </div>
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-3">
+        {/*
+          enhanced: 構成音が 3↔4 で変わると凡例が 1↔2 行に折り返し、カードの高さが
+          変わって下の要素が上下する。2 行ぶん (24px×2 + 行間 8px) を常に確保する
+        */}
+        <div
+          className={
+            enhanced
+              ? "mt-3 flex min-h-14 w-full flex-wrap content-start justify-center gap-x-4 gap-y-2"
+              : "flex flex-wrap justify-center gap-x-4 gap-y-2 mt-3"
+          }
+        >
           {legend.map(({ key, color, label }) => (
             <div key={key} className="flex items-center gap-2 text-base">
               <span className="size-3.5 rounded-full" style={{ backgroundColor: color }} />

@@ -31,6 +31,9 @@ interface BarFeedbackProps {
   };
 }
 
+/** enhanced の行の高さ (役割ラベル + 音名 + 平均律との差の 3 行が収まる高さ)。空き行も同じ */
+const BAR_ROW_HEIGHT = "h-[52px]";
+
 function formatSignedCents(cents: number): string {
   const r = Math.round(cents);
   return r > 0 ? `+${r}` : r < 0 ? `−${Math.abs(r)}` : "±0";
@@ -65,7 +68,12 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
   const shownLevel = enhanced?.shownLevel ?? null;
 
   return (
-    <div className="flex items-center gap-2 w-full" data-testid="bar-row">
+    <div
+      // enhanced: 行の高さを固定し、根音 (平均律との差の行なし) と他の音、空き行で
+      // 高さが揃わずに和音が変わるたびに行がずれるのを防ぐ
+      className={enhanced ? `flex ${BAR_ROW_HEIGHT} w-full items-center gap-2` : "flex items-center gap-2 w-full"}
+      data-testid="bar-row"
+    >
       {enhanced ? (
         <div className="flex w-[4.5rem] shrink-0 flex-col items-end leading-tight">
           <span
@@ -82,11 +90,12 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
             )}
             {pitchName}
           </span>
-          {enhanced.justOffsetCents !== null && Math.abs(enhanced.justOffsetCents) >= 0.5 && (
-            <span className="text-[10px] text-muted-foreground tabular-nums">
-              平均律{formatSignedCents(enhanced.justOffsetCents)}c
-            </span>
-          )}
+          {/* 差がない (根音・完全8度) ときも行は確保して高さを揃える */}
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {enhanced.justOffsetCents !== null && Math.abs(enhanced.justOffsetCents) >= 0.5
+              ? `平均律${formatSignedCents(enhanced.justOffsetCents)}c`
+              : "\u00a0"}
+          </span>
         </div>
       ) : (
       <div className="flex w-16 shrink-0 items-center justify-end gap-1 text-base font-semibold tabular-nums">
@@ -228,7 +237,7 @@ export const BarListFeedback: React.FC<BarListFeedbackProps> = ({
           key={`empty-${i}`}
           aria-hidden="true"
           data-testid="bar-empty-row"
-          className="h-11 rounded-md border border-dashed border-gray-200"
+          className={`${BAR_ROW_HEIGHT} rounded-md border border-dashed border-gray-200`}
         />
       ))}
     </div>
