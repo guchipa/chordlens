@@ -71,6 +71,8 @@ export const FeedbackCarousel: React.FC<FeedbackCarouselProps> = ({
   });
 
   const label = FEEDBACK_TYPE_LABELS[current];
+  // 軌跡は切替区間を自分で描き分けるので、全体を灰色にはしない
+  const dimmed = transitioning && current !== "trajectory";
 
   return (
     <section
@@ -147,15 +149,15 @@ export const FeedbackCarousel: React.FC<FeedbackCarouselProps> = ({
             {/* 切替中は旧和音基準の偏差なので、灰色に落として誤った赤表示を見せない */}
             <div
               data-testid="feedback-slide-body"
-              data-transitioning={transitioning}
+              data-transitioning={dimmed}
               className={cn(
                 "transition-[opacity,filter] duration-150",
-                transitioning && "opacity-40 grayscale",
+                dimmed && "opacity-40 grayscale",
               )}
             >
               <FeedbackSlide feedbackType={current} {...slideProps} />
             </div>
-            {transitioning && (
+            {dimmed && (
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 flex items-center justify-center"

@@ -9,6 +9,7 @@ import { BarFeedback } from "./BarFeedback";
 import { CircleFeedback } from "./CircleFeedback";
 import { VoiceLanesFeedback } from "./VoiceLanesFeedback";
 import { PurityFeedback } from "./PurityFeedback";
+import { TrajectoryFeedback } from "./TrajectoryFeedback";
 
 export interface FeedbackDatum {
   pitch: Pitch;
@@ -43,6 +44,7 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
   evalRangeCents,
   a4Freq,
   holdEnabled,
+  transitioning = false,
 }) => {
   const rootPitch = analysisData.find((d) => d.pitch.isRoot);
   const rootPitchName = rootPitch
@@ -79,6 +81,16 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
         analysisData={enabled}
         evalRangeCents={evalRangeCents}
         holdEnabled={holdEnabled}
+      />
+    );
+  }
+
+  if (feedbackType === "trajectory") {
+    return (
+      <TrajectoryFeedback
+        analysisData={enabled}
+        evalRangeCents={evalRangeCents}
+        transitioning={transitioning}
       />
     );
   }

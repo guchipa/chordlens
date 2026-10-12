@@ -302,6 +302,7 @@ export const FEEDBACK_TYPES = [
   "circle",
   "lanes",
   "purity",
+  "trajectory",
 ] as const;
 
 export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
@@ -331,6 +332,7 @@ export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
   circle: "サークル",
   lanes: "声部レーン",
   purity: "純正度",
+  trajectory: "軌跡",
 };
 
 export const FEEDBACK_TYPE_DESCRIPTIONS: Record<FeedbackType, string> = {
@@ -339,4 +341,5 @@ export const FEEDBACK_TYPE_DESCRIPTIONS: Record<FeedbackType, string> = {
   circle: "円になった音名で和音の形をわかりやすく",
   lanes: "声部ごとの縦レーンに役割と偏差を表示。和音が変わってもレーンの位置で自分の音を追える",
   purity: "和音全体で最もずれた音の偏差を大きく表示。今の和音が合っているかを一目で判断できる",
+  trajectory: "直近 10 秒の偏差の推移を声部ごとの線で表示。和音ごとの区間で合い具合を振り返れる",
 };
