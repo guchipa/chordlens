@@ -24,7 +24,18 @@ export const removePitchWithUndoAtom = atom(null, (get, set, index: number) => {
         message: `${removed.pitchName}${removed.octaveNum} を削除しました`,
         actionLabel: UNDO_LABEL,
         onAction: () => {
-            set(pitchListAtom, insertAt(get(pitchListAtom), index, removed));
+            const current = get(pitchListAtom);
+            const label = `${removed.pitchName}${removed.octaveNum}`;
+            // 削除後に同じ音や別の根音が追加されていたら、重複を作らないよう復元しない
+            if (current.some((p) => p.pitchName === removed.pitchName && p.octaveNum === removed.octaveNum)) {
+                set(showToastAtom, { message: `${label} は既に追加されているため元に戻せません` });
+                return;
+            }
+            if (removed.isRoot && current.some((p) => p.isRoot)) {
+                set(showToastAtom, { message: `根音が既に設定されているため ${label} を元に戻せません` });
+                return;
+            }
+            set(pitchListAtom, insertAt(current, index, removed));
         },
     });
 });

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within, act } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Toaster } from "@/components/feature/Toaster";
@@ -110,5 +110,23 @@ describe("「元に戻す」付き操作", () => {
     expect(getPresets()).toEqual(before);
     expect(getPresets().map((p) => p.id)).toEqual(["id-c", "id-b", "id-a"]);
     expect(store.get(presetsAtom)).toEqual(before);
+  });
+
+  it("削除後に同じ音が追加されていたら重複させず、理由を通知する", () => {
+    const store = setup(C);
+    fireEvent.click(screen.getByRole("button", { name: "E4 を削除" }));
+    act(() => store.set(pitchListAtom, [...store.get(pitchListAtom), C[1]]));
+    undo();
+    expect(store.get(pitchListAtom).filter((p) => p.pitchName === "E")).toHaveLength(1);
+    expect(screen.getByText("E4 は既に追加されているため元に戻せません")).toBeInTheDocument();
+  });
+
+  it("削除後に別の根音が設定されていたら根音を重複させない", () => {
+    const store = setup(C);
+    fireEvent.click(screen.getByRole("button", { name: "C4 を削除" }));
+    act(() => store.set(pitchListAtom, [{ ...C[1], isRoot: true }, C[2]]));
+    undo();
+    expect(store.get(pitchListAtom).filter((p) => p.isRoot)).toHaveLength(1);
+    expect(store.get(pitchListAtom).some((p) => p.pitchName === "C")).toBe(false);
   });
 });
