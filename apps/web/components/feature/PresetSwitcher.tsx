@@ -21,7 +21,7 @@ interface PresetSwitcherProps {
 
 /** 有効な構成音を並べる。根音は太字 */
 function ChordNotes({ pitchList }: { pitchList: Pitch[] }) {
-  const notes = pitchList.filter((p) => p.enabled);
+  const notes = pitchList.filter((p) => p.enabled !== false);
   return (
     <span className="block max-w-full truncate text-xs opacity-75">
       {notes.map((p, i) => (

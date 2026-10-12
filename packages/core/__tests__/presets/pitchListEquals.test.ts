@@ -29,4 +29,9 @@ describe("pitchListEquals", () => {
   it("空リスト同士は true", () => {
     expect(pitchListEquals([], [])).toBe(true);
   });
+  it("enabled 未定義は true と同じ扱い", () => {
+    const a = [{ pitchName: "C", octaveNum: 4, isRoot: true }] as unknown as Parameters<typeof pitchListEquals>[0];
+    const b = [{ pitchName: "C", octaveNum: 4, isRoot: true, enabled: true }] as Parameters<typeof pitchListEquals>[0];
+    expect(pitchListEquals(a, b)).toBe(true);
+  });
 });

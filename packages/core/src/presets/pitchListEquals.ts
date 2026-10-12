@@ -14,7 +14,8 @@ export function pitchListEquals(a: Pitch[], b: Pitch[]): boolean {
       p.pitchName === q.pitchName &&
       p.octaveNum === q.octaveNum &&
       Boolean(p.isRoot) === Boolean(q.isRoot) &&
-      p.enabled === q.enabled
+      // enabled 未定義は有効扱い (旧データ互換。他の箇所と同じく false のみ無効)
+      (p.enabled !== false) === (q.enabled !== false)
     );
   });
 }
