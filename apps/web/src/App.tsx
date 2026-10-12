@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAtomValue } from "jotai";
 
+import { alignResultsByKey } from "@chordlens/core/feedback/tuningMetrics";
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
 import { useChordFollow } from "@/lib/hooks/useChordFollow";
 import { useWakeLock } from "@/lib/hooks/useWakeLock";
@@ -49,6 +50,7 @@ export function App() {
     error,
     dismissError,
     analysisResult,
+    analyzedPitchList,
     centDeviations,
     peakSearchDebug,
     comparisonResults,
@@ -81,6 +83,10 @@ export function App() {
     stopProcessing,
   });
 
+  // 構成音リストが自動追従で差し替わった直後は、結果がまだ旧リストで計算されている。
+  // 位置ではなく音のキーで対応付け、旧リストの偏差が別の音に割り当たるのを防ぐ
+  const alignedDeviations = alignResultsByKey(currentPitchList, analyzedPitchList, analysisResult);
+
   // 解析中は画面スリープを抑止する (実験フローは別ルートのため対象外)
   useWakeLock(isProcessing);
 
@@ -112,7 +118,7 @@ export function App() {
           feedbackType={feedbackType}
           analysisData={currentPitchList.map((pitch, index) => ({
             pitch,
-            deviation: analysisResult?.[index] ?? null,
+            deviation: alignedDeviations[index],
           }))}
           evalRangeCents={evalRangeCents}
           a4Freq={a4Freq}
