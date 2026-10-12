@@ -2,20 +2,23 @@
 
 import { useAtom } from "jotai";
 import {
-  FEEDBACK_TYPES,
+  LEGACY_FEEDBACK_TYPES,
   FEEDBACK_TYPE_LABELS,
-  type FeedbackType,
+  toLegacyFeedbackType,
+  type LegacyFeedbackType,
 } from "@chordlens/core/constants";
 import { cn } from "@/lib/utils";
 import { feedbackTypeAtom } from "@/lib/store";
 
 /**
- * フィードバック形式のセグメント切替 (メイン画面のカードヘッダ用)。
+ * フィードバック形式のセグメント切替 (評価実験画面のカードヘッダ用)。
+ * 実験条件を固定するため従来の 3 形式のみを扱う (メイン画面は FeedbackCarousel)。
  * 設定ドロワーの FeedbackTypeSelector と同じ feedbackTypeAtom を共有する。
  * 各セグメントは 44px 高のタップ領域。
  */
 export function FeedbackTypeSwitch({ className }: { className?: string }) {
-  const [feedbackType, setFeedbackType] = useAtom(feedbackTypeAtom);
+  const [storedType, setFeedbackType] = useAtom(feedbackTypeAtom);
+  const feedbackType = toLegacyFeedbackType(storedType);
 
   return (
     <div
@@ -23,7 +26,7 @@ export function FeedbackTypeSwitch({ className }: { className?: string }) {
       aria-label="フィードバック形式"
       className={cn("grid grid-cols-3 gap-0.5 rounded-lg bg-gray-100 p-0.5", className)}
     >
-      {FEEDBACK_TYPES.map((type: FeedbackType) => {
+      {LEGACY_FEEDBACK_TYPES.map((type: LegacyFeedbackType) => {
         const selected = type === feedbackType;
         return (
           <button

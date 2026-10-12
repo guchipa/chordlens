@@ -8,7 +8,7 @@ import { useWakeLock } from "@/lib/hooks/useWakeLock";
 import { useAutoStopOnHidden } from "@/lib/hooks/useAutoStopOnHidden";
 
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
-import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
+import { FeedbackCarousel } from "@/components/feedback/FeedbackCarousel";
 import { PresetSwitcher } from "@/components/feature/PresetSwitcher";
 import { CentDisplay } from "@/components/feature/CentDisplay";
 import { Toaster } from "@/components/feature/Toaster";
@@ -24,7 +24,6 @@ import {
   smoothingTimeConstantAtom,
   holdEnabledAtom,
   experimentModeAtom,
-  feedbackTypeAtom,
   pitchAlgorithmAtom,
   swipeBandwidthCentsAtom,
 } from "@/lib/store";
@@ -40,7 +39,6 @@ export function App() {
   const smoothingTimeConstant = useAtomValue(smoothingTimeConstantAtom);
   const holdEnabled = useAtomValue(holdEnabledAtom);
   const experimentMode = useAtomValue(experimentModeAtom);
-  const feedbackType = useAtomValue(feedbackTypeAtom);
   const pitchAlgorithm = useAtomValue(pitchAlgorithmAtom);
   const swipeBandwidthCents = useAtomValue(swipeBandwidthCentsAtom);
 
@@ -114,8 +112,7 @@ export function App() {
           />
         )}
 
-        <UnifiedFeedback
-          feedbackType={feedbackType}
+        <FeedbackCarousel
           analysisData={currentPitchList.map((pitch, index) => ({
             pitch,
             deviation: alignedDeviations[index],

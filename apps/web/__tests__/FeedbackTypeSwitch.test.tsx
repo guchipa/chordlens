@@ -61,7 +61,7 @@ function swipe(el: Element, from: [number, number], to: [number, number]) {
   fireEvent.pointerUp(el, { ...base, clientX: to[0], clientY: to[1] });
 }
 
-describe("FeedbackTypeSwitch (メイン画面)", () => {
+describe("FeedbackTypeSwitch (評価実験画面)", () => {
   afterEach(cleanup);
 
   it("3 形式のセグメントを表示し、現在の形式が選択状態になる", () => {

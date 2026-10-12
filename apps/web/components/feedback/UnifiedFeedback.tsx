@@ -7,7 +7,12 @@ import { BarFeedback } from "./BarFeedback";
 // import { StroboFeedback } from "./StroboFeedback";
 // import { NumericFeedback } from "./NumericFeedback";
 // import { WaveformFeedback } from "./WaveformFeedback";
-import { FEEDBACK_TYPES, type FeedbackType } from "@chordlens/core/constants";
+import {
+  LEGACY_FEEDBACK_TYPES,
+  toLegacyFeedbackType,
+  type FeedbackType,
+  type LegacyFeedbackType,
+} from "@chordlens/core/constants";
 import { stepItem } from "@chordlens/core/gestures/swipeIntent";
 import type { Pitch } from "@chordlens/core/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -32,28 +37,35 @@ interface UnifiedFeedbackProps {
 /** カードヘッダ: 形式切替のセグメント (タイトルの代わり) */
 const SWITCH_HEADER_CLASS = "px-3 pt-3 pb-0";
 
+/**
+ * 評価実験画面 (/experiments) 用のフィードバック表示。
+ * 被験者条件を変えないため従来の 3 形式・従来の描画のまま固定する。
+ * メイン画面は FeedbackCarousel を使う。
+ */
 export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
-  feedbackType,
+  feedbackType: storedType,
   analysisData,
   // evalRangeCents,
   a4Freq = 442,
   holdEnabled = true,
 }) => {
   const setFeedbackType = useSetAtom(feedbackTypeAtom);
+  // メイン画面で新しい形式が選ばれていても、ここでは従来のメーターで描く
+  const feedbackType = toLegacyFeedbackType(storedType);
   // 切替方向 (左右どちらから入るか)。形式が変わった描画中に算出する
   const [prevType, setPrevType] = useState(feedbackType);
   const [direction, setDirection] = useState<"next" | "prev">("next");
   if (prevType !== feedbackType) {
     setPrevType(feedbackType);
     setDirection(
-      FEEDBACK_TYPES.indexOf(feedbackType) >= FEEDBACK_TYPES.indexOf(prevType)
+      LEGACY_FEEDBACK_TYPES.indexOf(feedbackType) >= LEGACY_FEEDBACK_TYPES.indexOf(prevType)
         ? "next"
         : "prev",
     );
   }
 
   const go = (step: 1 | -1) => {
-    const next = stepItem(FEEDBACK_TYPES, feedbackType, step);
+    const next = stepItem(LEGACY_FEEDBACK_TYPES, feedbackType, step);
     if (next) setFeedbackType(next);
   };
   const swipe = useSwipeNav({ onNext: () => go(1), onPrev: () => go(-1) });
@@ -93,7 +105,7 @@ export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
 };
 
 interface FeedbackBodyProps {
-  feedbackType: FeedbackType;
+  feedbackType: LegacyFeedbackType;
   analysisData: UnifiedFeedbackProps["analysisData"];
   a4Freq: number;
   holdEnabled: boolean;

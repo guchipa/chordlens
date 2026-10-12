@@ -30,6 +30,8 @@ interface TunerMeterProps {
   a4Freq?: number;
   /** 表示保持（ホールド）を有効にするか（デフォルト: true） */
   holdEnabled?: boolean;
+  /** カードヘッダを描かない (形式切替を外側に置くメイン画面のカルーセル用) */
+  hideHeader?: boolean;
 }
 
 export const TunerMeter: React.FC<TunerMeterProps> = ({
@@ -38,6 +40,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   rootPitchName,
   a4Freq = 442,
   holdEnabled = true,
+  hideHeader = false,
 }) => {
   // 表示用のデータを保持する state
   const [displayData, setDisplayData] = useState(analysisData);
@@ -113,14 +116,16 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   }, []);
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="px-4 pt-3 pb-0">
-        {typeof title === "string" || title == null ? (
-          <CardTitle className="text-sm font-medium text-muted-foreground">{title || "Tuner"}</CardTitle>
-        ) : (
-          title
-        )}
-      </CardHeader>
-      <CardContent className="flex flex-col items-center px-3 pb-3 pt-1">
+      {!hideHeader && (
+        <CardHeader className="px-4 pt-3 pb-0">
+          {typeof title === "string" || title == null ? (
+            <CardTitle className="text-sm font-medium text-muted-foreground">{title || "Tuner"}</CardTitle>
+          ) : (
+            title
+          )}
+        </CardHeader>
+      )}
+      <CardContent className={hideHeader ? "flex flex-col items-center px-3 py-3" : "flex flex-col items-center px-3 pb-3 pt-1"}>
         <div className="flex w-full aspect-[2/1] overflow-hidden">
           {/* メーターの背景（半円） */}
           <svg

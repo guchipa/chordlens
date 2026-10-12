@@ -281,7 +281,7 @@ export const PITCH_ALGORITHM_DESCRIPTIONS: Record<PitchAlgorithm, string> = {
 };
 
 /**
- * フィードバック形式の定義
+ * フィードバック形式の定義 (メイン画面のカルーセルの並び順)
  */
 export const FEEDBACK_TYPES = [
   "meter",
@@ -290,6 +290,25 @@ export const FEEDBACK_TYPES = [
 ] as const;
 
 export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
+
+/**
+ * 評価実験 (/experiments) で使う形式。被験者条件を変えないため、
+ * 実験画面は従来の 3 形式と従来の描画のまま固定する
+ */
+export const LEGACY_FEEDBACK_TYPES = [
+  "meter",
+  "bar",
+  "circle",
+] as const satisfies readonly FeedbackType[];
+
+export type LegacyFeedbackType = (typeof LEGACY_FEEDBACK_TYPES)[number];
+
+/** 実験画面で表示できない形式は従来のメーターに読み替える */
+export function toLegacyFeedbackType(type: FeedbackType): LegacyFeedbackType {
+  return (LEGACY_FEEDBACK_TYPES as readonly FeedbackType[]).includes(type)
+    ? (type as LegacyFeedbackType)
+    : "meter";
+}
 
 export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
   meter: "メーター",
