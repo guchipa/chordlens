@@ -2,12 +2,38 @@
 
 import React, { useMemo } from "react";
 import { getSingleEqualJustDiff } from "@chordlens/core/audio_analysis/calcJustFreq";
+import {
+  CHORD_ROLE_COLORS,
+  FEEDBACK_NUMBER_UPDATE_MS,
+  TUNING_LEVEL_COLORS,
+} from "@chordlens/core/constants";
+import { tuningLevel, type TuningLevel } from "@chordlens/core/feedback/tuningMetrics";
+import { useStabilizedFeedback, useThrottledValue } from "@/lib/hooks/useStabilizedFeedback";
+import type { Pitch } from "@chordlens/core/types";
 
 interface BarFeedbackProps {
   pitchName: string;
   deviation: number | null; // -1.0 to 1.0, or null when not detected
   rootPitchName?: string; // 根音の音名（例: "C4"）
   a4Freq?: number; // A4の基準周波数（デフォルト: 442Hz）
+  /**
+   * enhanced 表示用 (BarListFeedback から渡す)。指定すると左に役割ラベルと
+   * 平均律との差、右に偏差のセント値を出す
+   */
+  enhanced?: {
+    roleLabel: string | null;
+    roleColor: string;
+    /** 数値表示用 (間引き後) の偏差のセント値と段階 */
+    shownCents: number | null;
+    shownLevel: TuningLevel | null;
+    /** 純正律 − 平均律 (セント) */
+    justOffsetCents: number | null;
+  };
+}
+
+function formatSignedCents(cents: number): string {
+  const r = Math.round(cents);
+  return r > 0 ? `+${r}` : r < 0 ? `−${Math.abs(r)}` : "±0";
 }
 
 export const BarFeedback: React.FC<BarFeedbackProps> = ({
@@ -15,6 +41,7 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
   deviation,
   rootPitchName,
   a4Freq = 442,
+  enhanced,
 }) => {
   // 平均律と純正律の差を計算（セント単位）
   const equalJustDiffCents = useMemo(() => {
@@ -35,8 +62,33 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
   const isInTune = deviation !== null && Math.abs(deviation) < 0.05;
   const isClose = deviation !== null && Math.abs(deviation) < 0.2;
 
+  const shownLevel = enhanced?.shownLevel ?? null;
+
   return (
-    <div className="flex items-center gap-2 w-full">
+    <div className="flex items-center gap-2 w-full" data-testid="bar-row">
+      {enhanced ? (
+        <div className="flex w-[4.5rem] shrink-0 flex-col items-end leading-tight">
+          <span
+            className="max-w-full truncate rounded-full px-1.5 text-[11px] font-semibold text-white"
+            style={{ backgroundColor: enhanced.roleColor }}
+          >
+            {enhanced.roleLabel ?? "—"}
+          </span>
+          <span className="flex items-center gap-1 text-base font-semibold tabular-nums">
+            {isInTune && (
+              <span className="text-green-600" role="img" aria-label="合っています">
+                ✓
+              </span>
+            )}
+            {pitchName}
+          </span>
+          {enhanced.justOffsetCents !== null && Math.abs(enhanced.justOffsetCents) >= 0.5 && (
+            <span className="text-[10px] text-muted-foreground tabular-nums">
+              平均律{formatSignedCents(enhanced.justOffsetCents)}c
+            </span>
+          )}
+        </div>
+      ) : (
       <div className="flex w-16 shrink-0 items-center justify-end gap-1 text-base font-semibold tabular-nums">
         {isInTune && (
           <span
@@ -49,6 +101,7 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
         )}
         <span>{pitchName}</span>
       </div>
+      )}
 
       <div className="relative h-8 grow bg-gray-200 dark:bg-gray-800 rounded-md overflow-hidden">
         {/* 中央ライン */}
@@ -107,6 +160,77 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
           </div>
         )}
       </div>
+      {enhanced && (
+        <span
+          data-testid="bar-cents"
+          className="w-12 shrink-0 text-right text-lg font-bold tabular-nums"
+          style={{ color: shownLevel ? TUNING_LEVEL_COLORS[shownLevel] : "#9ca3af" }}
+        >
+          {enhanced.shownCents === null ? "—" : `${formatSignedCents(enhanced.shownCents)}c`}
+        </span>
+      )}
+    </div>
+  );
+};
+
+/** 構成音が 3↔4 で変わってもカードの高さが動かないよう、最低この行数を確保する */
+const MIN_BAR_ROWS = 4;
+
+interface BarListFeedbackProps {
+  analysisData: Array<{ pitch: Pitch; deviation: number | null }>;
+  evalRangeCents: number;
+  a4Freq: number;
+  holdEnabled: boolean;
+}
+
+/**
+ * メイン画面用のバー一覧。構成音が動的に変わっても見失わないよう、
+ * 上から高い声部の順 (楽譜と同じ向き) に並べ、役割ラベルを付け、最低 4 行を
+ * 確保して行の位置とカードの高さを固定する。値は保持・平滑化 (和音変更でリセット) し、
+ * セント値は間引いて表示する。
+ */
+export const BarListFeedback: React.FC<BarListFeedbackProps> = ({
+  analysisData,
+  evalRangeCents,
+  a4Freq,
+  holdEnabled,
+}) => {
+  const { voices, chordKey } = useStabilizedFeedback(analysisData, holdEnabled);
+  const shown = useThrottledValue(
+    voices.map((v) => v.deviation),
+    FEEDBACK_NUMBER_UPDATE_MS,
+    chordKey,
+  );
+  const rootPitchName = voices.find((v) => v.pitch.isRoot)?.key;
+  const rows = voices.map((v, i) => ({ v, shownDeviation: shown[i] ?? null })).reverse();
+  const emptyCount = Math.max(0, MIN_BAR_ROWS - rows.length);
+
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map(({ v, shownDeviation }) => (
+        <BarFeedback
+          key={v.key}
+          pitchName={v.key}
+          deviation={v.deviation === null ? null : Math.max(-1, Math.min(1, v.deviation))}
+          rootPitchName={rootPitchName}
+          a4Freq={a4Freq}
+          enhanced={{
+            roleLabel: v.intervalLabel,
+            roleColor: v.role ? CHORD_ROLE_COLORS[v.role] : "#9ca3af",
+            shownCents: shownDeviation === null ? null : shownDeviation * evalRangeCents,
+            shownLevel: shownDeviation === null ? null : tuningLevel(shownDeviation),
+            justOffsetCents: v.justOffsetCents,
+          }}
+        />
+      ))}
+      {Array.from({ length: emptyCount }, (_, i) => (
+        <div
+          key={`empty-${i}`}
+          aria-hidden="true"
+          data-testid="bar-empty-row"
+          className="h-11 rounded-md border border-dashed border-gray-200"
+        />
+      ))}
     </div>
   );
 };

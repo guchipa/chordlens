@@ -5,8 +5,8 @@ import type { FeedbackType } from "@chordlens/core/constants";
 import type { Pitch } from "@chordlens/core/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { TunerMeter } from "./MeterFeedback";
-import { BarFeedback } from "./BarFeedback";
-import { CircleFeedback } from "./CircleFeedback";
+import { BarListFeedback } from "./BarFeedback";
+import { CircleSlide } from "./CircleFeedback";
 import { VoiceLanesFeedback } from "./VoiceLanesFeedback";
 import { PurityFeedback } from "./PurityFeedback";
 import { TrajectoryFeedback } from "./TrajectoryFeedback";
@@ -61,6 +61,7 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
         rootPitchName={rootPitchName}
         a4Freq={a4Freq}
         holdEnabled={holdEnabled}
+        variant="enhanced"
       />
     );
   }
@@ -107,21 +108,15 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
     return (
       <Card className="mx-auto w-full max-w-md">
         <CardContent className="flex flex-col gap-2 px-3 py-3">
-          {enabled.map((d) => {
-            const pitchName = `${d.pitch.pitchName}${d.pitch.octaveNum}`;
-            return (
-              <BarFeedback
-                key={pitchName}
-                pitchName={pitchName}
-                deviation={d.deviation}
-                rootPitchName={rootPitchName}
-                a4Freq={a4Freq}
-              />
-            );
-          })}
+          <BarListFeedback
+            analysisData={enabled}
+            evalRangeCents={evalRangeCents}
+            a4Freq={a4Freq}
+            holdEnabled={holdEnabled}
+          />
           <div
             aria-hidden="true"
-            className="ml-[4.5rem] flex justify-between text-xs text-muted-foreground"
+            className="mr-14 ml-[5rem] flex justify-between text-xs text-muted-foreground"
           >
             <span>← 低い</span>
             <span>合っている</span>
@@ -136,11 +131,9 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardContent className="flex justify-center px-3 py-3">
-        <CircleFeedback
-          analysisData={enabled.map((d) => ({
-            pitchName: `${d.pitch.pitchName}${d.pitch.octaveNum}`,
-            deviation: d.deviation,
-          }))}
+        <CircleSlide
+          analysisData={enabled}
+          holdEnabled={holdEnabled}
           className="w-full max-w-[360px]"
         />
       </CardContent>

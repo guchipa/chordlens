@@ -49,7 +49,7 @@ export {
 } from "./undoAtoms";
 
 // フィードバック
-export { feedbackTypeAtom } from "./feedbackAtoms";
+export { feedbackTypeAtom, circleLayoutAtom } from "./feedbackAtoms";
 
 // 構成音自動追従
 export {

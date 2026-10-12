@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  CHORD_ROLE_COLORS,
   METER_MAX_DEVIATION_DEGREES,
   METER_NEEDLE_HOLD_MS,
   METER_NEEDLE_SMOOTHING_ALPHA,
@@ -12,6 +13,8 @@ import {
 import type { Pitch } from "@chordlens/core/types";
 import { getSingleEqualJustDiff } from "@chordlens/core/audio_analysis/calcJustFreq";
 import { updateEmaHoldList, type EmaHoldState } from "@chordlens/core/utils/emaHold";
+import { chordKey } from "@chordlens/core/feedback/chordName";
+import { describeVoices } from "@chordlens/core/feedback/chordRoles";
 
 interface TunerMeterProps {
   /**
@@ -32,6 +35,13 @@ interface TunerMeterProps {
   holdEnabled?: boolean;
   /** カードヘッダを描かない (形式切替を外側に置くメイン画面のカルーセル用) */
   hideHeader?: boolean;
+  /**
+   * legacy: 従来の描画 (音名ごとの色。評価実験画面用)
+   * enhanced: 構成音が動的に変わるメイン画面用。針と凡例を役割 (度数) の色にし、
+   *   凡例を声部順 (低い順) に「長3度 E4」の形で出す。和音が変わったら
+   *   針の保持・平滑化の状態を捨て、旧和音の針を残さない
+   */
+  variant?: "legacy" | "enhanced";
 }
 
 export const TunerMeter: React.FC<TunerMeterProps> = ({
@@ -41,7 +51,9 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   a4Freq = 442,
   holdEnabled = true,
   hideHeader = false,
+  variant = "legacy",
 }) => {
+  const enhanced = variant === "enhanced";
   // 表示用のデータを保持する state
   const [displayData, setDisplayData] = useState(analysisData);
   // タイマーのIDを保持するための ref
@@ -51,11 +63,28 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
 
   // 針ごとの状態（保持・スムージング）
   const needleStateRef = useRef<Map<string, EmaHoldState>>(new Map());
+  // enhanced: 和音の変化を検出して状態を捨てるための直前の和音キー
+  const lastChordKeyRef = useRef<string | null>(null);
 
   const getKey = (pitch: Pitch) => `${pitch.pitchName}${pitch.octaveNum}`;
 
   useEffect(() => {
     const now = performance.now();
+
+    let chordChanged = false;
+    if (enhanced) {
+      const key = chordKey(analysisData.map(({ pitch }) => pitch));
+      if (lastChordKeyRef.current !== key) {
+        chordChanged = lastChordKeyRef.current !== null;
+        lastChordKeyRef.current = key;
+        needleStateRef.current.clear();
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        isWaitingForTimeoutRef.current = false;
+      }
+    }
 
     const keys = analysisData.map(({ pitch }) => getKey(pitch));
     const rawDeviations = analysisData.map(({ deviation }) => deviation);
@@ -78,7 +107,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
 
     const isAnySoundDetected = analysisData.some((data) => data.deviation !== null);
 
-    if (isAnySoundDetected) {
+    if (isAnySoundDetected || chordChanged) {
       // 何かしら検出されている間は、毎フレーム追従しつつ、針ごとの保持/平滑化で安定化
       // 既存のタイマーがあればクリア
       if (timeoutRef.current) {
@@ -102,7 +131,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
       }
       // 既にタイマー待ち中の場合は何もしない（タイマーは継続）
     }
-  }, [analysisData, holdEnabled]); // analysisData が変更されるたびに effect を実行
+  }, [analysisData, holdEnabled, enhanced]); // analysisData が変更されるたびに effect を実行
 
   // コンポーネントがアンマウントされるときにタイマーをクリア
   useEffect(() => {
@@ -114,6 +143,24 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
       isWaitingForTimeoutRef.current = false;
     };
   }, []);
+  // enhanced: 役割 (度数) と声部順。和音が変わっても色の意味 (3 度は青など) が変わらない
+  const voices = enhanced ? describeVoices(displayData.map(({ pitch }) => pitch)) : [];
+  const roleByKey = new Map(voices.map((v) => [v.key, v]));
+  const colorOf = (pitch: Pitch): string => {
+    if (enhanced) {
+      const role = roleByKey.get(getKey(pitch))?.role;
+      return role ? CHORD_ROLE_COLORS[role] : "#888";
+    }
+    return PITCH_COLOR_MAP[pitch.pitchName] || "#888";
+  };
+  const legend = enhanced
+    ? voices.map((v) => ({ key: v.key, color: colorOf(v.pitch), label: `${v.intervalLabel ?? ""} ${v.key}`.trim() }))
+    : displayData.map(({ pitch }, index) => ({
+        key: `${pitch.pitchName}-${pitch.octaveNum}-${index}`,
+        color: PITCH_COLOR_MAP[pitch.pitchName] || "#888",
+        label: `${pitch.pitchName}${pitch.octaveNum}`,
+      }));
+
   return (
     <Card className="w-full max-w-md mx-auto">
       {!hideHeader && (
@@ -169,7 +216,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
               // セントを-1.0〜1.0の範囲に正規化（±50セントが±1.0に対応）
               const normalizedDiff = equalJustDiffCents / 50;
               const markerRotation = normalizedDiff * METER_MAX_DEVIATION_DEGREES;
-              const markerColor = PITCH_COLOR_MAP[pitch.pitchName] || "#888";
+              const markerColor = colorOf(pitch);
 
               // マーカー用の座標計算
               const markerRotationRad = (-markerRotation + 90) * (Math.PI / 180);
@@ -199,8 +246,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
 
               const needleRotation =
                 deviation * METER_MAX_DEVIATION_DEGREES;
-              const needleColor =
-                PITCH_COLOR_MAP[pitch.pitchName] || "#888"; // マップにない場合はデフォルト色
+              const needleColor = colorOf(pitch); // マップにない場合はデフォルト色
 
               return (
                 <line
@@ -223,21 +269,10 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
           </svg>
         </div>
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-3">
-          {displayData.map(({ pitch: { pitchName, octaveNum } }, index) => (
-            <div
-              key={`${pitchName}-${octaveNum}-${index}`}
-              className="flex items-center gap-2 text-base"
-            >
-              <span
-                className="size-3.5 rounded-full"
-                style={{
-                  backgroundColor: PITCH_COLOR_MAP[pitchName] || "#888",
-                }}
-              />
-              <span className="font-semibold">
-                {pitchName}
-                {octaveNum}
-              </span>
+          {legend.map(({ key, color, label }) => (
+            <div key={key} className="flex items-center gap-2 text-base">
+              <span className="size-3.5 rounded-full" style={{ backgroundColor: color }} />
+              <span className="font-semibold">{label}</span>
             </div>
           ))}
         </div>

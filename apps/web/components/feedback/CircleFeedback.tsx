@@ -1,7 +1,19 @@
 "use client";
 
-import { PITCH_NAME_LIST } from '@chordlens/core/constants';
+import {
+  CIRCLE_OF_FIFTHS,
+  CLOSE_DEVIATION,
+  IN_TUNE_DEVIATION,
+  PITCH_NAME_LIST,
+  TUNING_LEVEL_COLORS,
+  type CircleLayout,
+} from '@chordlens/core/constants';
 import React from 'react';
+import { useAtomValue } from 'jotai';
+import { nameChord } from '@chordlens/core/feedback/chordName';
+import type { Pitch } from '@chordlens/core/types';
+import { useStabilizedFeedback } from '@/lib/hooks/useStabilizedFeedback';
+import { circleLayoutAtom } from '@/lib/store';
 
 interface CircleFeedbackProps {
   analysisData: Array<{
@@ -9,6 +21,26 @@ interface CircleFeedbackProps {
     deviation: number | null;
   }>;
   className?: string;
+  /** 音名の並び順 (既定: 半音順) */
+  layout?: CircleLayout;
+  /**
+   * legacy: 従来の描画 (赤/緑の 2 値、針は ±15° の線形。評価実験画面用)
+   * enhanced: メイン画面用。偏差に応じて塗りの色を連続的に変え、小さなずれでも
+   *   針が見えるよう振れを平方根で拡大し、中央に centerLabel (和音名) を出す
+   */
+  variant?: 'legacy' | 'enhanced';
+  centerLabel?: string | null;
+}
+
+/** enhanced の塗り色: 合っている=緑、近い=緑→黄、それ以上=黄→赤 (|偏差| 0.5 で赤) */
+function continuousColor(deviation: number): string {
+  const abs = Math.abs(deviation);
+  if (abs < IN_TUNE_DEVIATION) return TUNING_LEVEL_COLORS.inTune;
+  const hue =
+    abs <= CLOSE_DEVIATION
+      ? 142 - (142 - 48) * ((abs - IN_TUNE_DEVIATION) / (CLOSE_DEVIATION - IN_TUNE_DEVIATION))
+      : Math.max(0, 48 - 48 * ((abs - CLOSE_DEVIATION) / (0.5 - CLOSE_DEVIATION)));
+  return `hsl(${hue.toFixed(0)} 75% 50%)`;
 }
 
 // SVGの円弧パスを生成する関数
@@ -45,7 +77,15 @@ const createArcPath = (
   `;
 };
 
-export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, className }) => {
+export const CircleFeedback: React.FC<CircleFeedbackProps> = ({
+  analysisData,
+  className,
+  layout = 'chromatic',
+  variant = 'legacy',
+  centerLabel,
+}) => {
+  const enhanced = variant === 'enhanced';
+  const order = layout === 'fifths' ? CIRCLE_OF_FIFTHS : PITCH_NAME_LIST;
   const centerX = 300;
   const centerY = 300;
   const innerRadius = 80;
@@ -53,7 +93,7 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
   const textRadius = 115;
 
   // 各音名の位置を計算
-  const pitchPositions = PITCH_NAME_LIST.map((name, index) => {
+  const pitchPositions = order.map((name, index) => {
     const angle = (index * 30 - 90) * (Math.PI / 180);
     const x = centerX + textRadius * Math.cos(angle);
     const y = centerY + textRadius * Math.sin(angle);
@@ -75,7 +115,7 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
     .filter((data) => data.deviation !== null)
     .map((data) => {
       const pitchNameOnly = data.pitchName.replace(/[0-9]/g, '');
-      const pitchIndex = PITCH_NAME_LIST.indexOf(pitchNameOnly);
+      const pitchIndex = order.indexOf(pitchNameOnly);
 
       if (pitchIndex === -1) return null;
 
@@ -86,7 +126,11 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
       // deviation = -1 → 領域の開始角度（-15度）
       // deviation = 0 → 領域の中心角度（0度）
       // deviation = +1 → 領域の終了角度（+15度）
-      const angleOffset = (data.deviation ?? 0) * 15; // ±15度
+      // enhanced は平方根で拡大して小さなずれも見えるようにする (±1 で ±15度は同じ)
+      const d = Math.max(-1, Math.min(1, data.deviation ?? 0));
+      const angleOffset = enhanced
+        ? Math.sign(d) * Math.sqrt(Math.abs(d)) * 15
+        : (data.deviation ?? 0) * 15; // ±15度
       const needleAngle = centerAngle + angleOffset;
 
       return {
@@ -119,7 +163,7 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
         />
 
         {/* 12個の領域それぞれを塗りつぶし */}
-        {PITCH_NAME_LIST.map((name, index) => {
+        {order.map((name, index) => {
           const startAngle = index * 30 - 15;
           const endAngle = (index + 1) * 30 - 15;
 
@@ -131,7 +175,9 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
             const isInTune = Math.abs(deviation) < 0.05;
 
             // 塗りつぶし色を決定（領域全体を塗りつぶす）
-            const fillColor = isInTune ? '#22c55e' : '#ef4444'; // 緑 or 赤
+            const fillColor = enhanced
+              ? continuousColor(deviation)
+              : isInTune ? '#22c55e' : '#ef4444'; // 緑 or 赤
 
             return (
               <path
@@ -196,6 +242,21 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
           strokeWidth="5"
         />
 
+        {enhanced && centerLabel && (
+          <text
+            data-testid="circle-center-label"
+            x={centerX}
+            y={centerY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={centerLabel.length > 5 ? 22 : 36}
+            fontWeight="bold"
+            fill="#111827"
+          >
+            {centerLabel}
+          </text>
+        )}
+
         {/* 音名のテキスト */}
         {pitchPositions.map((pos) => (
           <text
@@ -213,6 +274,29 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({ analysisData, cl
         ))}
       </g>
     </svg>
+  );
+};
+
+/**
+ * メイン画面用のサークル。並び順は設定 (circleLayoutAtom) に従い、値は
+ * 保持・平滑化 (和音変更でリセット) し、中央に和音名を出す。
+ */
+export const CircleSlide: React.FC<{
+  analysisData: Array<{ pitch: Pitch; deviation: number | null }>;
+  holdEnabled: boolean;
+  className?: string;
+}> = ({ analysisData, holdEnabled, className }) => {
+  const layout = useAtomValue(circleLayoutAtom);
+  const { voices } = useStabilizedFeedback(analysisData, holdEnabled);
+  const chord = nameChord(analysisData.map((d) => d.pitch));
+  return (
+    <CircleFeedback
+      analysisData={voices.map((v) => ({ pitchName: v.key, deviation: v.deviation }))}
+      layout={layout}
+      variant="enhanced"
+      centerLabel={chord?.symbol ?? chord?.rootName ?? null}
+      className={className}
+    />
   );
 };
 

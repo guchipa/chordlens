@@ -319,6 +319,21 @@ export const LEGACY_FEEDBACK_TYPES = [
 
 export type LegacyFeedbackType = (typeof LEGACY_FEEDBACK_TYPES)[number];
 
+/**
+ * サークル形式の音名の並び順。
+ * chromatic: 半音順 (鍵盤と同じ)、fifths: 5 度圏 (長三和音・短三和音が一定の形になる)
+ */
+export const CIRCLE_LAYOUTS = ["chromatic", "fifths"] as const;
+export type CircleLayout = (typeof CIRCLE_LAYOUTS)[number];
+export const CIRCLE_LAYOUT_LABELS: Record<CircleLayout, string> = {
+  chromatic: "半音順",
+  fifths: "5度圏",
+};
+/** 5 度圏の並び (C から完全 5 度ずつ) */
+export const CIRCLE_OF_FIFTHS: string[] = [
+  "C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "Eb", "Bb", "F",
+];
+
 /** 実験画面で表示できない形式は従来のメーターに読み替える */
 export function toLegacyFeedbackType(type: FeedbackType): LegacyFeedbackType {
   return (LEGACY_FEEDBACK_TYPES as readonly FeedbackType[]).includes(type)
