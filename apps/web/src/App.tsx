@@ -97,7 +97,7 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-2xl grow flex-col items-stretch gap-4 px-3 pt-3 pb-[calc(12rem+env(safe-area-inset-bottom))] sm:px-6">
+      <main className="mx-auto flex w-full max-w-2xl grow flex-col items-stretch gap-4 px-3 pt-3 pb-[calc(var(--bottom-bar-h,12rem)+1rem)] sm:px-6">
         {experimentMode && (
           <ExperimentModePanel
             isProcessing={isProcessing}
