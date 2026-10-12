@@ -45,6 +45,7 @@ export function App() {
 
   const {
     isProcessing,
+    isStarting,
     error,
     dismissError,
     analysisResult,
@@ -74,7 +75,11 @@ export function App() {
 
   // 背面へ回ったら解析 (マイク) を止める。前面復帰時は自動再開せず、案内を出して次の「解析開始」を待つ。
   // isProcessing に従うため、WakeLock・構成音の自動追従も同時に止まり、再取得もされない
-  const { autoStopped, clearAutoStopped } = useAutoStopOnHidden({ isProcessing, stopProcessing });
+  const { autoStopped, clearAutoStopped } = useAutoStopOnHidden({
+    // 初期化中に背面へ回った場合も止める (初期化完了後に開始されないよう取り消す)
+    isProcessing: isProcessing || isStarting,
+    stopProcessing,
+  });
 
   // 解析中は画面スリープを抑止する (実験フローは別ルートのため対象外)
   useWakeLock(isProcessing);
