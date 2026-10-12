@@ -20,6 +20,11 @@ export interface FeedbackSlideProps {
   evalRangeCents: number;
   a4Freq: number;
   holdEnabled: boolean;
+  /**
+   * 和音の切替中 (自動追従の推定が確定値と食い違う間)。この間の偏差は
+   * 旧和音を基準にしているため、信頼できない値として扱う
+   */
+  transitioning?: boolean;
 }
 
 const EMPTY_MESSAGE = (

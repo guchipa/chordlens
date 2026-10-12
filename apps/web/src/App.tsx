@@ -9,6 +9,7 @@ import { useAutoStopOnHidden } from "@/lib/hooks/useAutoStopOnHidden";
 
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { FeedbackCarousel } from "@/components/feedback/FeedbackCarousel";
+import { ChordHeader } from "@/components/feedback/ChordHeader";
 import { PresetSwitcher } from "@/components/feature/PresetSwitcher";
 import { CentDisplay } from "@/components/feature/CentDisplay";
 import { Toaster } from "@/components/feature/Toaster";
@@ -26,6 +27,9 @@ import {
   experimentModeAtom,
   pitchAlgorithmAtom,
   swipeBandwidthCentsAtom,
+  chordFollowEnabledAtom,
+  chordFollowLockedAtom,
+  chordFollowPendingAtom,
 } from "@/lib/store";
 
 export function App() {
@@ -41,6 +45,9 @@ export function App() {
   const experimentMode = useAtomValue(experimentModeAtom);
   const pitchAlgorithm = useAtomValue(pitchAlgorithmAtom);
   const swipeBandwidthCents = useAtomValue(swipeBandwidthCentsAtom);
+  const chordFollowEnabled = useAtomValue(chordFollowEnabledAtom);
+  const chordFollowLocked = useAtomValue(chordFollowLockedAtom);
+  const chordFollowPending = useAtomValue(chordFollowPendingAtom);
 
   const {
     isProcessing,
@@ -113,6 +120,8 @@ export function App() {
         )}
 
         <FeedbackCarousel
+          header={<ChordHeader pitchList={currentPitchList} />}
+          transitioning={chordFollowEnabled && !chordFollowLocked && chordFollowPending}
           analysisData={currentPitchList.map((pitch, index) => ({
             pitch,
             deviation: alignedDeviations[index],

@@ -56,5 +56,7 @@ export {
     chordFollowEnabledAtom,
     chordFollowStatusAtom,
     chordFollowErrorAtom,
+    chordFollowPendingAtom,
+    chordFollowLockedAtom,
     type ChordFollowStatus,
 } from "./chordDetectionAtoms";

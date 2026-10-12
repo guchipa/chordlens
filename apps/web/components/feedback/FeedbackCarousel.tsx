@@ -36,6 +36,7 @@ export const FeedbackCarousel: React.FC<FeedbackCarouselProps> = ({
   header,
   ...slideProps
 }) => {
+  const { transitioning = false } = slideProps;
   const [feedbackType, setFeedbackType] = useAtom(feedbackTypeAtom);
   const index = Math.max(0, FEEDBACK_TYPES.indexOf(feedbackType));
   const current: FeedbackType = FEEDBACK_TYPES[index];
@@ -139,11 +140,31 @@ export const FeedbackCarousel: React.FC<FeedbackCarouselProps> = ({
             aria-roledescription="slide"
             aria-label={`${index + 1} / ${FEEDBACK_TYPES.length}: ${label}`}
             className={cn(
-              "animate-in fade-in duration-200 motion-reduce:animate-none",
+              "relative animate-in fade-in duration-200 motion-reduce:animate-none",
               direction === "next" ? "slide-in-from-right-6" : "slide-in-from-left-6",
             )}
           >
-            <FeedbackSlide feedbackType={current} {...slideProps} />
+            {/* 切替中は旧和音基準の偏差なので、灰色に落として誤った赤表示を見せない */}
+            <div
+              data-testid="feedback-slide-body"
+              data-transitioning={transitioning}
+              className={cn(
+                "transition-[opacity,filter] duration-150",
+                transitioning && "opacity-40 grayscale",
+              )}
+            >
+              <FeedbackSlide feedbackType={current} {...slideProps} />
+            </div>
+            {transitioning && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 flex items-center justify-center"
+              >
+                <span className="rounded-full bg-gray-900/80 px-4 py-1.5 text-sm font-medium text-white">
+                  和音を判定中…
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

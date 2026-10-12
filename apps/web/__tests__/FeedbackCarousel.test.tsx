@@ -27,12 +27,18 @@ const data = [
   { pitch: { pitchName: "E", octaveNum: 4, enabled: true, isRoot: false } as Pitch, deviation: -0.2 },
 ];
 
-function setup(initial: FeedbackType = "meter") {
+function setup(initial: FeedbackType = "meter", transitioning = false) {
   const store = createStore();
   store.set(feedbackTypeAtom, initial);
   render(
     <Provider store={store}>
-      <FeedbackCarousel analysisData={data} evalRangeCents={50} a4Freq={442} holdEnabled />
+      <FeedbackCarousel
+        analysisData={data}
+        evalRangeCents={50}
+        a4Freq={442}
+        holdEnabled
+        transitioning={transitioning}
+      />
     </Provider>
   );
   return store;
@@ -101,5 +107,11 @@ describe("FeedbackCarousel (メイン画面)", () => {
     expect(store.get(feedbackTypeAtom)).toBe("bar");
     fireEvent.click(screen.getByRole("button", { name: `前の形式: ${FEEDBACK_TYPE_LABELS.meter}` }));
     expect(store.get(feedbackTypeAtom)).toBe("meter");
+  });
+
+  it("和音の切替中はカードを灰色にして判定中と表示する", () => {
+    setup("bar", true);
+    expect(screen.getByTestId("feedback-slide-body").dataset.transitioning).toBe("true");
+    expect(screen.getByText("和音を判定中…")).toBeDefined();
   });
 });
