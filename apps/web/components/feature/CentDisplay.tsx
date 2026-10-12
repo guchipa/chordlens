@@ -7,25 +7,10 @@ import { Volume2, Square } from "lucide-react";
 import type { Pitch } from "@chordlens/core/types";
 import { getEqualJustDiff, getEqualFrequencies, getJustFrequencies } from "@chordlens/core/audio_analysis/calcJustFreq";
 import { PITCH_NAME_LIST } from "@chordlens/core/constants";
+import { INTERVAL_LABELS } from "@chordlens/core/feedback/chordRoles";
 
 // 表示するcentの小数点以下桁数
 const CENT_DIGIT_NUM = 2;
-
-// 半音数から音程名へのマッピング
-const INTERVAL_NAMES: { [key: number]: string } = {
-  0: "根音", // Root (完全1度)
-  1: "短2度", // Minor 2nd (短2度)
-  2: "長2度", // Major 2nd (長2度)
-  3: "短3度", // Minor 3rd (短3度)
-  4: "長3度", // Major 3rd (長3度)
-  5: "完全4度", // Perfect 4th (完全4度)
-  6: "増4度/減5度", // Tritone (増4度/減5度)
-  7: "完全5度", // Perfect 5th (完全5度)
-  8: "短6度", // Minor 6th (短6度)
-  9: "長6度", // Major 6th (長6度)
-  10: "短7度", // Minor 7th (短7度)
-  11: "長7度", // Major 7th (長7度)
-};
 
 interface CentDisplayProps {
   pitchList: Pitch[];
@@ -174,7 +159,7 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
         <ul className="divide-y">
           {pitchList.map((pitch, index) => {
             const interval = calculateInterval(pitchList, index);
-            const intervalName = INTERVAL_NAMES[interval] || "?";
+            const intervalName = INTERVAL_LABELS[interval] || "?";
             const centValue = equalJustDiff[index];
 
             return (

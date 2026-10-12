@@ -237,6 +237,25 @@ export const PITCH_COLOR_MAP: { [key: string]: string } = {
 };
 
 /**
+ * 偏差 (±1 正規化) の段階判定の閾値。
+ * evalRangeCents=50 のとき、合っている: ±2.5 セント未満 / 近い: ±10 セント未満
+ */
+export const IN_TUNE_DEVIATION = 0.05;
+export const CLOSE_DEVIATION = 0.2;
+
+/**
+ * 構成音の役割 (度数の大分類) ごとの色。
+ * 偏差の状態色 (緑/黄/赤) と混同しないよう、寒色と無彩色から選ぶ
+ */
+export const CHORD_ROLE_COLORS = {
+  root: "#334155",
+  third: "#2563eb",
+  fifth: "#7c3aed",
+  seventh: "#0891b2",
+  other: "#a16207",
+} as const;
+
+/**
  * SWIPE' バンドパスフィルタ幅のデフォルト値（セント）
  * ±600 cents = 1 オクターブ分の帯域で倍音を含む
  */
