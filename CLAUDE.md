@@ -80,3 +80,6 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
 - `docs/` は実装と同期させる (特に ARCHITECTURE.md のディレクトリ構成)
 - deploy は Vercel (`vercel.json` がルート)。出力先 `apps/web/dist` を変えたら vercel.json も更新
 - `/experiments` 配下は評価実験用フロー。被験者データに影響するため挙動変更は慎重に
+- フィードバック表示はメイン画面 (`FeedbackCarousel`、全形式・enhanced 表示) と評価実験画面
+  (`UnifiedFeedback`、従来 3 形式・legacy 表示に固定) で分けている。既存コンポーネントを改善するときは
+  `variant` 等で legacy の描画を変えないこと

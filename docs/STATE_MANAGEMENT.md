@@ -90,12 +90,25 @@ apps/web/lib/store/
 
 | Atom名 | 型 | デフォルト値 | Storage Key |
 |--------|----|------------|-------------|
-| `feedbackTypeAtom` | `Meter \| Bar \| Circle` | `"meter"` | `feedbackType` |
+| `feedbackTypeAtom` | `FeedbackType` (`FEEDBACK_TYPES`) | `"meter"` | `feedbackType` |
+| `circleLayoutAtom` | `"chromatic" \| "fifths"` | `"chromatic"` | `circleLayout` |
 
-メイン画面の `FeedbackTypeSwitch` / カードの横スワイプと、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。
+メイン画面の `FeedbackCarousel` (横スワイプ・前後ボタン) と、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。評価実験画面の `FeedbackTypeSwitch` / `UnifiedFeedback` も同じ atom を使いますが、従来の 3 形式以外は `toLegacyFeedbackType` でメーターとして扱います。`circleLayoutAtom` はメイン画面のサークルのみが参照します。
 
 **カスタムストレージロジック**:
-`localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes`）を行い、無効な値はデフォルト値にフォールバックします。
+`localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes` / `CIRCLE_LAYOUTS.includes`）を行い、無効な値はデフォルト値にフォールバックします。
+
+### 2.4. Chord Detection Atoms (`chordDetectionAtoms.ts`)
+
+構成音の自動追従の状態を、設定ドロワーのトグルと App 常駐の `useChordFollow`、メイン画面の `ChordHeader` / `FeedbackCarousel` の間で共有します。いずれも永続化しません。
+
+| Atom名 | 型 | 説明 |
+|--------|----|------|
+| `chordFollowEnabledAtom` | `boolean` | 自動追従モードの ON/OFF |
+| `chordFollowStatusAtom` | `"idle" \| "listening" \| "tracking"` | 追従ループの状態 |
+| `chordFollowErrorAtom` | `string \| null` | 追従ループのエラー |
+| `chordFollowPendingAtom` | `boolean` | 推定中の和音が確定値と食い違う (切替中)。フィードバックを灰色にする |
+| `chordFollowLockedAtom` | `boolean` | 和音の固定。推定は続け、構成音リストへの反映だけを止める |
 
 ---
 

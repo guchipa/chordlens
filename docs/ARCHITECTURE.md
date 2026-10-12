@@ -120,6 +120,12 @@ chordlens/
 │       │   │   ├── phaseVocoderEstimation.ts # 位相ボコーダ法
 │       │   │   ├── peakInterpolation.ts    # ピーク補間
 │       │   │   └── fft.ts                  # FFT 共通ユーティリティ
+│       │   ├── feedback/        # フィードバック表示用ロジック（純粋 TypeScript）
+│       │   │   ├── chordRoles.ts           # 役割（度数）・声部順・平均律との差
+│       │   │   ├── chordName.ts            # コードシンボル・和音の同一判定キー
+│       │   │   ├── tuningMetrics.ts        # 偏差の段階・純正度（最大絶対偏差）・解析結果のキー対応付け
+│       │   │   ├── deviationStabilizer.ts  # 表示値の保持・平滑化（和音変更でリセット）
+│       │   │   └── trajectory.ts           # ピッチ軌跡の時系列バッファ（切替区間のさかのぼり判定）
 │       │   ├── adapters/        # プラットフォーム抽象インターフェース
 │       │   │   ├── storage.ts              # KeyValueStorage（localStorage 等の抽象）
 │       │   │   ├── audio.ts                # SpectrumSource（音声入力の抽象）
@@ -153,7 +159,7 @@ chordlens/
 │       │   └── routes/experiments/  # 評価実験フロー
 │       ├── components/
 │       │   ├── feature/         # 機能コンポーネント
-│       │   ├── feedback/        # 視覚フィードバック（メーター、バー、円形）
+│       │   ├── feedback/        # 視覚フィードバック（メイン画面: FeedbackCarousel + 6 形式、評価実験画面: UnifiedFeedback）
 │       │   ├── layout/          # ヘッダー・フッター・ドロワー
 │       │   └── ui/              # shadcn/ui プリミティブ
 │       ├── lib/                 # Web 依存のロジック
