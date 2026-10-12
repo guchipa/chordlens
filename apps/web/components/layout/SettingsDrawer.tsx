@@ -16,7 +16,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useBackButtonClose } from "@/lib/hooks/useBackButtonClose";
 import { useSwipeDrawer } from "@/lib/hooks/useSwipeDrawer";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
@@ -41,8 +40,6 @@ export function SettingsDrawer({
     }
   };
 
-  // 戻る操作 (ブラウザ/Android の戻る) でドロワーを閉じる
-  useBackButtonClose(isOpen, onClose);
   // ドロワー表示中は下部固定バーが隠れるため、Toaster が画面下端へ寄せられるよう
   // <html> に目印を付ける (CSS だけで参照できる。atom を介さない)
   useEffect(() => {
