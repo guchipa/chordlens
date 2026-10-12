@@ -243,6 +243,19 @@ export const PITCH_COLOR_MAP: { [key: string]: string } = {
 export const IN_TUNE_DEVIATION = 0.05;
 export const CLOSE_DEVIATION = 0.2;
 
+/** 偏差の段階ごとの色 (合っている / 近い / ずれている) */
+export const TUNING_LEVEL_COLORS = {
+  inTune: "#22c55e",
+  close: "#eab308",
+  off: "#ef4444",
+} as const;
+
+/**
+ * 数値 (セント) 表示の更新間隔 (ms)。毎フレーム書き換えると読めないため間引く。
+ * バーや針などの図形は毎フレーム追従させる
+ */
+export const FEEDBACK_NUMBER_UPDATE_MS = 250;
+
 /**
  * 構成音の役割 (度数の大分類) ごとの色。
  * 偏差の状態色 (緑/黄/赤) と混同しないよう、寒色と無彩色から選ぶ
@@ -287,6 +300,7 @@ export const FEEDBACK_TYPES = [
   "meter",
   "bar",
   "circle",
+  "lanes",
 ] as const;
 
 export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
@@ -314,10 +328,12 @@ export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
   meter: "メーター",
   bar: "バー",
   circle: "サークル",
+  lanes: "声部レーン",
 };
 
 export const FEEDBACK_TYPE_DESCRIPTIONS: Record<FeedbackType, string> = {
   meter: "針が動くアナログメーター表示",
   bar: "シンプルな横棒グラフ表示",
   circle: "円になった音名で和音の形をわかりやすく",
+  lanes: "声部ごとの縦レーンに役割と偏差を表示。和音が変わってもレーンの位置で自分の音を追える",
 };

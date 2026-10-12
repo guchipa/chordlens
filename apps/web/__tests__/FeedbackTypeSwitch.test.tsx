@@ -104,4 +104,10 @@ describe("FeedbackTypeSwitch (評価実験画面)", () => {
     swipe(area, [100, 200], [250, 200]);
     expect(store.get(feedbackTypeAtom)).toBe("meter");
   });
+
+  it("メイン画面だけの形式が保存されていても従来のメーターで描く", () => {
+    setup("lanes");
+    expect(screen.getAllByRole("radio").map((r) => r.textContent)).toEqual(["メーター", "バー", "サークル"]);
+    expect(screen.getByRole("radio", { name: "メーター" }).getAttribute("aria-checked")).toBe("true");
+  });
 });

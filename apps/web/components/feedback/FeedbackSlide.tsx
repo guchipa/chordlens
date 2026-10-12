@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TunerMeter } from "./MeterFeedback";
 import { BarFeedback } from "./BarFeedback";
 import { CircleFeedback } from "./CircleFeedback";
+import { VoiceLanesFeedback } from "./VoiceLanesFeedback";
 
 export interface FeedbackDatum {
   pitch: Pitch;
@@ -38,6 +39,7 @@ const EMPTY_MESSAGE = (
 export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
   feedbackType,
   analysisData,
+  evalRangeCents,
   a4Freq,
   holdEnabled,
 }) => {
@@ -55,6 +57,16 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
         analysisData={enabled}
         rootPitchName={rootPitchName}
         a4Freq={a4Freq}
+        holdEnabled={holdEnabled}
+      />
+    );
+  }
+
+  if (feedbackType === "lanes") {
+    return (
+      <VoiceLanesFeedback
+        analysisData={enabled}
+        evalRangeCents={evalRangeCents}
         holdEnabled={holdEnabled}
       />
     );
