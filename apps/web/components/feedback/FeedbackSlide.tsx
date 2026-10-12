@@ -8,6 +8,7 @@ import { TunerMeter } from "./MeterFeedback";
 import { BarFeedback } from "./BarFeedback";
 import { CircleFeedback } from "./CircleFeedback";
 import { VoiceLanesFeedback } from "./VoiceLanesFeedback";
+import { PurityFeedback } from "./PurityFeedback";
 
 export interface FeedbackDatum {
   pitch: Pitch;
@@ -65,6 +66,16 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
   if (feedbackType === "lanes") {
     return (
       <VoiceLanesFeedback
+        analysisData={enabled}
+        evalRangeCents={evalRangeCents}
+        holdEnabled={holdEnabled}
+      />
+    );
+  }
+
+  if (feedbackType === "purity") {
+    return (
+      <PurityFeedback
         analysisData={enabled}
         evalRangeCents={evalRangeCents}
         holdEnabled={holdEnabled}
