@@ -52,6 +52,17 @@ describe("restorePreset", () => {
     expect(store.getPresets()).toHaveLength(1);
   });
 
+  it("同名のプリセットが後から保存されていれば重複させず失敗を返す", () => {
+    const store = setup();
+    store.savePreset("A", pitches);
+    const [old] = store.getPresets();
+    store.deletePreset(old.id);
+    store.savePreset("A", pitches);
+    const res = store.restorePreset(old);
+    expect(res.success).toBe(false);
+    expect(store.getPresets().filter((p) => p.name === "A")).toHaveLength(1);
+  });
+
   it("上限に達していれば失敗を返す", () => {
     const store = setup();
     for (let i = 0; i < 20; i++) store.savePreset(`P${i}`, pitches);

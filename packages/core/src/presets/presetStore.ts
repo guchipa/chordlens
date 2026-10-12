@@ -183,6 +183,13 @@ export function createPresetStore(options: PresetStoreOptions): PresetStore {
         // 既に存在する (二重実行など)。何もしない
         return { success: true };
       }
+      if (presets.some((p) => p.name === preset.name)) {
+        // 削除後に同名で保存された。savePreset と同じく同名の重複は作らない
+        return {
+          success: false,
+          error: `同名のプリセット「${preset.name}」が既にあるため元に戻せません`,
+        };
+      }
       if (presets.length >= MAX_PRESETS) {
         return {
           success: false,
