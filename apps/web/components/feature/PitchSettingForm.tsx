@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtom, useSetAtom } from "jotai";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,18 +10,11 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsSection, TAP_ROW } from "@/components/layout/SettingsSection";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PITCH_NAME_LIST, OCTAVE_NUM_LIST } from "@chordlens/core/constants";
 import { FormSchema, type Pitch } from "@chordlens/core/types";
@@ -34,6 +27,7 @@ type PitchFormInput = z.input<typeof FormSchema>;
 export function PitchSettingForm() {
   const [currentPitchList] = useAtom(pitchListAtom);
   const addOrUpdatePitch = useSetAtom(addOrUpdatePitchAtom);
+  const [addedLabel, setAddedLabel] = useState<string | null>(null);
 
   const form = useForm<PitchFormInput, unknown, Pitch>({
     resolver: zodResolver(FormSchema),
@@ -80,6 +74,7 @@ export function PitchSettingForm() {
   const onSubmit = useCallback(
     (data: Pitch) => {
       addOrUpdatePitch(data);
+      setAddedLabel(`${data.pitchName}${data.octaveNum}`);
       form.reset({
         pitchName: undefined,
         octaveNum: 4,
@@ -91,102 +86,136 @@ export function PitchSettingForm() {
   );
 
   return (
-    <Card className="w-full max-w-lg">
-      <CardHeader>
-        <CardTitle>評価する音の追加</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="pitchName"
-              render={({ field }) => (
-                <FormItem className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                  <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
-                    音名
-                  </FormLabel>
-                  <Select
-                    key={`pitchName-${field.value || "empty"}`}
-                    onValueChange={field.onChange}
-                    value={field.value || undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="音名を選んでください" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {PITCH_NAME_LIST.map((name) => (
-                        <SelectItem key={name} value={name}>
-                          {name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage className="sm:ml-28" />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="octaveNum"
-              render={({ field }) => (
-                <FormItem className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                  <FormLabel className="mb-1 whitespace-nowrap sm:mb-0 sm:w-24">
-                    オクターブ
-                  </FormLabel>
-                  <div className="flex items-center gap-2 flex-1">
-                    <Select
-                      onValueChange={(val) => field.onChange(Number(val))}
-                      value={field.value ? field.value.toString() : undefined}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="オクターブ番号を選んでください" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {OCTAVE_NUM_LIST.map((num) => (
-                          <SelectItem key={num} value={num.toString()}>
-                            {num}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <MicInputButton onDetect={handleMicDetect} />
-                  </div>
-                  <FormMessage className="sm:ml-28" />
-                </FormItem>
-              )}
-            />
+    <SettingsSection title="評価する音の追加">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="pitchName"
+            render={({ field }) => (
+              <FormItem className="gap-1.5">
+                <span id="pitch-name-label" className="text-sm font-medium">
+                  音名
+                </span>
+                <div
+                  role="group"
+                  aria-labelledby="pitch-name-label"
+                  className="grid grid-cols-6 gap-1"
+                >
+                  {PITCH_NAME_LIST.map((name) => {
+                    const selected = field.value === name;
+                    const isAccidental = name.length > 1;
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => {
+                          setAddedLabel(null);
+                          field.onChange(name);
+                        }}
+                        className={cn(
+                          "h-11 rounded-lg border text-base font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                          selected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : isAccidental
+                              ? "border-transparent bg-slate-200 text-slate-800 active:bg-slate-300"
+                              : "bg-background active:bg-accent"
+                        )}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="octaveNum"
+            render={({ field }) => (
+              <FormItem className="gap-1.5">
+                <span id="octave-label" className="text-sm font-medium">
+                  オクターブ
+                </span>
+                <div
+                  role="group"
+                  aria-labelledby="octave-label"
+                  className="bg-background flex rounded-lg border p-0.5"
+                >
+                  {OCTAVE_NUM_LIST.map((num) => {
+                    const selected = Number(field.value) === num;
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => field.onChange(num)}
+                        className={cn(
+                          "h-11 min-w-0 flex-1 rounded-md text-base font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                          selected
+                            ? "bg-primary text-primary-foreground"
+                            : "active:bg-accent"
+                        )}
+                      >
+                        {num}
+                      </button>
+                    );
+                  })}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <MicInputButton onDetect={handleMicDetect} />
+            <Button
+              type="submit"
+              className="h-11 flex-1 text-base"
+              disabled={!isFormValid}
+            >
+              {isFormValid ? `${pitchName}${octaveNum} を追加` : "音を選んで追加"}
+            </Button>
+          </div>
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-sm font-medium text-emerald-700 empty:hidden"
+          >
+            {addedLabel && `${addedLabel} を追加しました`}
+          </p>
+          <div className="divide-y rounded-lg border bg-background px-3">
             <FormField
               control={form.control}
               name="isRoot"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={!!field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={hasRoot} // 根音が既にある場合は無効化
-                      id="is-root-checkbox"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel
-                      htmlFor="is-root-checkbox"
-                      className={`cursor-pointer ${hasRoot ? "cursor-not-allowed text-gray-500" : ""
-                        }`}
-                    >
-                      根音として設定
-                    </FormLabel>
-                    {hasRoot && (
-                      <p className="text-xs text-gray-500">
-                        根音は既に設定されています。2つ目の根音は設定できません。
-                      </p>
+                <FormItem className="gap-0 py-1">
+                  <label
+                    htmlFor="is-root-checkbox"
+                    className={cn(
+                      TAP_ROW,
+                      hasRoot && "cursor-not-allowed text-gray-500"
                     )}
-                  </div>
+                  >
+                    <FormControl>
+                      <Checkbox
+                        touch
+                        checked={!!field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={hasRoot} // 根音が既にある場合は無効化
+                        id="is-root-checkbox"
+                        className="-mx-2"
+                      />
+                    </FormControl>
+                    <span className="text-sm font-medium">根音として設定</span>
+                  </label>
+                  {hasRoot && (
+                    <p className="text-xs text-gray-500 pb-2">
+                      根音は既に設定されています。2つ目の根音は設定できません。
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
@@ -194,39 +223,36 @@ export function PitchSettingForm() {
               control={form.control}
               name="enabled"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value !== false} // undefined (default) or true -> checked
-                      onCheckedChange={field.onChange}
-                      id="enabled-checkbox"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel
-                      htmlFor="enabled-checkbox"
-                      className="cursor-pointer"
-                    >
-                      計測に含める
-                    </FormLabel>
-                    <p className="text-xs text-gray-500">
-                      チェックを外すと、この音は解析の対象外となります（根音としての計算には使用されます）。
-                    </p>
-                  </div>
+                <FormItem className="gap-0 py-1">
+                  <label htmlFor="enabled-checkbox" className={TAP_ROW}>
+                    <FormControl>
+                      <Checkbox
+                        touch
+                        checked={field.value !== false} // undefined (default) or true -> checked
+                        onCheckedChange={field.onChange}
+                        id="enabled-checkbox"
+                        className="-mx-2"
+                      />
+                    </FormControl>
+                    <span className="text-sm font-medium">計測に含める</span>
+                  </label>
+                  <p className="text-xs text-gray-500 pb-2">
+                    チェックを外すと、この音は解析の対象外となります（根音としての計算には使用されます）。
+                  </p>
                 </FormItem>
               )}
             />
-            {showRootWarning && (
-              <p className="text-sm font-medium text-red-600">
-                警告: 根音が設定されていません。解析には根音の指定が必要です。
-              </p>
-            )}
-            <Button type="submit" className="w-full" disabled={!isFormValid}>
-              設定した音を追加
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            マイクボタンは、鳴っている音を検出して追加します。
+          </p>
+          {showRootWarning && (
+            <p className="text-sm font-medium text-red-600">
+              警告: 根音が設定されていません。解析には根音の指定が必要です。
+            </p>
+          )}
+        </form>
+      </Form>
+    </SettingsSection>
   );
 }

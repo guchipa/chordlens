@@ -4,11 +4,6 @@ import { useState, useCallback } from "react";
 import { useAtomValue } from "jotai";
 import { Mic, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { noteEventsToPitchList } from "@chordlens/core/audio_analysis/chordToneEstimation";
 import type { Pitch } from "@chordlens/core/types";
 import {
@@ -94,49 +89,48 @@ export function MicInputButton({
     }, [status, recordDurationMs, onDetect, a4Freq]);
 
     const isActive = status !== "idle";
+    const statusText =
+        message ??
+        (status === "recording"
+            ? "録音中..."
+            : status === "processing"
+              ? "解析中..."
+              : null);
 
     return (
-        <HoverCard openDelay={200} closeDelay={100}>
-            <HoverCardTrigger asChild>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleClick}
-                    disabled={disabled || isActive}
-                    className={`relative ${status === "recording"
-                            ? "border-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900"
-                            : ""
-                        }`}
-                    aria-label="マイクで入力"
-                >
-                    {status === "processing" ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <>
-                            <Mic
-                                className={`h-4 w-4 ${status === "recording" ? "text-red-500" : ""}`}
-                            />
-                            {status === "recording" && (
-                                <span className="absolute inset-0 animate-ping rounded-md bg-red-400 opacity-30" />
-                            )}
-                        </>
-                    )}
-                </Button>
-            </HoverCardTrigger>
-            <HoverCardContent side="top" className="w-auto p-2">
-                <p className="text-sm">
-                    {message ? (
-                        <span className="text-red-500">{message}</span>
-                    ) : status === "recording" ? (
-                        "録音中..."
-                    ) : status === "processing" ? (
-                        "解析中..."
-                    ) : (
-                        "マイクで入力"
-                    )}
-                </p>
-            </HoverCardContent>
-        </HoverCard>
+        <>
+            <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleClick}
+                disabled={disabled || isActive}
+                className={`relative size-11 shrink-0 ${status === "recording"
+                        ? "border-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900"
+                        : ""
+                    }`}
+                aria-label="マイクで入力"
+            >
+                {status === "processing" ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                    <>
+                        <Mic
+                            className={`h-5 w-5 ${status === "recording" ? "text-red-500" : ""}`}
+                        />
+                        {status === "recording" && (
+                            <span className="absolute inset-0 animate-ping rounded-md bg-red-400 opacity-30 motion-reduce:animate-none" />
+                        )}
+                    </>
+                )}
+            </Button>
+            {/* ホバーに依存せず常時表示する状態/エラー行 (親が flex-wrap の行を想定) */}
+            <p
+                aria-live="polite"
+                className={`basis-full text-sm ${message ? "text-red-600" : "text-muted-foreground"} ${statusText ? "" : "hidden"}`}
+            >
+                {statusText}
+            </p>
+        </>
     );
 }

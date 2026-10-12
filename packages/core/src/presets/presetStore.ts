@@ -28,6 +28,8 @@ export interface PresetStore {
   getPresets(): PitchPreset[];
   savePreset(name: string, pitchList: Pitch[]): SavePresetResult;
   deletePreset(id: string): boolean;
+  /** 削除したプリセットを同じ id・名前・作成日時 (= 一覧での並び順) のまま復元する (「元に戻す」用) */
+  restorePreset(preset: PitchPreset): SavePresetResult;
   getPresetById(id: string): PitchPreset | null;
   isDuplicatePresetName(name: string): boolean;
 }
@@ -174,6 +176,42 @@ export function createPresetStore(options: PresetStoreOptions): PresetStore {
     }
   }
 
+  function restorePreset(preset: PitchPreset): SavePresetResult {
+    try {
+      const presets = getPresets();
+      if (presets.some((p) => p.id === preset.id)) {
+        // 既に存在する (二重実行など)。何もしない
+        return { success: true };
+      }
+      if (presets.some((p) => p.name === preset.name)) {
+        // 削除後に同名で保存された。savePreset と同じく同名の重複は作らない
+        return {
+          success: false,
+          error: `同名のプリセット「${preset.name}」が既にあるため元に戻せません`,
+        };
+      }
+      if (presets.length >= MAX_PRESETS) {
+        return {
+          success: false,
+          error: `プリセットは最大${MAX_PRESETS}件まで保存できます。`,
+        };
+      }
+      const restored: PitchPreset = JSON.parse(JSON.stringify(preset));
+      const updated = [...presets, restored].sort(
+        (a, b) => b.createdAt - a.createdAt
+      );
+      const data: PresetsData = {
+        version: PRESETS_SCHEMA_VERSION,
+        presets: updated,
+      };
+      storage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(data));
+      return { success: true };
+    } catch (error) {
+      console.error("Failed to restore preset:", error);
+      return { success: false, error: "プリセットの復元に失敗しました" };
+    }
+  }
+
   function getPresetById(id: string): PitchPreset | null {
     const presets = getPresets();
     return presets.find((p) => p.id === id) || null;
@@ -188,6 +226,7 @@ export function createPresetStore(options: PresetStoreOptions): PresetStore {
     getPresets,
     savePreset,
     deletePreset,
+    restorePreset,
     getPresetById,
     isDuplicatePresetName,
   };

@@ -70,6 +70,8 @@ export function PracticeWithTuner() {
 
   const {
     isProcessing,
+    error,
+    dismissError,
     analysisResult,
     startProcessing,
     stopProcessing,
@@ -81,6 +83,13 @@ export function PracticeWithTuner() {
     fftSize,
     smoothingTimeConstant,
   });
+
+  // マイク取得失敗はメインアプリではバナー表示だが、実験フローでは従来どおり alert で知らせる
+  useEffect(() => {
+    if (!error) return;
+    alert("マイクへのアクセスを許可してください。");
+    dismissError();
+  }, [error, dismissError]);
 
   // マウント時：ユーザーの presets を退避し、実験 preset を注入
   useEffect(() => {

@@ -3,12 +3,14 @@ import { useAtomValue } from "jotai";
 
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
 import { useChordFollow } from "@/lib/hooks/useChordFollow";
+import { useWakeLock } from "@/lib/hooks/useWakeLock";
+import { useAutoStopOnHidden } from "@/lib/hooks/useAutoStopOnHidden";
 
-import { AppFooter } from "@/components/layout/AppFooter";
 import { AnalysisControl } from "@/components/feature/AnalysisControl";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
+import { PresetSwitcher } from "@/components/feature/PresetSwitcher";
 import { CentDisplay } from "@/components/feature/CentDisplay";
-import { MainHeader } from "@/components/layout/MainHeader";
+import { Toaster } from "@/components/feature/Toaster";
 import { SettingsDrawer } from "@/components/layout/SettingsDrawer";
 import { ExperimentModePanel } from "@/components/feature/experiment/ExperimentModePanel";
 
@@ -43,6 +45,9 @@ export function App() {
 
   const {
     isProcessing,
+    isStarting,
+    error,
+    dismissError,
     analysisResult,
     centDeviations,
     peakSearchDebug,
@@ -68,15 +73,31 @@ export function App() {
   // 解析実行中のみ、チューナー本体の音声グラフを共有して推定を行う
   useChordFollow({ active: isProcessing, audioNodesRef });
 
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <SettingsDrawer
-        isOpen={isSettingsOpen}
-        onOpen={() => setIsSettingsOpen(true)}
-        onClose={() => setIsSettingsOpen(false)}
-      />
+  // 背面へ回ったら解析 (マイク) を止める。前面復帰時は自動再開せず、案内を出して次の「解析開始」を待つ。
+  // isProcessing に従うため、WakeLock・構成音の自動追従も同時に止まり、再取得もされない
+  const { autoStopped, clearAutoStopped } = useAutoStopOnHidden({
+    // 初期化中に背面へ回った場合も止める (初期化完了後に開始されないよう取り消す)
+    isProcessing: isProcessing || isStarting,
+    stopProcessing,
+  });
 
-      <main className="container mx-auto flex grow flex-col items-center gap-8 p-4 sm:p-8 md:p-12">
+  // 解析中は画面スリープを抑止する (実験フローは別ルートのため対象外)
+  useWakeLock(isProcessing);
+
+  return (
+    <div className="flex min-h-dvh flex-col bg-gray-50">
+      <header className="sticky top-0 z-40 border-b bg-gray-50/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <div className="flex h-14 items-center gap-1 px-2">
+          <SettingsDrawer
+            isOpen={isSettingsOpen}
+            onOpen={() => setIsSettingsOpen(true)}
+            onClose={() => setIsSettingsOpen(false)}
+          />
+          <h1 className="text-lg font-bold text-gray-800">和音チューナー</h1>
+        </div>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-2xl grow flex-col items-stretch gap-4 px-3 pt-3 pb-[calc(var(--bottom-bar-h,12rem)+1rem)] sm:px-6">
         {experimentMode && (
           <ExperimentModePanel
             isProcessing={isProcessing}
@@ -85,20 +106,6 @@ export function App() {
             peakSearchDebug={peakSearchDebug}
             comparisonResults={comparisonResults}
           />
-        )}
-
-        <MainHeader />
-
-        <AnalysisControl
-          isProcessing={isProcessing}
-          startProcessing={startProcessing}
-          stopProcessing={stopProcessing}
-          isPitchListEmpty={currentPitchList.length === 0}
-        />
-        {isProcessing && (
-          <p className="mt-4 font-medium text-blue-600">
-            マイク入力からの解析中...
-          </p>
         )}
 
         <UnifiedFeedback
@@ -118,7 +125,21 @@ export function App() {
           title="和音情報"
         />
       </main>
-      <AppFooter />
+
+      <AnalysisControl
+        isProcessing={isProcessing}
+        startProcessing={() => {
+          clearAutoStopped();
+          void startProcessing();
+        }}
+        stopProcessing={stopProcessing}
+        isPitchListEmpty={currentPitchList.length === 0}
+        error={error}
+        onDismissError={dismissError}
+        autoStopped={autoStopped}
+        topSlot={<PresetSwitcher onOpenSettings={() => setIsSettingsOpen(true)} />}
+      />
+      <Toaster />
     </div>
   );
 }

@@ -54,6 +54,36 @@ apps/web/lib/store/
 | `loadPresetAtom` | Action | プリセットからリストを一括読み込み |
 | `setRootAtom` | Action | 指定した音を根音（ルート）に設定 |
 
+#### 「元に戻す」付きの操作 (`undoAtoms.ts`)
+
+メインアプリ (設定ドロワー・プリセット切替) 専用。実験フローは従来の `removePitchAtom` / `loadPresetAtom` 等をそのまま使い、挙動は変わらない。実行後に `showToastAtom` で取り消し用トーストを出す。
+
+| Atom名 | 役割 | 取り消しの内容 |
+|--------|------|----------------|
+| `removePitchWithUndoAtom` | 構成音を 1 つ削除 | 元の index に `isRoot` / `enabled` ごと挿入 (`core/undo/listOps.insertAt`) |
+| `clearPitchListWithUndoAtom` | 全クリア | クリア前のリスト全体を復元 |
+| `loadPresetWithUndoAtom` | プリセット読み込み (メイン画面のチップ) | 直前のリストへ戻す。内容が同じ (`pitchListEquals`) なら通知しない |
+| `deletePresetWithUndoAtom` | プリセット削除 (確認ダイアログなし) | `restorePreset` で同じ id・名前・`createdAt` (= 並び順) のまま復元 |
+
+### 2.2c. Toast Atoms (`toastAtoms.ts`)
+
+| Atom名 | 役割 | 説明 |
+|--------|------|------|
+| `toastAtom` | State | 表示中の通知 (`{ id, message, actionLabel?, onAction? }`) または `null`。同時に 1 件のみ |
+| `showToastAtom` | Action | 通知を表示。新しい通知は古いものを置き換える (`id` が変わりタイマーを張り直す) |
+| `dismissToastAtom` | Action | 通知を閉じる |
+
+表示時間は `TOAST_DURATION_MS` (5 秒)。タイマーは `Toaster` コンポーネントが持つ。
+
+### 2.2b. Preset Atoms (`presetAtoms.ts`)
+
+保存済みプリセット一覧を設定ドロワーとメイン画面で共有します。永続化は `lib/presets.ts` (localStorage)。
+
+| Atom名 | 役割 | 説明 |
+|--------|------|------|
+| `presetsAtom` | State | 保存済みプリセット (`PitchPreset[]`) の読み込みキャッシュ |
+| `refreshPresetsAtom` | Action | localStorage から再読み込み (マウント時・保存/削除後に呼ぶ) |
+
 ### 2.3. Feedback Atoms (`feedbackAtoms.ts`)
 
 視覚フィードバックの表示形式を管理します。
@@ -61,6 +91,8 @@ apps/web/lib/store/
 | Atom名 | 型 | デフォルト値 | Storage Key |
 |--------|----|------------|-------------|
 | `feedbackTypeAtom` | `Meter \| Bar \| Circle` | `"meter"` | `feedbackType` |
+
+メイン画面の `FeedbackTypeSwitch` / カードの横スワイプと、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。
 
 **カスタムストレージロジック**:
 `localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes`）を行い、無効な値はデフォルト値にフォールバックします。

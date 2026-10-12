@@ -6,15 +6,15 @@ export const AppFooter = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-white border-t">
-      <div className="container mx-auto py-5 px-4 text-center text-sm text-gray-600">
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-2">
+    <footer className="w-full border-t">
+      <div className="py-2 text-center text-xs text-gray-600">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 ">
           <p>&copy; {currentYear} Hinata Moriguchi</p>
           <a
             href="https://github.com/guchipa/chordlens"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 hover:text-gray-900 transition-colors"
+            className="inline-flex min-h-11 items-center gap-1.5 hover:text-gray-900 transition-colors"
           >
             <svg
               role="img"

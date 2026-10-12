@@ -81,7 +81,7 @@ export const PresetSaveDialog: React.FC<PresetSaveDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="top-[8%] translate-y-0 sm:top-[50%] sm:max-w-[425px] sm:translate-y-[-50%]">
         {!showOverwriteConfirm ? (
           <>
             <DialogHeader>
@@ -99,6 +99,8 @@ export const PresetSaveDialog: React.FC<PresetSaveDialogProps> = ({
                   value={presetName}
                   onChange={(e) => setPresetName(e.target.value)}
                   maxLength={30}
+                  enterKeyHint="done"
+                  className="h-11 text-base md:text-base"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -113,10 +115,10 @@ export const PresetSaveDialog: React.FC<PresetSaveDialogProps> = ({
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={handleCancel}>
+              <Button variant="outline" className="h-11" onClick={handleCancel}>
                 キャンセル
               </Button>
-              <Button onClick={handleSave} disabled={pitchList.length === 0}>
+              <Button className="h-11" onClick={handleSave} disabled={pitchList.length === 0}>
                 保存
               </Button>
             </DialogFooter>
@@ -130,10 +132,10 @@ export const PresetSaveDialog: React.FC<PresetSaveDialogProps> = ({
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={handleCancelOverwrite}>
+              <Button variant="outline" className="h-11" onClick={handleCancelOverwrite}>
                 キャンセル
               </Button>
-              <Button onClick={handleSave}>上書き保存</Button>
+              <Button className="h-11" onClick={handleSave}>上書き保存</Button>
             </DialogFooter>
           </>
         )}

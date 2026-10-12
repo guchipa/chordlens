@@ -22,7 +22,8 @@ interface TunerMeterProps {
     deviation: number | null;
   }>;
   /** メーターのタイトル */
-  title?: string;
+  /** カードヘッダに表示する内容 (文字列、または形式切替などの要素) */
+  title?: React.ReactNode;
   /** 根音の音名（例: "C4"） */
   rootPitchName?: string;
   /** A4の基準周波数（デフォルト: 442Hz） */
@@ -112,11 +113,15 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   }, []);
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>{title || "Tuner"}</CardTitle>
+      <CardHeader className="px-4 pt-3 pb-0">
+        {typeof title === "string" || title == null ? (
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title || "Tuner"}</CardTitle>
+        ) : (
+          title
+        )}
       </CardHeader>
-      <CardContent className="flex flex-col justify-center items-center">
-        <div className="flex w-64 h-32 overflow-hidden mb-4">
+      <CardContent className="flex flex-col items-center px-3 pb-3 pt-1">
+        <div className="flex w-full aspect-[2/1] overflow-hidden">
           {/* メーターの背景（半円） */}
           <svg
             className="w-full h-full"
@@ -212,14 +217,14 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
             <circle cx="50" cy="50" r="3" fill="black" />
           </svg>
         </div>
-        <div className="flex flex-wrap justify-start gap-x-4 gap-y-2 mt-4">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-3">
           {displayData.map(({ pitch: { pitchName, octaveNum } }, index) => (
             <div
               key={`${pitchName}-${octaveNum}-${index}`}
-              className="flex items-center gap-2 text-sm"
+              className="flex items-center gap-2 text-base"
             >
               <span
-                className="w-3 h-3 rounded-full"
+                className="size-3.5 rounded-full"
                 style={{
                   backgroundColor: PITCH_COLOR_MAP[pitchName] || "#888",
                 }}

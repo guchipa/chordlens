@@ -6,15 +6,20 @@ import { PitchList } from "@/components/feature/PitchList";
 import { SettingsForm } from "@/components/feature/SettingsForm";
 import { PresetManager } from "@/components/feature/PresetManager";
 import { FeedbackTypeSelector } from "@/components/feature/FeedbackTypeSelector";
+import { AppFooter } from "@/components/layout/AppFooter";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useSwipeDrawer } from "@/lib/hooks/useSwipeDrawer";
+import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
+import { useEffect } from "react";
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -35,29 +40,55 @@ export function SettingsDrawer({
     }
   };
 
+  // ドロワー表示中は下部固定バーが隠れるため、Toaster が画面下端へ寄せられるよう
+  // <html> に目印を付ける (CSS だけで参照できる。atom を介さない)
+  useEffect(() => {
+    if (!isOpen) return;
+    const root = document.documentElement;
+    root.setAttribute("data-drawer-open", "");
+    return () => root.removeAttribute("data-drawer-open");
+  }, [isOpen]);
+
+  const swipe = useSwipeDrawer({ isOpen, onClose });
+
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
-          className="fixed top-4 left-4 z-50 bg-background/50 backdrop-blur-sm hover:bg-accent"
+          className="size-11 shrink-0"
           aria-label="設定を開く"
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="size-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-full max-w-sm overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-xl">設定</SheetTitle>
+      <SheetContent
+        side="left"
+        ref={swipe.ref}
+        {...swipe.contentProps}
+        className={cn(
+          "w-full gap-0 overflow-hidden p-0 sm:max-w-sm",
+          swipe.holdAnimation && "animate-none!",
+        )}
+        overlayClassName={swipe.holdAnimation ? "animate-none!" : undefined}
+      >
+        <SheetHeader className="bg-background border-b px-4 pt-[calc(env(safe-area-inset-top)+0.25rem)] pr-16 pb-1">
+          <SheetTitle className="text-lg leading-11">設定</SheetTitle>
+          <SheetDescription className="sr-only">
+            設定した和音の純正律からのズレをリアルタイムで解析します。
+          </SheetDescription>
         </SheetHeader>
-        <div className="space-y-8 py-4">
-          <ChordFollowToggle />
-          <PitchSettingForm />
-          <PitchList />
+        <div className="flex-1 space-y-5 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <div className="space-y-3">
+            <PitchList />
+            <PitchSettingForm />
+          </div>
           <PresetManager />
+          <ChordFollowToggle />
           <FeedbackTypeSelector />
           <SettingsForm />
+          <AppFooter />
         </div>
       </SheetContent>
     </Sheet>
