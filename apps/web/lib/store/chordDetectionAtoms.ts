@@ -8,7 +8,7 @@
 import { atom } from "jotai";
 
 /** 自動追従モードの ON/OFF (マイク権限が絡むため永続化しない) */
-export const chordFollowEnabledAtom = atom<boolean>(false);
+export const chordFollowEnabledAtom = atom<boolean>(true);
 
 /**
  * 追従ループの現在の状態
