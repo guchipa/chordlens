@@ -8,15 +8,12 @@ import {
   FEEDBACK_TYPE_LABELS,
   type FeedbackType,
 } from "@chordlens/core/constants";
-import { stepItem } from "@chordlens/core/gestures/swipeIntent";
+import { stepItemLoop } from "@chordlens/core/gestures/swipeIntent";
 import { Button } from "@/components/ui/button";
 import { useSwipeNav } from "@/lib/hooks/useSwipeNav";
 import { feedbackTypeAtom } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { FeedbackSlide, type FeedbackSlideProps } from "./FeedbackSlide";
-
-/** 端の形式で更に引っ張ったときの追従率 (ゴムのような抵抗) */
-const EDGE_RESISTANCE = 0.25;
 
 export type FeedbackCarouselProps = Omit<FeedbackSlideProps, "feedbackType"> & {
   /** カルーセルの上 (形式ナビの上) に固定表示する内容。和音名ヘッダ用 */
@@ -25,8 +22,9 @@ export type FeedbackCarouselProps = Omit<FeedbackSlideProps, "feedbackType"> & {
 
 /**
  * メイン画面のフィードバック表示。形式をカルーセルで並べ、横スワイプで
- * 前後の形式へ移る (タブは置かない)。カードは指に追従し、距離またはフリングで
- * 確定すると次の形式が左右からスライドインする。
+ * 前後の形式へ移る (タブは置かない)。端の形式からは反対側の端へ循環する。
+ * カードは指に追従し、距離またはフリングで確定すると次の形式が左右から
+ * スライドインする。
  *
  * スワイプできない環境 (マウス・キーボード・支援技術) 向けに、前後ボタンと
  * 現在位置のドットを形式名と一緒に出す。形式は feedbackTypeAtom
@@ -40,34 +38,35 @@ export const FeedbackCarousel: React.FC<FeedbackCarouselProps> = ({
   const [feedbackType, setFeedbackType] = useAtom(feedbackTypeAtom);
   const index = Math.max(0, FEEDBACK_TYPES.indexOf(feedbackType));
   const current: FeedbackType = FEEDBACK_TYPES[index];
-  const prevType = stepItem(FEEDBACK_TYPES, current, -1);
-  const nextType = stepItem(FEEDBACK_TYPES, current, 1);
+  const prevType = stepItemLoop(FEEDBACK_TYPES, current, -1);
+  const nextType = stepItemLoop(FEEDBACK_TYPES, current, 1);
 
-  // 切替方向 (どちらからスライドインするか)。形式が変わった描画中に算出する
+  // 切替方向 (どちらからスライドインするか)。形式が変わった描画中に決める。
+  // スワイプ・前後ボタンでの移動は操作した向きを使う (端をまたぐ循環では
+  // 添字の大小と向きが逆になるため)。設定ドロワーからの変更は添字の大小で決める
   const [shownType, setShownType] = useState(current);
   const [direction, setDirection] = useState<"next" | "prev">("next");
+  const [stepDirection, setStepDirection] = useState<"next" | "prev" | null>(null);
   if (shownType !== current) {
     setShownType(current);
-    setDirection(index >= FEEDBACK_TYPES.indexOf(shownType) ? "next" : "prev");
+    setDirection(
+      stepDirection ?? (index >= FEEDBACK_TYPES.indexOf(shownType) ? "next" : "prev"),
+    );
+    setStepDirection(null);
   }
 
   const [dragX, setDragX] = useState<number | null>(null);
 
   const go = (step: 1 | -1) => {
     const next = step === 1 ? nextType : prevType;
-    if (next) setFeedbackType(next);
+    if (!next) return;
+    setStepDirection(step === 1 ? "next" : "prev");
+    setFeedbackType(next);
   };
   const swipe = useSwipeNav({
     onNext: () => go(1),
     onPrev: () => go(-1),
-    onDrag: (dx) => {
-      if (dx === null) {
-        setDragX(null);
-        return;
-      }
-      const blocked = (dx > 0 && !prevType) || (dx < 0 && !nextType);
-      setDragX(blocked ? dx * EDGE_RESISTANCE : dx);
-    },
+    onDrag: setDragX,
   });
 
   const label = FEEDBACK_TYPE_LABELS[current];

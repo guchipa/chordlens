@@ -91,14 +91,42 @@ describe("FeedbackCarousel (メイン画面)", () => {
     expect(slideTrack().style.transform).toBe("");
   });
 
-  it("端の形式では引っ張りに抵抗がかかり、それ以上動かない", () => {
+  it("端の形式からは反対側の端へ循環する (スワイプ)", () => {
+    const last = FEEDBACK_TYPES[FEEDBACK_TYPES.length - 1];
     const store = setup("meter");
+    swipe([100, 200], [250, 200]);
+    expect(store.get(feedbackTypeAtom)).toBe(last);
+    swipe([250, 200], [120, 205]);
+    expect(store.get(feedbackTypeAtom)).toBe("meter");
+  });
+
+  it("端をまたぐ循環でも操作した向きからスライドインする", () => {
+    setup("meter");
+    // 前へ (右スワイプ) で最後の形式へ: 左から入る
+    swipe([100, 200], [250, 200]);
+    expect(screen.getByRole("group", { name: /\d+ \/ \d+/ }).className).toContain("slide-in-from-left-6");
+    // 次へ (左スワイプ) で最初の形式へ: 右から入る
+    swipe([250, 200], [120, 205]);
+    expect(screen.getByRole("group", { name: /\d+ \/ \d+/ }).className).toContain("slide-in-from-right-6");
+  });
+
+  it("端の形式でも引っ張りに抵抗をかけず指に追従する", () => {
+    setup("meter");
     fireEvent.pointerDown(area(), { ...base, clientX: 100, clientY: 200 });
     fireEvent.pointerMove(area(), { ...base, clientX: 180, clientY: 200 });
-    expect(slideTrack().style.transform).toBe("translateX(20px)");
-    fireEvent.pointerUp(area(), { ...base, clientX: 250, clientY: 200 });
+    expect(slideTrack().style.transform).toBe("translateX(80px)");
+    fireEvent.pointerUp(area(), { ...base, clientX: 180, clientY: 200 });
+  });
+
+  it("前後ボタンは端でも無効にならず循環する", () => {
+    const last = FEEDBACK_TYPES[FEEDBACK_TYPES.length - 1];
+    const store = setup("meter");
+    const prev = screen.getByRole("button", { name: `前の形式: ${FEEDBACK_TYPE_LABELS[last]}` });
+    expect(prev).toHaveProperty("disabled", false);
+    fireEvent.click(prev);
+    expect(store.get(feedbackTypeAtom)).toBe(last);
+    fireEvent.click(screen.getByRole("button", { name: `次の形式: ${FEEDBACK_TYPE_LABELS.meter}` }));
     expect(store.get(feedbackTypeAtom)).toBe("meter");
-    expect(screen.getByRole("button", { name: "前の形式" })).toHaveProperty("disabled", true);
   });
 
   it("前後ボタンでも切り替えられる (スワイプできない環境向け)", () => {

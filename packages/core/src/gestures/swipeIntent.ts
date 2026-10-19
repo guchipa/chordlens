@@ -50,3 +50,13 @@ export function stepItem<T>(items: readonly T[], current: T, step: 1 | -1): T | 
   if (i < 0) return null;
   return items[i + step] ?? null;
 }
+
+/**
+ * items 内で現在位置から step 分動かした項目 (端で循環する)。
+ * current が items に無い、または項目が 1 つ以下なら null (移動先がない)
+ */
+export function stepItemLoop<T>(items: readonly T[], current: T, step: 1 | -1): T | null {
+  const i = items.indexOf(current);
+  if (i < 0 || items.length < 2) return null;
+  return items[(i + step + items.length) % items.length];
+}
