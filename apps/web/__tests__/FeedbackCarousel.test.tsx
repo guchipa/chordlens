@@ -1,10 +1,12 @@
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeedbackCarousel } from "@/components/feedback/FeedbackCarousel";
 import { feedbackTypeAtom } from "@/lib/store";
 import { FEEDBACK_TYPES, FEEDBACK_TYPE_LABELS, type FeedbackType } from "@chordlens/core/constants";
 import type { Pitch } from "@chordlens/core/types";
+import { DeviationStabilizer } from "@chordlens/core/feedback/deviationStabilizer";
+import { TrajectoryBuffer } from "@chordlens/core/feedback/trajectory";
 
 // jsdom には PointerEvent がないため、座標・pointerType を持つ最小実装を用意する
 if (typeof window.PointerEvent === "undefined") {
@@ -95,6 +97,25 @@ describe("FeedbackCarousel (メイン画面)", () => {
     fireEvent.pointerUp(area(), { ...base, clientX: 170, clientY: 201 });
     expect(slideTrack().style.transform).toBe("");
   });
+
+  it.each(["bar", "trajectory"] as const)(
+    "ドラッグ中の再描画では偏差の平滑化・軌跡を進めない (%s)",
+    (type) => {
+      const update = vi.spyOn(DeviationStabilizer.prototype, "update");
+      const push = vi.spyOn(TrajectoryBuffer.prototype, "push");
+      setup(type);
+      const before = update.mock.calls.length + push.mock.calls.length;
+      fireEvent.pointerDown(area(), { ...base, clientX: 200, clientY: 200 });
+      for (const x of [190, 180, 170, 160]) {
+        fireEvent.pointerMove(area(), { ...base, clientX: x, clientY: 201 });
+      }
+      expect(slideTrack().style.transform).toBe("translateX(-40px)");
+      expect(update.mock.calls.length + push.mock.calls.length).toBe(before);
+      fireEvent.pointerCancel(area());
+      update.mockRestore();
+      push.mockRestore();
+    },
+  );
 
   it("端の形式からは反対側の端へ循環する (スワイプ)", () => {
     const store = setup(first);

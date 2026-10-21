@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAtomValue } from "jotai";
 
 import { alignResultsByKey } from "@chordlens/core/feedback/tuningMetrics";
@@ -91,7 +91,12 @@ export function App() {
   // 構成音リストが自動追従で差し替わった直後は、結果がまだ旧リストで計算されている。
   // 位置ではなく音のキーで対応付け、旧リストの偏差が別の音に割り当たるのを防ぐ
   // (根音が変わった場合は基準が変わるため、旧結果はすべて捨てる)
-  const alignedDeviations = alignResultsByKey(currentPitchList, analyzedPitchList, analysisResult);
+  // 表示側は解析フレームごとの更新 (EMA・軌跡のサンプル追加) をこの配列の
+  // 同一性で判定するため、解析結果か構成音が変わったときだけ作り直す
+  const feedbackData = useMemo(() => {
+    const aligned = alignResultsByKey(currentPitchList, analyzedPitchList, analysisResult);
+    return currentPitchList.map((pitch, index) => ({ pitch, deviation: aligned[index] }));
+  }, [currentPitchList, analyzedPitchList, analysisResult]);
 
   // 解析中は画面スリープを抑止する (実験フローは別ルートのため対象外)
   useWakeLock(isProcessing);
@@ -123,10 +128,7 @@ export function App() {
         <FeedbackCarousel
           header={<ChordHeader pitchList={currentPitchList} />}
           transitioning={chordFollowEnabled && !chordFollowLocked && chordFollowPending}
-          analysisData={currentPitchList.map((pitch, index) => ({
-            pitch,
-            deviation: alignedDeviations[index],
-          }))}
+          analysisData={feedbackData}
           evalRangeCents={evalRangeCents}
           a4Freq={a4Freq}
           holdEnabled={holdEnabled}

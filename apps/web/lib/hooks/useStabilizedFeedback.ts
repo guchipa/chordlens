@@ -24,6 +24,10 @@ interface FeedbackInput {
  * 偏差を安定化 (音ごとのホールド + 全音無音時の表示保持) する。
  * 和音が変わったら安定化の状態を捨てる。
  * 全音無音時の表示保持は、解析停止で再描画が来なくても保持時間の経過で消す。
+ *
+ * analysisData の同一性を「新しい解析フレーム」とみなして状態を進める。
+ * 呼び出し側は解析結果が変わったときだけ配列を作り直すこと (描画のたびに
+ * 作り直すと、同じ値で EMA が繰り返し進み平滑化が効かなくなる)。
  */
 export function useStabilizedFeedback(
   analysisData: FeedbackInput[],

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import type { FeedbackType } from "@chordlens/core/constants";
 import type { Pitch } from "@chordlens/core/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,7 +50,12 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
   const rootPitchName = rootPitch
     ? `${rootPitch.pitch.pitchName}${rootPitch.pitch.octaveNum}`
     : undefined;
-  const enabled = analysisData.filter((d) => d.pitch.enabled === true);
+  // 各形式は analysisData の同一性で解析フレームの更新を判定する (EMA・軌跡の
+  // サンプル追加)。カルーセルのドラッグなど無関係な再描画で新しい配列を作らない
+  const enabled = useMemo(
+    () => analysisData.filter((d) => d.pitch.enabled === true),
+    [analysisData],
+  );
 
   if (feedbackType === "meter") {
     return (
