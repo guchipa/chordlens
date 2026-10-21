@@ -380,12 +380,12 @@ ChordLensは複数の視覚フィードバック形式をサポート：
 | 形式 | コンポーネント | 説明 |
 |------|--------------|------|
 | **軌跡** | `TrajectoryFeedback` | 直近の偏差の推移（メイン画面のデフォルト） |
-| **メーター** | `MeterFeedback` | 針が動くアナログメーター（評価実験画面のデフォルト） |
+| **メーター** | `MeterFeedback` | 針が動くアナログメーター（評価実験画面はこの形式に固定） |
 | **バー** | `BarFeedback` | シンプルな横棒グラフ |
 | **円形** | `CircleFeedback` | 12音を円周上に配置、和音の形を可視化 |
 | **数値** | `NumericFeedback` | セント値の数値表示 |
 
-メイン画面は`FeedbackCarousel`、評価実験画面は`UnifiedFeedback`が表示形式の切り替えを制御します。形式は画面ごとに別の atom (`feedbackTypeAtom` / `experimentFeedbackTypeAtom`) で持ちます。
+メイン画面は`FeedbackCarousel`が表示形式の切り替えを制御します (`feedbackTypeAtom`)。評価実験画面の`UnifiedFeedback`は被験者条件を変えないためメーターに固定し、切り替えを持ちません。
 
 ---
 

@@ -91,13 +91,12 @@ apps/web/lib/store/
 | Atom名 | 型 | デフォルト値 | Storage Key |
 |--------|----|------------|-------------|
 | `feedbackTypeAtom` | `FeedbackType` (`FEEDBACK_TYPES`) | `"trajectory"` | `feedbackType` |
-| `experimentFeedbackTypeAtom` | `LegacyFeedbackType` (`LEGACY_FEEDBACK_TYPES`) | `"meter"` | `experimentFeedbackType` |
 | `circleLayoutAtom` | `"chromatic" \| "fifths"` | `"chromatic"` | `circleLayout` |
 
-メイン画面の `FeedbackCarousel` (横スワイプ・前後ボタン) と、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。評価実験画面の `FeedbackTypeSwitch` / `UnifiedFeedback` / `PracticeWithTuner` は別の `experimentFeedbackTypeAtom` を使い、メイン画面の操作で実験条件が変わらないようにしています。`experimentFeedbackType` が未保存の場合は、分離前に共有していた `feedbackType` の値を (従来の 3 形式であれば) 引き継ぎます。`circleLayoutAtom` はメイン画面のサークルのみが参照します。
+メイン画面の `FeedbackCarousel` (横スワイプ・前後ボタン) と、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。評価実験画面 (`UnifiedFeedback`) はメーターに固定しているため、フィードバック形式の atom を参照しません。`circleLayoutAtom` はメイン画面のサークルのみが参照します。
 
 **カスタムストレージロジック**:
-`localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes` / `LEGACY_FEEDBACK_TYPES.includes` / `CIRCLE_LAYOUTS.includes`）を行い、無効な値はデフォルト値にフォールバックします。
+`localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes` / `CIRCLE_LAYOUTS.includes`）を行い、無効な値はデフォルト値にフォールバックします。
 
 ### 2.4. Chord Detection Atoms (`chordDetectionAtoms.ts`)
 

@@ -308,18 +308,6 @@ export const FEEDBACK_TYPES = [
 export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
 
 /**
- * 評価実験 (/experiments) で使う形式。被験者条件を変えないため、
- * 実験画面は従来の 3 形式と従来の描画のまま固定する
- */
-export const LEGACY_FEEDBACK_TYPES = [
-  "meter",
-  "bar",
-  "circle",
-] as const satisfies readonly FeedbackType[];
-
-export type LegacyFeedbackType = (typeof LEGACY_FEEDBACK_TYPES)[number];
-
-/**
  * サークル形式の音名の並び順。
  * chromatic: 半音順 (鍵盤と同じ)、fifths: 5 度圏 (長三和音・短三和音が一定の形になる)
  */
