@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   METER_NEEDLE_HOLD_MS,
   METER_NEEDLE_SMOOTHING_ALPHA,
@@ -23,6 +23,7 @@ interface FeedbackInput {
  * フィードバック表示用に、構成音を声部順 (低い順) に並べて役割を付け、
  * 偏差を安定化 (音ごとのホールド + 全音無音時の表示保持) する。
  * 和音が変わったら安定化の状態を捨てる。
+ * 全音無音時の表示保持は、解析停止で再描画が来なくても保持時間の経過で消す。
  */
 export function useStabilizedFeedback(
   analysisData: FeedbackInput[],
@@ -30,8 +31,10 @@ export function useStabilizedFeedback(
 ): { voices: StabilizedVoice[]; chordKey: string } {
   const stabilizerRef = useRef<DeviationStabilizer | null>(null);
   const lastChordKeyRef = useRef<string | null>(null);
+  // 保持の期限切れで再計算させるためのカウンタ
+  const [expireTick, setExpireTick] = useState(0);
 
-  return useMemo(() => {
+  const result = useMemo(() => {
     const pitchList = analysisData.map((d) => d.pitch);
     const key = chordKey(pitchList);
     const options = {
@@ -61,8 +64,24 @@ export function useStabilizedFeedback(
     return {
       chordKey: key,
       voices: voiceInfos.map((v, i) => ({ ...v, deviation: values[i] ?? null })),
+      holdUntilMs: stabilizerRef.current.holdUntilMs,
     };
-  }, [analysisData, holdEnabled]);
+    // expireTick は保持の期限切れで再計算させるためだけの依存
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysisData, holdEnabled, expireTick]);
+
+  // 停止直後など、保持中のまま解析結果が更新されなくなった場合に保持を切る
+  const { holdUntilMs } = result;
+  useEffect(() => {
+    if (holdUntilMs === null) return;
+    const timer = setTimeout(
+      () => setExpireTick((t) => t + 1),
+      Math.max(0, holdUntilMs - performance.now()) + 1,
+    );
+    return () => clearTimeout(timer);
+  }, [holdUntilMs]);
+
+  return { voices: result.voices, chordKey: result.chordKey };
 }
 
 /**

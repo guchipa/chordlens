@@ -7,6 +7,10 @@
  *
  * 和音 (構成音リスト) が変わったら reset() で状態を捨てる。旧和音の値を
  * 新和音の同名音に引き継ぐと、基準が変わったのに古い偏差が残って見える。
+ *
+ * 保持の期限切れは次の update() でしか判定されない。解析停止などで update() が
+ * 来なくなると保持中の値が残り続けるため、呼び出し側は holdUntilMs の時刻に
+ * update() をもう一度呼ぶ (メーターの setTimeout と同じ役割)。
  */
 
 import { updateEmaHoldList, type EmaHoldState } from "../utils/emaHold";
@@ -25,6 +29,7 @@ export class DeviationStabilizer {
   private lastValues: Array<number | null> = [];
   private lastKeys: string[] = [];
   private lastDetectedMs = -Infinity;
+  private holdUntil: number | null = null;
 
   constructor(private options: DeviationStabilizerOptions) {}
 
@@ -37,6 +42,12 @@ export class DeviationStabilizer {
     this.lastValues = [];
     this.lastKeys = [];
     this.lastDetectedMs = -Infinity;
+    this.holdUntil = null;
+  }
+
+  /** 直前の update() が全体の保持中の値を返した場合、その保持が切れる時刻 (ms)。それ以外は null */
+  get holdUntilMs(): number | null {
+    return this.holdUntil;
   }
 
   update(keys: string[], raw: ReadonlyArray<number | null>, nowMs: number): Array<number | null> {
@@ -45,6 +56,7 @@ export class DeviationStabilizer {
       holdMs: this.options.holdMs,
     });
 
+    this.holdUntil = null;
     if (values.some((v) => v !== null)) {
       this.lastDetectedMs = nowMs;
       this.lastValues = values;
@@ -56,6 +68,7 @@ export class DeviationStabilizer {
     const sameKeys =
       keys.length === this.lastKeys.length && keys.every((k, i) => k === this.lastKeys[i]);
     if (sameKeys && nowMs - this.lastDetectedMs <= this.options.remainMs) {
+      this.holdUntil = this.lastDetectedMs + this.options.remainMs;
       return this.lastValues;
     }
     return values;

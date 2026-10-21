@@ -17,6 +17,18 @@ describe("DeviationStabilizer", () => {
     expect(s.update(["C4", "E4"], [null, null], 1600)).toEqual([null, null]);
   });
 
+  it("全体の保持中は保持が切れる時刻を返し、検出が戻れば null に戻る", () => {
+    const s = create();
+    s.update(["C4", "E4"], [0.1, 0.2], 100);
+    expect(s.holdUntilMs).toBeNull();
+    s.update(["C4", "E4"], [null, null], 500);
+    expect(s.holdUntilMs).toBe(1600);
+    s.update(["C4", "E4"], [0.1, 0.2], 600);
+    expect(s.holdUntilMs).toBeNull();
+    s.update(["C4", "E4"], [null, null], 1500);
+    expect(s.holdUntilMs).toBe(2100);
+  });
+
   it("構成音が変わったら全体の保持はしない", () => {
     const s = create();
     s.update(["C4", "E4"], [0.1, 0.2], 0);
