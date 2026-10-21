@@ -215,13 +215,13 @@ match /pairs/{pairId}/{phase}/{attempt}/{file} {
 
 ```bash
 # 基本: 同ディレクトリに <入力名>.csv を出力
-pnpm analyze:file -- path/to/song_C4-E4-G4.wav
+pnpm analyze:file path/to/song_C4-E4-G4.wav
 
 # 出力先を指定
-pnpm analyze:file -- path/to/Cmaj7_C4-E4-G4-B4.m4a ./out.csv
+pnpm analyze:file path/to/Cmaj7_C4-E4-G4-B4.m4a ./out.csv
 
 # サンプルレートを指定 (既定: 48000)
-pnpm analyze:file -- path/to/F#4-A4-C#5.wav --sample-rate 44100
+pnpm analyze:file path/to/F#4-A4-C#5.wav --sample-rate 44100
 ```
 
 ファイル名の例:
@@ -304,7 +304,7 @@ pnpm test
 pnpm test:watch
 
 # カバレッジレポート生成
-pnpm --filter @chordlens/web test -- --coverage
+pnpm --filter @chordlens/web test --coverage
 ```
 
 **テスト対象:**

@@ -29,4 +29,4 @@ pnpm build       # 本番ビルド
 
 - web テストで `Cannot find package 'xxx'` → pnpm の厳密な node_modules が原因。
   root package.json の `pnpm.packageExtensions` で peer 依存を補う(過去例: `@hookform/resolvers` に zod)。
-- スナップショット差分 → 意図した UI 変更なら `pnpm --filter @chordlens/web test -- -u` で更新。
+- スナップショット差分 → 意図した UI 変更なら `pnpm --filter @chordlens/web test -u` で更新。

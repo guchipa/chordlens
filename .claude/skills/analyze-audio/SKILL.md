@@ -16,10 +16,10 @@ description: 録音済み音声ファイルをオフライン解析して純正�
 
 ```bash
 # 基本: 同ディレクトリに <入力名>.csv を出力
-pnpm analyze:file -- path/to/song_C4-E4-G4.wav
+pnpm analyze:file path/to/song_C4-E4-G4.wav
 
 # 出力先とサンプルレートの指定
-pnpm analyze:file -- path/to/Cmaj7_C4-E4-G4-B4.m4a ./out.csv --sample-rate 44100
+pnpm analyze:file path/to/Cmaj7_C4-E4-G4-B4.m4a ./out.csv --sample-rate 44100
 ```
 
 ffmpeg は `ffmpeg-static` から自動解決される(追加インストール不要)。

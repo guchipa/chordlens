@@ -39,9 +39,9 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
 | `pnpm typecheck` | 全 workspace の型チェック (core の DOM 非依存もここで検証) |
 | `pnpm lint` | ESLint |
 | `pnpm build` | 本番ビルド (`apps/web/dist`) |
-| `pnpm analyze:file -- <audio>` | 音声ファイルのオフライン解析 CLI |
+| `pnpm analyze:file <audio>` | 音声ファイルのオフライン解析 CLI |
 
-単一テストの実行: `pnpm --filter @chordlens/web test -- __tests__/PitchList.test.tsx`
+単一テストの実行: `pnpm --filter @chordlens/web test __tests__/PitchList.test.tsx`
 
 ## テスト配置
 
