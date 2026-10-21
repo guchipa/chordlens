@@ -13,7 +13,7 @@ import {
 // フィードバック形式atom（localStorageに永続化）
 export const feedbackTypeAtom = atomWithStorage<FeedbackType>(
     "feedbackType",
-    "meter",
+    "trajectory",
     // カスタムストレージで有効な値のみ受け入れる
     {
         getItem: (key, initialValue) => {
