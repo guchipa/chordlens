@@ -385,7 +385,7 @@ ChordLensは複数の視覚フィードバック形式をサポート：
 | **円形** | `CircleFeedback` | 12音を円周上に配置、和音の形を可視化 |
 | **数値** | `NumericFeedback` | セント値の数値表示 |
 
-`UnifiedFeedback`コンポーネントが表示形式の切り替えを制御します。
+メイン画面は`FeedbackCarousel`、評価実験画面は`UnifiedFeedback`が表示形式の切り替えを制御します。形式は画面ごとに別の atom (`feedbackTypeAtom` / `experimentFeedbackTypeAtom`) で持ちます。
 
 ---
 

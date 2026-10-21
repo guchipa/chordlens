@@ -9,8 +9,6 @@ import { BarFeedback } from "./BarFeedback";
 // import { WaveformFeedback } from "./WaveformFeedback";
 import {
   LEGACY_FEEDBACK_TYPES,
-  toLegacyFeedbackType,
-  type FeedbackType,
   type LegacyFeedbackType,
 } from "@chordlens/core/constants";
 import { stepItem } from "@chordlens/core/gestures/swipeIntent";
@@ -19,11 +17,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CircleFeedback } from "./CircleFeedback";
 import { FeedbackTypeSwitch } from "./FeedbackTypeSwitch";
 import { useSwipeNav } from "@/lib/hooks/useSwipeNav";
-import { feedbackTypeAtom } from "@/lib/store";
+import { experimentFeedbackTypeAtom } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 interface UnifiedFeedbackProps {
-  feedbackType: FeedbackType;
+  feedbackType: LegacyFeedbackType;
   analysisData: Array<{
     pitch: Pitch;
     deviation: number | null;
@@ -40,18 +38,18 @@ const SWITCH_HEADER_CLASS = "px-3 pt-3 pb-0";
 /**
  * 評価実験画面 (/experiments) 用のフィードバック表示。
  * 被験者条件を変えないため従来の 3 形式・従来の描画のまま固定する。
+ * 形式はメイン画面と別の experimentFeedbackTypeAtom で持つ
+ * (メイン画面のカルーセル操作で実験条件が変わらないようにする)。
  * メイン画面は FeedbackCarousel を使う。
  */
 export const UnifiedFeedback: React.FC<UnifiedFeedbackProps> = ({
-  feedbackType: storedType,
+  feedbackType,
   analysisData,
   // evalRangeCents,
   a4Freq = 442,
   holdEnabled = true,
 }) => {
-  const setFeedbackType = useSetAtom(feedbackTypeAtom);
-  // メイン画面で新しい形式が選ばれていても、ここでは従来のメーターで描く
-  const feedbackType = toLegacyFeedbackType(storedType);
+  const setFeedbackType = useSetAtom(experimentFeedbackTypeAtom);
   // 切替方向 (左右どちらから入るか)。形式が変わった描画中に算出する
   const [prevType, setPrevType] = useState(feedbackType);
   const [direction, setDirection] = useState<"next" | "prev">("next");

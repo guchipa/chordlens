@@ -334,13 +334,6 @@ export const CIRCLE_OF_FIFTHS: string[] = [
   "C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "Eb", "Bb", "F",
 ];
 
-/** 実験画面で表示できない形式は従来のメーターに読み替える */
-export function toLegacyFeedbackType(type: FeedbackType): LegacyFeedbackType {
-  return (LEGACY_FEEDBACK_TYPES as readonly FeedbackType[]).includes(type)
-    ? (type as LegacyFeedbackType)
-    : "meter";
-}
-
 export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
   trajectory: "軌跡",
   meter: "メーター",

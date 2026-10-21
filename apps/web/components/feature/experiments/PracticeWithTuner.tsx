@@ -34,7 +34,7 @@ import {
   fftSizeAtom,
   smoothingTimeConstantAtom,
   holdEnabledAtom,
-  feedbackTypeAtom,
+  experimentFeedbackTypeAtom,
   sensitivityAtom,
 } from "@/lib/store";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
@@ -52,7 +52,7 @@ export function PracticeWithTuner() {
   const fftSize = useAtomValue(fftSizeAtom);
   const smoothingTimeConstant = useAtomValue(smoothingTimeConstantAtom);
   const holdEnabled = useAtomValue(holdEnabledAtom);
-  const feedbackType = useAtomValue(feedbackTypeAtom);
+  const feedbackType = useAtomValue(experimentFeedbackTypeAtom);
 
   const [sensitivity, setSensitivity] = useAtom(sensitivityAtom);
 

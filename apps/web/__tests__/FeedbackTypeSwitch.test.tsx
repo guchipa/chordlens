@@ -3,8 +3,8 @@ import { Provider, createStore } from "jotai";
 import { afterEach, describe, expect, it } from "vitest";
 import { UnifiedFeedback } from "@/components/feedback/UnifiedFeedback";
 import { FeedbackTypeSelector } from "@/components/feature/FeedbackTypeSelector";
-import { feedbackTypeAtom } from "@/lib/store";
-import type { FeedbackType } from "@chordlens/core/constants";
+import { experimentFeedbackTypeAtom, feedbackTypeAtom } from "@/lib/store";
+import type { LegacyFeedbackType } from "@chordlens/core/constants";
 import type { Pitch } from "@chordlens/core/types";
 
 // jsdom には PointerEvent がないため、座標・pointerType を持つ最小実装を用意する
@@ -37,7 +37,7 @@ function Harness({ store }: { store: ReturnType<typeof createStore> }) {
 }
 import { useAtomValue } from "jotai";
 function Connected() {
-  const type = useAtomValue(feedbackTypeAtom);
+  const type = useAtomValue(experimentFeedbackTypeAtom);
   return (
     <>
       <UnifiedFeedback feedbackType={type} analysisData={data} evalRangeCents={50} />
@@ -46,9 +46,9 @@ function Connected() {
   );
 }
 
-function setup(initial: FeedbackType = "meter") {
+function setup(initial: LegacyFeedbackType = "meter") {
   const store = createStore();
-  store.set(feedbackTypeAtom, initial);
+  store.set(experimentFeedbackTypeAtom, initial);
   render(<Harness store={store} />);
   return store;
 }
@@ -71,22 +71,28 @@ describe("FeedbackTypeSwitch (評価実験画面)", () => {
     expect(screen.getByRole("radio", { name: "バー" }).getAttribute("aria-checked")).toBe("true");
   });
 
-  it("タップで形式が切り替わり、ドロワーのセレクタと atom を共有する", () => {
+  it("タップで形式が切り替わる", () => {
     const store = setup("meter");
     fireEvent.click(screen.getByRole("radio", { name: "サークル" }));
-    expect(store.get(feedbackTypeAtom)).toBe("circle");
+    expect(store.get(experimentFeedbackTypeAtom)).toBe("circle");
     expect(screen.getByRole("radio", { name: "サークル" }).getAttribute("aria-checked")).toBe("true");
-    // ドロワー側セレクタの説明文も追従する
-    expect(screen.getByText(/円になった音名/)).toBeDefined();
+  });
+
+  it("メイン画面の形式とは atom を共有しない (実験条件が変わらない)", () => {
+    const store = setup("bar");
+    store.set(feedbackTypeAtom, "lanes");
+    expect(store.get(experimentFeedbackTypeAtom)).toBe("bar");
+    fireEvent.click(screen.getByRole("radio", { name: "サークル" }));
+    expect(store.get(feedbackTypeAtom)).toBe("lanes");
   });
 
   it("左スワイプで次の形式、右スワイプで前の形式へ移動する", () => {
     const store = setup("bar");
     const area = document.querySelector('[data-slot="feedback-swipe-area"]')!;
     swipe(area, [250, 200], [120, 205]);
-    expect(store.get(feedbackTypeAtom)).toBe("circle");
+    expect(store.get(experimentFeedbackTypeAtom)).toBe("circle");
     swipe(area, [100, 200], [240, 200]);
-    expect(store.get(feedbackTypeAtom)).toBe("bar");
+    expect(store.get(experimentFeedbackTypeAtom)).toBe("bar");
   });
 
   it("縦方向のスワイプ・短い移動・左端開始では切り替わらない", () => {
@@ -95,19 +101,13 @@ describe("FeedbackTypeSwitch (評価実験画面)", () => {
     swipe(area, [200, 100], [140, 260]);
     swipe(area, [200, 200], [180, 200]);
     swipe(area, [10, 200], [200, 200]);
-    expect(store.get(feedbackTypeAtom)).toBe("bar");
+    expect(store.get(experimentFeedbackTypeAtom)).toBe("bar");
   });
 
   it("端の形式ではそれ以上動かない", () => {
     const store = setup("meter");
     const area = document.querySelector('[data-slot="feedback-swipe-area"]')!;
     swipe(area, [100, 200], [250, 200]);
-    expect(store.get(feedbackTypeAtom)).toBe("meter");
-  });
-
-  it("メイン画面だけの形式が保存されていても従来のメーターで描く", () => {
-    setup("lanes");
-    expect(screen.getAllByRole("radio").map((r) => r.textContent)).toEqual(["メーター", "バー", "サークル"]);
-    expect(screen.getByRole("radio", { name: "メーター" }).getAttribute("aria-checked")).toBe("true");
+    expect(store.get(experimentFeedbackTypeAtom)).toBe("meter");
   });
 });

@@ -4,21 +4,20 @@ import { useAtom } from "jotai";
 import {
   LEGACY_FEEDBACK_TYPES,
   FEEDBACK_TYPE_LABELS,
-  toLegacyFeedbackType,
   type LegacyFeedbackType,
 } from "@chordlens/core/constants";
 import { cn } from "@/lib/utils";
-import { feedbackTypeAtom } from "@/lib/store";
+import { experimentFeedbackTypeAtom } from "@/lib/store";
 
 /**
  * フィードバック形式のセグメント切替 (評価実験画面のカードヘッダ用)。
  * 実験条件を固定するため従来の 3 形式のみを扱う (メイン画面は FeedbackCarousel)。
- * 設定ドロワーの FeedbackTypeSelector と同じ feedbackTypeAtom を共有する。
+ * メイン画面とは別の experimentFeedbackTypeAtom を読み書きする
+ * (メイン画面のカルーセルや設定ドロワーの操作で実験条件が変わらないようにする)。
  * 各セグメントは 44px 高のタップ領域。
  */
 export function FeedbackTypeSwitch({ className }: { className?: string }) {
-  const [storedType, setFeedbackType] = useAtom(feedbackTypeAtom);
-  const feedbackType = toLegacyFeedbackType(storedType);
+  const [feedbackType, setFeedbackType] = useAtom(experimentFeedbackTypeAtom);
 
   return (
     <div
