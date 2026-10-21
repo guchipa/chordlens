@@ -53,6 +53,11 @@ function swipe(from: [number, number], to: [number, number]) {
   fireEvent.pointerUp(area(), { ...base, clientX: to[0], clientY: to[1] });
 }
 
+// 並び順に依存しないよう、端の形式と bar の位置は FEEDBACK_TYPES から求める
+const first = FEEDBACK_TYPES[0];
+const last = FEEDBACK_TYPES[FEEDBACK_TYPES.length - 1];
+const barIndex = FEEDBACK_TYPES.indexOf("bar");
+
 const slideTrack = () =>
   screen.getByRole("group", { name: /\d+ \/ \d+/ }).parentElement as HTMLElement;
 
@@ -63,13 +68,13 @@ describe("FeedbackCarousel (メイン画面)", () => {
     setup("bar");
     expect(screen.queryAllByRole("radio")).toHaveLength(0);
     expect(screen.getAllByTestId("carousel-dot")).toHaveLength(FEEDBACK_TYPES.length);
-    expect(screen.getByRole("group", { name: `2 / ${FEEDBACK_TYPES.length}: バー` })).toBeDefined();
+    expect(screen.getByRole("group", { name: `${barIndex + 1} / ${FEEDBACK_TYPES.length}: バー` })).toBeDefined();
   });
 
   it("左スワイプで次の形式、右スワイプで前の形式へ移動する", () => {
     const store = setup("bar");
     swipe([250, 200], [120, 205]);
-    expect(store.get(feedbackTypeAtom)).toBe(FEEDBACK_TYPES[2]);
+    expect(store.get(feedbackTypeAtom)).toBe(FEEDBACK_TYPES[barIndex + 1]);
     swipe([100, 200], [240, 200]);
     expect(store.get(feedbackTypeAtom)).toBe("bar");
   });
@@ -92,16 +97,15 @@ describe("FeedbackCarousel (メイン画面)", () => {
   });
 
   it("端の形式からは反対側の端へ循環する (スワイプ)", () => {
-    const last = FEEDBACK_TYPES[FEEDBACK_TYPES.length - 1];
-    const store = setup("meter");
+    const store = setup(first);
     swipe([100, 200], [250, 200]);
     expect(store.get(feedbackTypeAtom)).toBe(last);
     swipe([250, 200], [120, 205]);
-    expect(store.get(feedbackTypeAtom)).toBe("meter");
+    expect(store.get(feedbackTypeAtom)).toBe(first);
   });
 
   it("端をまたぐ循環でも操作した向きからスライドインする", () => {
-    setup("meter");
+    setup(first);
     // 前へ (右スワイプ) で最後の形式へ: 左から入る
     swipe([100, 200], [250, 200]);
     expect(screen.getByRole("group", { name: /\d+ \/ \d+/ }).className).toContain("slide-in-from-left-6");
@@ -111,7 +115,7 @@ describe("FeedbackCarousel (メイン画面)", () => {
   });
 
   it("端の形式でも引っ張りに抵抗をかけず指に追従する", () => {
-    setup("meter");
+    setup(first);
     fireEvent.pointerDown(area(), { ...base, clientX: 100, clientY: 200 });
     fireEvent.pointerMove(area(), { ...base, clientX: 180, clientY: 200 });
     expect(slideTrack().style.transform).toBe("translateX(80px)");
@@ -119,14 +123,13 @@ describe("FeedbackCarousel (メイン画面)", () => {
   });
 
   it("前後ボタンは端でも無効にならず循環する", () => {
-    const last = FEEDBACK_TYPES[FEEDBACK_TYPES.length - 1];
-    const store = setup("meter");
+    const store = setup(first);
     const prev = screen.getByRole("button", { name: `前の形式: ${FEEDBACK_TYPE_LABELS[last]}` });
     expect(prev).toHaveProperty("disabled", false);
     fireEvent.click(prev);
     expect(store.get(feedbackTypeAtom)).toBe(last);
-    fireEvent.click(screen.getByRole("button", { name: `次の形式: ${FEEDBACK_TYPE_LABELS.meter}` }));
-    expect(store.get(feedbackTypeAtom)).toBe("meter");
+    fireEvent.click(screen.getByRole("button", { name: `次の形式: ${FEEDBACK_TYPE_LABELS[first]}` }));
+    expect(store.get(feedbackTypeAtom)).toBe(first);
   });
 
   it("前後ボタンでも切り替えられる (スワイプできない環境向け)", () => {

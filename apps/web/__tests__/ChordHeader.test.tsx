@@ -32,7 +32,9 @@ describe("ChordHeader", () => {
   afterEach(cleanup);
 
   it("和音名と根音を表示し、手動時は固定ボタンを出さない", () => {
-    setup([p("A", 3, true), p("C", 4), p("E", 4), p("G", 4)]);
+    setup([p("A", 3, true), p("C", 4), p("E", 4), p("G", 4)], (s) => {
+      s.set(chordFollowEnabledAtom, false);
+    });
     expect(screen.getByTestId("chord-symbol").textContent).toBe("Am7");
     expect(screen.getByText("A3")).toBeDefined();
     expect(screen.getByRole("status").textContent).toContain("手動");
