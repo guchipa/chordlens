@@ -37,8 +37,14 @@ describe("tuningMetrics", () => {
   describe("alignResultsByKey", () => {
     it("解析時のリストのキーで現在のリストに対応付ける", () => {
       const analyzed = [p("C", 4, true), p("E", 4), p("G", 4)];
+      const current = [p("C", 4, true), p("Eb", 4), p("G", 4), p("E", 4)];
+      expect(alignResultsByKey(current, analyzed, [0.1, 0.2, 0.3])).toEqual([0.1, null, 0.3, 0.2]);
+    });
+
+    it("根音が変わったら同名音でも旧根音基準の偏差を使わない", () => {
+      const analyzed = [p("C", 4, true), p("E", 4), p("G", 4)];
       const current = [p("A", 3, true), p("C", 4), p("E", 4)];
-      expect(alignResultsByKey(current, analyzed, [0.1, 0.2, 0.3])).toEqual([null, 0.1, 0.2]);
+      expect(alignResultsByKey(current, analyzed, [0.1, 0.2, 0.3])).toEqual([null, null, null]);
     });
 
     it("解析時のリストが無ければ位置で対応付ける", () => {

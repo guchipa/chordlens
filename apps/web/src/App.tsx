@@ -90,6 +90,7 @@ export function App() {
 
   // 構成音リストが自動追従で差し替わった直後は、結果がまだ旧リストで計算されている。
   // 位置ではなく音のキーで対応付け、旧リストの偏差が別の音に割り当たるのを防ぐ
+  // (根音が変わった場合は基準が変わるため、旧結果はすべて捨てる)
   const alignedDeviations = alignResultsByKey(currentPitchList, analyzedPitchList, analysisResult);
 
   // 解析中は画面スリープを抑止する (実験フローは別ルートのため対象外)

@@ -55,6 +55,8 @@ export function summarizePurity(entries: PurityEntry[]): PuritySummary {
  * 構成音リストが差し替わった直後のフレームは、結果がまだ旧リストで
  * 計算されている。位置で対応付けると旧リストの偏差が別の音に
  * 割り当たるため、キーが一致しない音は null (未検出) にする。
+ * 根音が変わった場合は同名音でも期待周波数 (純正律の基準) が変わるため、
+ * すべて null にする。
  * analyzedPitchList が null の場合は位置で対応付ける (従来互換)
  */
 export function alignResultsByKey(
@@ -66,9 +68,17 @@ export function alignResultsByKey(
   if (!analyzedPitchList) {
     return currentPitchList.map((_, i) => results[i] ?? null);
   }
+  if (rootKey(analyzedPitchList) !== rootKey(currentPitchList)) {
+    return currentPitchList.map(() => null);
+  }
   const byKey = new Map<string, number | null>();
   analyzedPitchList.forEach((p, i) => {
     byKey.set(pitchKey(p), results[i] ?? null);
   });
   return currentPitchList.map((p) => byKey.get(pitchKey(p)) ?? null);
+}
+
+function rootKey(pitchList: Pitch[]): string | null {
+  const root = pitchList.find((p) => p.isRoot);
+  return root ? pitchKey(root) : null;
 }
