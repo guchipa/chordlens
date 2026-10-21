@@ -4,6 +4,7 @@
  */
 import { atom } from "jotai";
 import { DEFAULT_INITIAL_PITCH_LIST } from "@chordlens/core/constants";
+import { pitchListKey } from "@chordlens/core/presets/pitchListKey";
 import type { Pitch } from "@chordlens/core/types";
 
 // メインのピッチリストatom
@@ -78,17 +79,13 @@ export const setRootAtom = atom(null, (get, set, index: number) => {
 });
 
 // 検出した構成音リストを反映するaction atom
-// 現在のリストと同一 (音名・オクターブ・ルートが一致) なら更新しない。
-// 連続追従モードでの無駄な再レンダリングを防ぐ
+// 現在のリストと和音として同一 (pitchListKey が一致) なら更新しない。
+// 連続追従モードでの無駄な再レンダリングを防ぎ、登録順や無効化した音など
+// ユーザーのリストの内容を保つ
 export const applyDetectedPitchListAtom = atom(
     null,
     (get, set, detected: Pitch[]): boolean => {
-        const toKey = (list: Pitch[]) =>
-            list
-                .map((p) => `${p.pitchName}${p.octaveNum}${p.isRoot ? "*" : ""}`)
-                .join(",");
-
-        if (toKey(get(pitchListAtom)) === toKey(detected)) {
+        if (pitchListKey(get(pitchListAtom)) === pitchListKey(detected)) {
             return false;
         }
         set(pitchListAtom, detected);

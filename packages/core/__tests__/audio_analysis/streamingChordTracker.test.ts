@@ -167,6 +167,29 @@ describe("StreamingChordTracker", () => {
     expect(updates[11].pending).toBe(false);
   });
 
+  it("登録順や無効化した音だけが違う確定値は、同じ和音として切替中にも上書きにもしない", async () => {
+    const cMajor = [60, 64, 67];
+    // 推定器が確定する C メジャーのリスト (昇順・全音有効) を得る
+    const probe = createTracker(Array(4).fill(cMajor));
+    const estimated = (await runFrames(probe, 4)).find((c) => c !== null)!;
+    expect(estimated).toHaveLength(3);
+
+    const variants: Pitch[][] = [
+      [...estimated].reverse(),
+      [...estimated, { pitchName: "Bb", octaveNum: 4, isRoot: false, enabled: false }],
+    ];
+    for (const confirmed of variants) {
+      const tracker = createTracker(Array(6).fill(cMajor));
+      tracker.syncConfirmedPitchList(confirmed);
+      for (let i = 0; i < 6; i++) {
+        tracker.push(new Float32Array(FRAME_LENGTH));
+        const { changed, pending } = await tracker.poll();
+        expect(changed).toBeNull();
+        expect(pending).toBe(false);
+      }
+    }
+  });
+
   it("無音では pending にならない", async () => {
     const tracker = createTracker([[]]);
     tracker.push(new Float32Array(FRAME_LENGTH));

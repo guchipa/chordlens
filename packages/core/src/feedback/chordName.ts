@@ -7,6 +7,7 @@
  */
 
 import type { Pitch } from "../types";
+import { pitchListKey } from "../presets/pitchListKey";
 import { INTERVAL_LABELS, intervalFromRoot } from "./chordRoles";
 
 /** 度数集合 (昇順を "," 連結) → コードの接尾辞 */
@@ -74,10 +75,10 @@ export function nameChord(pitchList: Pitch[]): ChordName | null {
   return { rootName: root.pitchName, symbol: null };
 }
 
-/** 和音の同一判定キー (音名+オクターブ+根音印、有効な音のみ) */
+/**
+ * 和音の同一判定キー。自動追従と食い違わないよう pitchListKey と同じ
+ * (有効な音のみ・音高順で、登録順に依存しない)
+ */
 export function chordKey(pitchList: Pitch[]): string {
-  return pitchList
-    .filter((p) => p.enabled)
-    .map((p) => `${p.pitchName}${p.octaveNum}${p.isRoot ? "*" : ""}`)
-    .join(",");
+  return pitchListKey(pitchList);
 }

@@ -375,6 +375,12 @@ pending も立てない。解除時は `syncConfirmedPitchList` で基準を今�
 鳴っている和音を次のサイクルで再確定させる。追従セッションの開始時にも基準を
 今のリストに合わせ、同じ和音が鳴っているだけで判定中にならないようにする。
 
+推定と確定値の比較は `pitchListKey` (`packages/core/src/presets/pitchListKey.ts`) の
+キーで行う。有効な音だけを音高順に並べたキーなので、ユーザーのリストが登録順で
+昇順でない場合や無効化した音を含む場合でも、鳴っている和音が有効な音と一致すれば
+同じ和音とみなし、判定中にも上書き (`applyDetectedPitchListAtom`) にもしない。
+フィードバック表示の和音判定 (`chordKey`) も同じキーを使う。
+
 ### 無音判定
 
 `poll()` が返す `StreamingChordUpdate.silent` は、直近フレームの検出イベントが

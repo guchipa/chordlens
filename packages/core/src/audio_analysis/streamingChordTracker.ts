@@ -19,6 +19,7 @@
 import type { NoteDetector } from "../adapters/noteDetection";
 import type { DetectedNoteEvent } from "../adapters/noteDetection";
 import type { Pitch } from "../types";
+import { pitchListKey } from "../presets/pitchListKey";
 import {
   noteEventsToPitchList,
   type ChordToneEstimationOptions,
@@ -68,13 +69,6 @@ export interface StreamingChordUpdate {
    * 旧和音を基準に計算されているため、表示側は信頼度を下げて見せる
    */
   pending: boolean;
-}
-
-/** 構成音リストの同一判定に使うキー (音名+オクターブ+ルート) */
-function pitchListKey(pitchList: Pitch[]): string {
-  return pitchList
-    .map((p) => `${p.pitchName}${p.octaveNum}${p.isRoot ? "*" : ""}`)
-    .join(",");
 }
 
 export class StreamingChordTracker {

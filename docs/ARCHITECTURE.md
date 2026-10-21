@@ -132,7 +132,7 @@ chordlens/
 │       │   │   ├── noteDetection.ts        # NoteDetector（構成音検出の抽象・実装は audio_analysis 側）
 │       │   │   ├── wakeLock.ts             # ScreenWakeLock（画面スリープ抑止の抽象）
 │       │   │   └── appLifecycle.ts         # AppLifecycle（前面/背面遷移の抽象。解析の自動停止に使う）
-│       │   ├── presets/         # プリセット管理コア（ストレージ注入式。削除の取り消し用 restorePreset を含む）、pitchListEquals（構成音リストの同一判定）
+│       │   ├── presets/         # プリセット管理コア（ストレージ注入式。削除の取り消し用 restorePreset を含む）、pitchListEquals（構成音リストの同一判定、順序・有効フラグ込み）、pitchListKey（和音としての同一判定キー、有効な音のみ・音高順）
 │       │   ├── undo/            # listOps（「元に戻す」用の removeAt / insertAt。純関数）
 │       │   ├── gestures/        # swipeIntent（横スワイプの確定判定・隣接項目の取得。純関数）
 │       │   ├── logging/         # ログ CSV 変換
@@ -270,7 +270,8 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
    0.25 秒フレームが揃うごとに `HarmonicNoteDetector` (core、倍音和サリエンス +
    貪欲減算、A4 設定に追従) で解析。直近 1 秒のスライディングウィンドウを
    `noteEventsToPitchList()` で集約し、2 サイクル一致のヒステリシスで確定
-3. **反映** → 確定した `Pitch[]` を `applyDetectedPitchListAtom` が即時更新。
+3. **反映** → 確定した `Pitch[]` を `applyDetectedPitchListAtom` が即時更新
+   (現在のリストと `pitchListKey` が一致すれば更新せず、ユーザーのリストを保つ)。
    体感レイテンシは 1 秒未満
 
 **単音のマイク入力 (バッチ)**:
