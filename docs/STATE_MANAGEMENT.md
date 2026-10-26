@@ -90,12 +90,29 @@ apps/web/lib/store/
 
 | Atom名 | 型 | デフォルト値 | Storage Key |
 |--------|----|------------|-------------|
-| `feedbackTypeAtom` | `Meter \| Bar \| Circle` | `"meter"` | `feedbackType` |
+| `feedbackTypeAtom` | `FeedbackType` (`FEEDBACK_TYPES`) | `"trajectory"` | `feedbackType` |
+| `circleLayoutAtom` | `"chromatic" \| "fifths"` | `"chromatic"` | `circleLayout` |
+| `inTuneCentsAtom` | `number` (0.5〜10、0.5 刻み) | `2.5` | `chordlens-inTuneCents` |
+| `displaySmoothingAtom` | `DisplaySmoothing` (`"off" \| "weak" \| "medium" \| "strong"`) | `"off"` | `chordlens-displaySmoothing` |
 
-メイン画面の `FeedbackTypeSwitch` / カードの横スワイプと、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。
+メイン画面の `FeedbackCarousel` (横スワイプ・前後ボタン) と、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。評価実験画面 (`UnifiedFeedback`) はメーターに固定しているため、フィードバック形式の atom を参照しません。`circleLayoutAtom` はメイン画面のサークルのみが参照します。
+
+`inTuneCentsAtom` (ピッチの正解幅) と `displaySmoothingAtom` (表示の平滑化) は `App` が読み、`FeedbackCarousel` → 各形式へ props (`inTuneDeviation` = `inTuneDeviationFromCents()` で正規化した閾値、`smoothingMs` = EMA の時定数) で渡します。評価実験画面は参照せず、既定値 (閾値 0.05・平滑化なし) のままです。
 
 **カスタムストレージロジック**:
-`localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes`）を行い、無効な値はデフォルト値にフォールバックします。
+`localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes` / `CIRCLE_LAYOUTS.includes`）を行い、無効な値はデフォルト値にフォールバックします。
+
+### 2.4. Chord Detection Atoms (`chordDetectionAtoms.ts`)
+
+構成音の自動追従の状態を、設定ドロワーのトグルと App 常駐の `useChordFollow`、メイン画面の `ChordHeader` / `FeedbackCarousel` の間で共有します。いずれも永続化しません。
+
+| Atom名 | 型 | 説明 |
+|--------|----|------|
+| `chordFollowEnabledAtom` | `boolean` | 自動追従モードの ON/OFF |
+| `chordFollowStatusAtom` | `"idle" \| "listening" \| "tracking"` | 追従ループの状態 |
+| `chordFollowErrorAtom` | `string \| null` | 追従ループのエラー |
+| `chordFollowPendingAtom` | `boolean` | 推定中の和音が確定値と食い違う (切替中)。フィードバックを灰色にする |
+| `chordFollowLockedAtom` | `boolean` | 和音の固定。推定は続け、構成音リストへの反映だけを止める |
 
 ---
 

@@ -6,6 +6,12 @@ export type EmaHoldState = {
 export type EmaHoldOptions = {
     /** 0〜1: 値が大きいほど追従が速い */
     alpha: number;
+    /**
+     * EMA の時定数 (ms)。正の値なら alpha の代わりに前回検出からの経過時間で
+     * 係数を決める (alpha = 1 - exp(-経過/時定数))。更新間隔が変わっても
+     * 同じ時間で追従する
+     */
+    timeConstantMs?: number;
     /** 未検出でも保持する時間（ms） */
     holdMs: number;
 };
@@ -38,12 +44,16 @@ export function updateEmaHoldState(
     nowMs: number,
     options: EmaHoldOptions
 ): EmaHoldUpdateResult {
-    const alpha = clamp01(options.alpha);
     const holdMs = clampHoldMs(options.holdMs);
 
     const prev = stateMap.get(key);
 
     if (rawValue !== null) {
+        const tau = options.timeConstantMs ?? 0;
+        const alpha =
+            tau > 0 && prev
+                ? 1 - Math.exp(-Math.max(0, nowMs - prev.lastSeenMs) / tau)
+                : clamp01(options.alpha);
         const prevSmoothed = prev?.smoothedValue ?? rawValue;
         const smoothed = prevSmoothed + (rawValue - prevSmoothed) * alpha;
 

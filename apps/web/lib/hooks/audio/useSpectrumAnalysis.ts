@@ -35,6 +35,12 @@ export interface UseSpectrumAnalysisReturn {
     analysisResult: (number | null)[] | null;
     /** セント単位の偏差 */
     centDeviations: (number | null)[] | null;
+    /**
+     * analysisResult / centDeviations を計算したときの構成音リスト。
+     * 結果は配列の位置で並ぶため、構成音リストが差し替わった直後に
+     * 位置ではなく音のキーで対応付けるのに使う
+     */
+    analyzedPitchList: Pitch[] | null;
     /** ピーク探索デバッグ情報 */
     peakSearchDebug: PeakSearchDebug[] | null;
     /** FFT と SWIPE' の比較結果 (enableComparison=true のときのみ) */
@@ -55,6 +61,7 @@ export function useSpectrumAnalysis(
 ): UseSpectrumAnalysisReturn {
     const [analysisResult, setAnalysisResult] = useState<(number | null)[] | null>(null);
     const [centDeviations, setCentDeviations] = useState<(number | null)[] | null>(null);
+    const [analyzedPitchList, setAnalyzedPitchList] = useState<Pitch[] | null>(null);
     const [peakSearchDebug, setPeakSearchDebug] = useState<PeakSearchDebug[] | null>(null);
     const [comparisonResults, setComparisonResults] = useState<AlgorithmComparisonEntry[] | null>(null);
 
@@ -318,6 +325,7 @@ export function useSpectrumAnalysis(
 
         setAnalysisResult(deviations);
         setCentDeviations(cents);
+        setAnalyzedPitchList(props.currentPitchList);
 
         animationFrameIdRef.current = requestAnimationFrame(analyzeFrame);
     }, [nodesRef, spectrumDataRef, freqBinsRef]);
@@ -338,6 +346,7 @@ export function useSpectrumAnalysis(
     const clearResults = useCallback(() => {
         setAnalysisResult(null);
         setCentDeviations(null);
+        setAnalyzedPitchList(null);
         setPeakSearchDebug(null);
         setComparisonResults(null);
         hasPeakSearchDebugRef.current = false;
@@ -355,6 +364,7 @@ export function useSpectrumAnalysis(
     return {
         analysisResult,
         centDeviations,
+        analyzedPitchList,
         peakSearchDebug,
         comparisonResults,
         startLoop,

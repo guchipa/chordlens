@@ -120,13 +120,19 @@ chordlens/
 │       │   │   ├── phaseVocoderEstimation.ts # 位相ボコーダ法
 │       │   │   ├── peakInterpolation.ts    # ピーク補間
 │       │   │   └── fft.ts                  # FFT 共通ユーティリティ
+│       │   ├── feedback/        # フィードバック表示用ロジック（純粋 TypeScript）
+│       │   │   ├── chordRoles.ts           # 役割（度数）・声部順・平均律との差
+│       │   │   ├── chordName.ts            # コードシンボル・和音の同一判定キー
+│       │   │   ├── tuningMetrics.ts        # 偏差の段階・純正度（最大絶対偏差）・解析結果のキー対応付け
+│       │   │   ├── deviationStabilizer.ts  # 表示値の保持・平滑化（和音変更でリセット）
+│       │   │   └── trajectory.ts           # ピッチ軌跡の時系列バッファ（切替区間のさかのぼり判定）
 │       │   ├── adapters/        # プラットフォーム抽象インターフェース
 │       │   │   ├── storage.ts              # KeyValueStorage（localStorage 等の抽象）
 │       │   │   ├── audio.ts                # SpectrumSource（音声入力の抽象）
 │       │   │   ├── noteDetection.ts        # NoteDetector（構成音検出の抽象・実装は audio_analysis 側）
 │       │   │   ├── wakeLock.ts             # ScreenWakeLock（画面スリープ抑止の抽象）
 │       │   │   └── appLifecycle.ts         # AppLifecycle（前面/背面遷移の抽象。解析の自動停止に使う）
-│       │   ├── presets/         # プリセット管理コア（ストレージ注入式。削除の取り消し用 restorePreset を含む）、pitchListEquals（構成音リストの同一判定）
+│       │   ├── presets/         # プリセット管理コア（ストレージ注入式。削除の取り消し用 restorePreset を含む）、pitchListEquals（構成音リストの同一判定、順序・有効フラグ込み）、pitchListKey（和音としての同一判定キー、有効な音のみ・音高順）
 │       │   ├── undo/            # listOps（「元に戻す」用の removeAt / insertAt。純関数）
 │       │   ├── gestures/        # swipeIntent（横スワイプの確定判定・隣接項目の取得。純関数）
 │       │   ├── logging/         # ログ CSV 変換
@@ -153,7 +159,7 @@ chordlens/
 │       │   └── routes/experiments/  # 評価実験フロー
 │       ├── components/
 │       │   ├── feature/         # 機能コンポーネント
-│       │   ├── feedback/        # 視覚フィードバック（メーター、バー、円形）
+│       │   ├── feedback/        # 視覚フィードバック（メイン画面: FeedbackCarousel + 6 形式、評価実験画面: UnifiedFeedback）
 │       │   ├── layout/          # ヘッダー・フッター・ドロワー
 │       │   └── ui/              # shadcn/ui プリミティブ
 │       ├── lib/                 # Web 依存のロジック
@@ -264,7 +270,8 @@ App 常駐の `useChordFollow` フックが回す（状態は Jotai atom で共�
    0.25 秒フレームが揃うごとに `HarmonicNoteDetector` (core、倍音和サリエンス +
    貪欲減算、A4 設定に追従) で解析。直近 1 秒のスライディングウィンドウを
    `noteEventsToPitchList()` で集約し、2 サイクル一致のヒステリシスで確定
-3. **反映** → 確定した `Pitch[]` を `applyDetectedPitchListAtom` が即時更新。
+3. **反映** → 確定した `Pitch[]` を `applyDetectedPitchListAtom` が即時更新
+   (現在のリストと `pitchListKey` が一致すれば更新せず、ユーザーのリストを保つ)。
    体感レイテンシは 1 秒未満
 
 **単音のマイク入力 (バッチ)**:
@@ -373,12 +380,13 @@ ChordLensは複数の視覚フィードバック形式をサポート：
 
 | 形式 | コンポーネント | 説明 |
 |------|--------------|------|
-| **メーター** | `MeterFeedback` | 針が動くアナログメーター（デフォルト） |
+| **軌跡** | `TrajectoryFeedback` | 直近の偏差の推移（メイン画面のデフォルト） |
+| **メーター** | `MeterFeedback` | 針が動くアナログメーター（評価実験画面はこの形式に固定） |
 | **バー** | `BarFeedback` | シンプルな横棒グラフ |
 | **円形** | `CircleFeedback` | 12音を円周上に配置、和音の形を可視化 |
 | **数値** | `NumericFeedback` | セント値の数値表示 |
 
-`UnifiedFeedback`コンポーネントが表示形式の切り替えを制御します。
+メイン画面は`FeedbackCarousel`が表示形式の切り替えを制御します (`feedbackTypeAtom`)。評価実験画面の`UnifiedFeedback`は被験者条件を変えないためメーターに固定し、切り替えを持ちません。
 
 ---
 

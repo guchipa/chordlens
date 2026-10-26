@@ -237,6 +237,68 @@ export const PITCH_COLOR_MAP: { [key: string]: string } = {
 };
 
 /**
+ * 偏差 (±1 正規化) の段階判定の閾値。
+ * evalRangeCents=50 のとき、合っている: ±2.5 セント未満 / 近い: ±10 セント未満
+ */
+export const IN_TUNE_DEVIATION = 0.05;
+export const CLOSE_DEVIATION = 0.2;
+
+/**
+ * 「ピッチの正解幅」設定 (セント)。合っている判定の閾値を ±この値にする。
+ * 既定は evalRangeCents=50 での IN_TUNE_DEVIATION と同じ ±2.5 セント
+ */
+export const IN_TUNE_CENTS_DEFAULT = 2.5;
+export const IN_TUNE_CENTS_MIN = 0.5;
+export const IN_TUNE_CENTS_MAX = 10;
+export const IN_TUNE_CENTS_STEP = 0.5;
+
+/**
+ * 表示の平滑化の強さ。偏差表示の EMA の時定数 (ms) で指定する。
+ * 解析は requestAnimationFrame 駆動でフレームレート (60/120Hz) が端末で変わるため、
+ * フレームあたりの係数ではなく時定数で決める。0 で平滑化なし
+ */
+export const DISPLAY_SMOOTHING_LEVELS = ["off", "weak", "medium", "strong"] as const;
+export type DisplaySmoothing = (typeof DISPLAY_SMOOTHING_LEVELS)[number];
+export const DISPLAY_SMOOTHING_DEFAULT: DisplaySmoothing = "off";
+export const DISPLAY_SMOOTHING_TIME_CONSTANT_MS: Record<DisplaySmoothing, number> = {
+  off: 0,
+  weak: 100,
+  medium: 250,
+  strong: 500,
+};
+export const DISPLAY_SMOOTHING_LABELS: Record<DisplaySmoothing, string> = {
+  off: "なし",
+  weak: "弱",
+  medium: "中",
+  strong: "強",
+};
+
+/** 偏差の段階ごとの色 (合っている / 近い / ずれている) */
+export const TUNING_LEVEL_COLORS = {
+  inTune: "#22c55e",
+  close: "#eab308",
+  off: "#ef4444",
+} as const;
+
+/**
+ * 数値 (セント) 表示の更新間隔 (ms)。毎フレーム書き換えると読めないため間引く。
+ * バーや針などの図形は毎フレーム追従させる
+ */
+export const FEEDBACK_NUMBER_UPDATE_MS = 250;
+
+/**
+ * 構成音の役割 (度数の大分類) ごとの色。
+ * 偏差の状態色 (緑/黄/赤) と混同しないよう、寒色と無彩色から選ぶ
+ */
+export const CHORD_ROLE_COLORS = {
+  root: "#334155",
+  third: "#2563eb",
+  fifth: "#7c3aed",
+  seventh: "#0891b2",
+  other: "#a16207",
+} as const;
+
+/**
  * SWIPE' バンドパスフィルタ幅のデフォルト値（セント）
  * ±600 cents = 1 オクターブ分の帯域で倍音を含む
  */
@@ -262,24 +324,48 @@ export const PITCH_ALGORITHM_DESCRIPTIONS: Record<PitchAlgorithm, string> = {
 };
 
 /**
- * フィードバック形式の定義
+ * フィードバック形式の定義 (メイン画面のカルーセルの並び順)
  */
 export const FEEDBACK_TYPES = [
+  "trajectory",
   "meter",
   "bar",
   "circle",
+  "lanes",
+  "purity",
 ] as const;
 
 export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
 
+/**
+ * サークル形式の音名の並び順。
+ * chromatic: 半音順 (鍵盤と同じ)、fifths: 5 度圏 (長三和音・短三和音が一定の形になる)
+ */
+export const CIRCLE_LAYOUTS = ["chromatic", "fifths"] as const;
+export type CircleLayout = (typeof CIRCLE_LAYOUTS)[number];
+export const CIRCLE_LAYOUT_LABELS: Record<CircleLayout, string> = {
+  chromatic: "半音順",
+  fifths: "5度圏",
+};
+/** 5 度圏の並び (C から完全 5 度ずつ) */
+export const CIRCLE_OF_FIFTHS: string[] = [
+  "C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "Eb", "Bb", "F",
+];
+
 export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
+  trajectory: "軌跡",
   meter: "メーター",
   bar: "バー",
   circle: "サークル",
+  lanes: "声部レーン",
+  purity: "純正度",
 };
 
 export const FEEDBACK_TYPE_DESCRIPTIONS: Record<FeedbackType, string> = {
+  trajectory: "直近 10 秒の偏差の推移を声部ごとの線で表示。和音ごとの区間で合い具合を振り返れる",
   meter: "針が動くアナログメーター表示",
   bar: "シンプルな横棒グラフ表示",
   circle: "円になった音名で和音の形をわかりやすく",
+  lanes: "声部ごとの縦レーンに役割と偏差を表示。和音が変わってもレーンの位置で自分の音を追える",
+  purity: "和音全体で最もずれた音の偏差を大きく表示。今の和音が合っているかを一目で判断できる",
 };

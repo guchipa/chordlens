@@ -364,6 +364,23 @@ minTotalDuration (2フレーム)  + 0.25 秒
 和音の**変更**時は、旧和音のイベントがウィンドウ (1 秒) から抜けるまでの時間が
 加わり、確定まで約 1 秒です。
 
+### 切替中の判定 (pending)
+
+`poll()` が返す `StreamingChordUpdate.pending` は、直近フレームの推定 (非空) が
+確定値と食い違うとき true になる (和音の切替中・ヒステリシス待ち)。この間の
+純正律偏差は旧和音を基準に計算されているため、フィードバックは灰色に落として
+「判定中」と表示する (`useChordFollow` → `chordFollowPendingAtom`)。和音の固定
+(`chordFollowLockedAtom`) 中は推定を続けたまま構成音リストへの反映を止め、
+pending も立てない。解除時は `syncConfirmedPitchList` で基準を今のリストに戻し、
+鳴っている和音を次のサイクルで再確定させる。追従セッションの開始時にも基準を
+今のリストに合わせ、同じ和音が鳴っているだけで判定中にならないようにする。
+
+推定と確定値の比較は `pitchListKey` (`packages/core/src/presets/pitchListKey.ts`) の
+キーで行う。有効な音だけを音高順に並べたキーなので、ユーザーのリストが登録順で
+昇順でない場合や無効化した音を含む場合でも、鳴っている和音が有効な音と一致すれば
+同じ和音とみなし、判定中にも上書き (`applyDetectedPitchListAtom`) にもしない。
+フィードバック表示の和音判定 (`chordKey`) も同じキーを使う。
+
 ### 無音判定
 
 `poll()` が返す `StreamingChordUpdate.silent` は、直近フレームの検出イベントが

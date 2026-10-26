@@ -9,6 +9,8 @@ import {
     chordFollowEnabledAtom,
     chordFollowStatusAtom,
     chordFollowErrorAtom,
+    chordFollowPendingAtom,
+    chordFollowLockedAtom,
 } from "@/lib/store/chordDetectionAtoms";
 import type { DetectedNoteEvent } from "@chordlens/core/adapters/noteDetection";
 
@@ -224,6 +226,77 @@ describe("useChordFollow", () => {
                     .get(pitchListAtom)
                     .map((p) => `${p.pitchName}${p.octaveNum}`)
             ).toEqual(["F4", "A4", "C5"]);
+        });
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, false);
+        });
+    });
+
+    const keysOf = (store: ReturnType<typeof setup>) =>
+        store.get(pitchListAtom).map((p) => `${p.pitchName}${p.octaveNum}`);
+
+    it("和音の切替中は pending を立て、確定したら下ろす", async () => {
+        mocks.detectNotes.mockResolvedValue([
+            frameNote(65),
+            frameNote(69),
+            frameNote(72),
+        ]);
+        const store = setup();
+        act(() => {
+            store.set(chordFollowEnabledAtom, true);
+        });
+        await waitFor(() => {
+            expect(mocks.onChunk).not.toBeNull();
+        });
+
+        await injectFrame();
+        await injectFrame();
+        // 初回推定 (F) は既定のリスト (C) と食い違うので切替中
+        await waitFor(() => {
+            expect(store.get(chordFollowPendingAtom)).toBe(true);
+        });
+        await injectFrame();
+        await waitFor(() => {
+            expect(keysOf(store)).toEqual(["F4", "A4", "C5"]);
+        });
+        expect(store.get(chordFollowPendingAtom)).toBe(false);
+
+        act(() => {
+            store.set(chordFollowEnabledAtom, false);
+        });
+    });
+
+    it("固定中は構成音リストを変えず pending も立てない。解除すると再確定する", async () => {
+        mocks.detectNotes.mockResolvedValue([
+            frameNote(65),
+            frameNote(69),
+            frameNote(72),
+        ]);
+        const store = setup();
+        const initial = keysOf(store);
+        act(() => {
+            store.set(chordFollowLockedAtom, true);
+            store.set(chordFollowEnabledAtom, true);
+        });
+        await waitFor(() => {
+            expect(mocks.onChunk).not.toBeNull();
+        });
+
+        for (let i = 0; i < 4; i++) await injectFrame();
+        await waitFor(() => {
+            expect(store.get(chordFollowStatusAtom)).toBe("tracking");
+        });
+        expect(keysOf(store)).toEqual(initial);
+        expect(store.get(chordFollowPendingAtom)).toBe(false);
+
+        // 解除後は鳴り続けている和音を次のサイクルで反映する
+        act(() => {
+            store.set(chordFollowLockedAtom, false);
+        });
+        await injectFrame();
+        await waitFor(() => {
+            expect(keysOf(store)).toEqual(["F4", "A4", "C5"]);
         });
 
         act(() => {

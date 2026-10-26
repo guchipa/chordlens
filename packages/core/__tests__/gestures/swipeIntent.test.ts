@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveSwipeIntent, stepItem } from "../../src/gestures/swipeIntent";
+import { resolveSwipeIntent, stepItem, stepItemLoop } from "../../src/gestures/swipeIntent";
 
 describe("resolveSwipeIntent", () => {
   it("十分な距離の左スワイプは next、右スワイプは prev", () => {
@@ -27,5 +27,18 @@ describe("stepItem", () => {
     expect(stepItem(items, "b", -1)).toBe("a");
     expect(stepItem(items, "c", 1)).toBeNull();
     expect(stepItem(items, "a", -1)).toBeNull();
+  });
+});
+
+describe("stepItemLoop", () => {
+  const items = ["a", "b", "c"] as const;
+  it("端では反対側の端へ循環する", () => {
+    expect(stepItemLoop(items, "b", 1)).toBe("c");
+    expect(stepItemLoop(items, "c", 1)).toBe("a");
+    expect(stepItemLoop(items, "a", -1)).toBe("c");
+  });
+  it("見つからない・項目が 1 つ以下なら null", () => {
+    expect(stepItemLoop(items, "z" as never, 1)).toBeNull();
+    expect(stepItemLoop(["a"], "a", 1)).toBeNull();
   });
 });

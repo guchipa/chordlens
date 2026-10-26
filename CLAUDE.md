@@ -39,9 +39,9 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
 | `pnpm typecheck` | 全 workspace の型チェック (core の DOM 非依存もここで検証) |
 | `pnpm lint` | ESLint |
 | `pnpm build` | 本番ビルド (`apps/web/dist`) |
-| `pnpm analyze:file -- <audio>` | 音声ファイルのオフライン解析 CLI |
+| `pnpm analyze:file <audio>` | 音声ファイルのオフライン解析 CLI |
 
-単一テストの実行: `pnpm --filter @chordlens/web test -- __tests__/PitchList.test.tsx`
+単一テストの実行: `pnpm --filter @chordlens/web test __tests__/PitchList.test.tsx`
 
 ## テスト配置
 
@@ -80,3 +80,6 @@ ChordLens — リアルタイム純正律和音チューナー。マイク入力
 - `docs/` は実装と同期させる (特に ARCHITECTURE.md のディレクトリ構成)
 - deploy は Vercel (`vercel.json` がルート)。出力先 `apps/web/dist` を変えたら vercel.json も更新
 - `/experiments` 配下は評価実験用フロー。被験者データに影響するため挙動変更は慎重に
+- フィードバック表示はメイン画面 (`FeedbackCarousel`、全形式・enhanced 表示) と評価実験画面
+  (`UnifiedFeedback`、メーター・legacy 表示に固定) で分けている。既存コンポーネントを改善するときは
+  `variant` 等で legacy の描画を変えないこと

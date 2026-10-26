@@ -7,30 +7,21 @@ import { Volume2, Square } from "lucide-react";
 import type { Pitch } from "@chordlens/core/types";
 import { getEqualJustDiff, getEqualFrequencies, getJustFrequencies } from "@chordlens/core/audio_analysis/calcJustFreq";
 import { PITCH_NAME_LIST } from "@chordlens/core/constants";
+import { INTERVAL_LABELS } from "@chordlens/core/feedback/chordRoles";
 
 // 表示するcentの小数点以下桁数
 const CENT_DIGIT_NUM = 2;
-
-// 半音数から音程名へのマッピング
-const INTERVAL_NAMES: { [key: number]: string } = {
-  0: "根音", // Root (完全1度)
-  1: "短2度", // Minor 2nd (短2度)
-  2: "長2度", // Major 2nd (長2度)
-  3: "短3度", // Minor 3rd (短3度)
-  4: "長3度", // Major 3rd (長3度)
-  5: "完全4度", // Perfect 4th (完全4度)
-  6: "増4度/減5度", // Tritone (増4度/減5度)
-  7: "完全5度", // Perfect 5th (完全5度)
-  8: "短6度", // Minor 6th (短6度)
-  9: "長6度", // Major 6th (長6度)
-  10: "短7度", // Minor 7th (短7度)
-  11: "長7度", // Major 7th (長7度)
-};
 
 interface CentDisplayProps {
   pitchList: Pitch[];
   a4Freq: number;
   title?: string;
+  /**
+   * 最低この行数ぶんの高さを確保する (既定 0 = 確保しない)。
+   * 自動追従で構成音の数が変わるたびに高さが変わると、下までスクロールして
+   * いるときにスクロール位置が補正されて画面全体が跳ぶため、メイン画面で使う
+   */
+  minRows?: number;
 }
 
 /**
@@ -57,6 +48,7 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
   pitchList,
   a4Freq,
   title,
+  minRows = 0,
 }) => {
   const equalJustDiff = getEqualJustDiff(pitchList, a4Freq);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -174,7 +166,7 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
         <ul className="divide-y">
           {pitchList.map((pitch, index) => {
             const interval = calculateInterval(pitchList, index);
-            const intervalName = INTERVAL_NAMES[interval] || "?";
+            const intervalName = INTERVAL_LABELS[interval] || "?";
             const centValue = equalJustDiff[index];
 
             return (
@@ -207,6 +199,18 @@ export const CentDisplay: React.FC<CentDisplayProps> = ({
               </li>
             );
           })}
+          {/* 高さ確保用の見えない行 (実際の行と同じ構造で高さを揃える) */}
+          {Array.from({ length: Math.max(0, minRows - pitchList.length) }, (_, i) => (
+            <li
+              key={`placeholder-${i}`}
+              aria-hidden="true"
+              data-testid="cent-display-placeholder"
+              className="invisible flex flex-col gap-2 py-3"
+            >
+              <span className="text-xl font-bold">C4</span>
+              <span className="h-11" />
+            </li>
+          ))}
         </ul>
       </CardContent>
     </Card>

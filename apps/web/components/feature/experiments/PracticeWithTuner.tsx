@@ -34,7 +34,6 @@ import {
   fftSizeAtom,
   smoothingTimeConstantAtom,
   holdEnabledAtom,
-  feedbackTypeAtom,
   sensitivityAtom,
 } from "@/lib/store";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
@@ -52,7 +51,6 @@ export function PracticeWithTuner() {
   const fftSize = useAtomValue(fftSizeAtom);
   const smoothingTimeConstant = useAtomValue(smoothingTimeConstantAtom);
   const holdEnabled = useAtomValue(holdEnabledAtom);
-  const feedbackType = useAtomValue(feedbackTypeAtom);
 
   const [sensitivity, setSensitivity] = useAtom(sensitivityAtom);
 
@@ -252,12 +250,10 @@ export function PracticeWithTuner() {
         )}
 
         <UnifiedFeedback
-          feedbackType={feedbackType}
           analysisData={currentPitchList.map((pitch, index) => ({
             pitch,
             deviation: analysisResult?.[index] ?? null,
           }))}
-          evalRangeCents={evalRangeCents}
           a4Freq={a4Freq}
           holdEnabled={holdEnabled}
         />

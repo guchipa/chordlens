@@ -19,6 +19,7 @@
 import type { NoteDetector } from "../adapters/noteDetection";
 import type { DetectedNoteEvent } from "../adapters/noteDetection";
 import type { Pitch } from "../types";
+import { pitchListKey } from "../presets/pitchListKey";
 import {
   noteEventsToPitchList,
   type ChordToneEstimationOptions,
@@ -62,13 +63,12 @@ export interface StreamingChordUpdate {
   silent: boolean;
   /** 確定した新しい構成音リスト。変化がなければ null */
   changed: Pitch[] | null;
-}
-
-/** 構成音リストの同一判定に使うキー (音名+オクターブ+ルート) */
-function pitchListKey(pitchList: Pitch[]): string {
-  return pitchList
-    .map((p) => `${p.pitchName}${p.octaveNum}${p.isRoot ? "*" : ""}`)
-    .join(",");
+  /**
+   * 直近フレームの推定 (非空) が確定値と食い違っているか。
+   * 和音の切替中やヒステリシス待ちの間 true になる。この間の偏差は
+   * 旧和音を基準に計算されているため、表示側は信頼度を下げて見せる
+   */
+  pending: boolean;
 }
 
 export class StreamingChordTracker {
@@ -87,6 +87,8 @@ export class StreamingChordTracker {
   private events: DetectedNoteEvent[] = [];
   private recentKeys: string[] = [];
   private stableKey = "";
+  /** 直近フレームの推定キー (空の推定は "") */
+  private lastEstimateKey = "";
   private lastFrameSilent = true;
   private processing = false;
 
@@ -127,7 +129,7 @@ export class StreamingChordTracker {
    */
   async poll(): Promise<StreamingChordUpdate> {
     if (this.processing) {
-      return { silent: this.lastFrameSilent, changed: null };
+      return { silent: this.lastFrameSilent, changed: null, pending: this.isPending() };
     }
     this.processing = true;
     try {
@@ -169,7 +171,7 @@ export class StreamingChordTracker {
         }
       }
 
-      return { silent: this.lastFrameSilent, changed };
+      return { silent: this.lastFrameSilent, changed, pending: this.isPending() };
     } finally {
       this.processing = false;
     }
@@ -191,6 +193,10 @@ export class StreamingChordTracker {
     this.stableKey = pitchListKey(pitchList);
   }
 
+  private isPending(): boolean {
+    return this.lastEstimateKey !== "" && this.lastEstimateKey !== this.stableKey;
+  }
+
   /**
    * 1 フレームぶんの推定とヒステリシス判定。
    * 直近 stableCycles 回の推定キーが一致し、かつ現在の確定値と異なる
@@ -199,6 +205,7 @@ export class StreamingChordTracker {
   private evaluateCycle(): Pitch[] | null {
     const pitchList = noteEventsToPitchList(this.events, this.estimationOptions);
     const key = pitchListKey(pitchList);
+    this.lastEstimateKey = key;
 
     this.recentKeys.push(key);
     if (this.recentKeys.length > this.stableCycles) {

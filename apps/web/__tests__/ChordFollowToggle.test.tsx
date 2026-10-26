@@ -25,17 +25,18 @@ describe("ChordFollowToggle", () => {
         renderWithStore();
         expect(screen.getByText("構成音の自動検出")).toBeInTheDocument();
         expect(screen.getByText("自動追従モード")).toBeInTheDocument();
-        expect(screen.getByRole("switch")).not.toBeChecked();
+        // 既定で自動追従は on
+        expect(screen.getByRole("switch")).toBeChecked();
     });
 
     it("スイッチ操作で chordFollowEnabledAtom を切り替える", () => {
         const { store } = renderWithStore();
 
         fireEvent.click(screen.getByRole("switch"));
-        expect(store.get(chordFollowEnabledAtom)).toBe(true);
+        expect(store.get(chordFollowEnabledAtom)).toBe(false);
 
         fireEvent.click(screen.getByRole("switch"));
-        expect(store.get(chordFollowEnabledAtom)).toBe(false);
+        expect(store.get(chordFollowEnabledAtom)).toBe(true);
     });
 
     it("追従中はステータスを表示する", () => {

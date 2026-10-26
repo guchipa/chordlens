@@ -11,6 +11,9 @@
  * 持つものを共有する (二重に確保すると CPU・バッテリーを余分に食い、
  * 入力デバイスの同時利用制限にも当たるため)。
  *
+ * 和音の固定 (chordFollowLockedAtom) 中は推定を続けたまま反映だけを止め、
+ * 推定が確定値と食い違う間は chordFollowPendingAtom を立てる (固定中は立てない)。
+ *
  * トグル UI (SettingsDrawer 内) はドロワーを閉じるとアンマウントされるため、
  * このフックは常駐するコンポーネント (App) で呼び、状態は atom で共有する。
  */
@@ -25,6 +28,8 @@ import {
     chordFollowEnabledAtom,
     chordFollowStatusAtom,
     chordFollowErrorAtom,
+    chordFollowPendingAtom,
+    chordFollowLockedAtom,
 } from "@/lib/store";
 import { createNoteDetector } from "@/lib/audio/noteDetectorFactory";
 import { StreamingPcmCapture } from "@/lib/audio/pcmCapture";
@@ -77,7 +82,19 @@ export function useChordFollow(options: UseChordFollowOptions): void {
     const setEnabled = useSetAtom(chordFollowEnabledAtom);
     const setStatus = useSetAtom(chordFollowStatusAtom);
     const setError = useSetAtom(chordFollowErrorAtom);
+    const setPending = useSetAtom(chordFollowPendingAtom);
+    const locked = useAtomValue(chordFollowLockedAtom);
     const applyDetectedPitchList = useSetAtom(applyDetectedPitchListAtom);
+
+    /**
+     * チャンクのコールバックから最新値を読むための ref。
+     * 固定の切替や構成音リストの変化でセッションを回し直すと解析が途切れるため、
+     * effect の依存に入れずここで受け渡す
+     */
+    const lockedRef = useRef(locked);
+    lockedRef.current = locked;
+    const pitchListRef = useRef(pitchList);
+    pitchListRef.current = pitchList;
 
     useEffect(() => {
         // チューナーが解析中でなければグラフがないので何もしない
@@ -114,9 +131,14 @@ export function useChordFollow(options: UseChordFollowOptions): void {
                         tracker.push(chunk);
                         tracker
                             .poll()
-                            .then(({ silent, changed }) => {
+                            .then(({ silent, changed, pending }) => {
                                 if (session.cancelled) return;
                                 setStatus(silent ? "listening" : "tracking");
+                                if (lockedRef.current) {
+                                    setPending(false);
+                                    return;
+                                }
+                                setPending(pending);
                                 if (changed) {
                                     applyDetectedPitchList(changed);
                                 }
@@ -139,6 +161,9 @@ export function useChordFollow(options: UseChordFollowOptions): void {
                     detector,
                     sampleRate: capture.sampleRate,
                 });
+                // 今のリストを確定値の基準にする。これがないと、すでに
+                // 鳴っている和音と同じリストでも初回確定までは「切替中」になる
+                tracker.syncConfirmedPitchList(pitchListRef.current);
                 trackerRef.current = tracker;
                 setStatus("listening");
 
@@ -161,6 +186,7 @@ export function useChordFollow(options: UseChordFollowOptions): void {
                 // idle で塗り潰さないようにする
                 if (currentSessionRef.current === session) {
                     setStatus("idle");
+                    setPending(false);
                 }
             }
         })();
@@ -177,6 +203,7 @@ export function useChordFollow(options: UseChordFollowOptions): void {
         setEnabled,
         setStatus,
         setError,
+        setPending,
         applyDetectedPitchList,
     ]);
 
@@ -194,4 +221,15 @@ export function useChordFollow(options: UseChordFollowOptions): void {
     useEffect(() => {
         trackerRef.current?.syncConfirmedPitchList(pitchList);
     }, [pitchList]);
+
+    /**
+     * 固定中もトラッカーは確定を進めるため、解除時点の確定値はリストとずれて
+     * いることがある。解除したら基準を今のリストに戻し、鳴っている和音を
+     * 次のサイクルで再確定させる
+     */
+    useEffect(() => {
+        if (!locked) {
+            trackerRef.current?.syncConfirmedPitchList(pitchListRef.current);
+        }
+    }, [locked]);
 }

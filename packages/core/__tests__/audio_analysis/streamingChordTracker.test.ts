@@ -137,6 +137,65 @@ describe("StreamingChordTracker", () => {
     }
   });
 
+  it("推定が確定値と食い違う間 (切替中) だけ pending: true を返す", async () => {
+    const cMajor = [60, 64, 67];
+    const fMajor = [65, 69, 72];
+    const tracker = createTracker([
+      ...Array(4).fill(cMajor),
+      ...Array(8).fill(fMajor),
+    ]);
+
+    const updates: { changed: Pitch[] | null; pending: boolean }[] = [];
+    for (let i = 0; i < 12; i++) {
+      tracker.push(new Float32Array(FRAME_LENGTH));
+      updates.push(await tracker.poll());
+    }
+
+    // 初回確定前 (推定はあるが確定値なし) は pending、確定した回は pending でない
+    expect(updates[1].pending).toBe(true);
+    expect(updates[2].changed).not.toBeNull();
+    expect(updates[2].pending).toBe(false);
+    expect(updates[3].pending).toBe(false);
+
+    // F への切替中は pending、F の確定とともに解除される
+    const fConfirmed = updates.findIndex(
+      (u, i) => i > 2 && u.changed !== null
+    );
+    expect(fConfirmed).toBeGreaterThan(4);
+    expect(updates.slice(4, fConfirmed).some((u) => u.pending)).toBe(true);
+    expect(updates[fConfirmed].pending).toBe(false);
+    expect(updates[11].pending).toBe(false);
+  });
+
+  it("登録順や無効化した音だけが違う確定値は、同じ和音として切替中にも上書きにもしない", async () => {
+    const cMajor = [60, 64, 67];
+    // 推定器が確定する C メジャーのリスト (昇順・全音有効) を得る
+    const probe = createTracker(Array(4).fill(cMajor));
+    const estimated = (await runFrames(probe, 4)).find((c) => c !== null)!;
+    expect(estimated).toHaveLength(3);
+
+    const variants: Pitch[][] = [
+      [...estimated].reverse(),
+      [...estimated, { pitchName: "Bb", octaveNum: 4, isRoot: false, enabled: false }],
+    ];
+    for (const confirmed of variants) {
+      const tracker = createTracker(Array(6).fill(cMajor));
+      tracker.syncConfirmedPitchList(confirmed);
+      for (let i = 0; i < 6; i++) {
+        tracker.push(new Float32Array(FRAME_LENGTH));
+        const { changed, pending } = await tracker.poll();
+        expect(changed).toBeNull();
+        expect(pending).toBe(false);
+      }
+    }
+  });
+
+  it("無音では pending にならない", async () => {
+    const tracker = createTracker([[]]);
+    tracker.push(new Float32Array(FRAME_LENGTH));
+    expect((await tracker.poll()).pending).toBe(false);
+  });
+
   it("無音では silent: true を返し、確定済みリストは変化しない", async () => {
     const cMajor = [60, 64, 67];
     const silence: number[] = [];

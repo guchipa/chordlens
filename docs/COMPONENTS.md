@@ -27,9 +27,10 @@ components/
 | **AnalysisControl** | 解析の開始・停止ボタン。解析中の状態表示。`topSlot` に PresetSwitcher を載せる (固定バー全体の高さは約 12rem。`App.tsx` の下余白が同値に依存)。マイク取得失敗時はインラインの閉じられるエラーバナー (`error`, `onDismissError`) を表示。`autoStopped` が true (背面移行で自動停止した直後) のとき、状態表示行に「バックグラウンドに移ったため解析を停止しました」を出し、開始ボタンはそのまま押せる (`App.tsx` が `useAutoStopOnHidden` の結果を渡し、開始タップで解除)。実測した高さを CSS 変数 `--bottom-bar-h` に公開し Toaster の位置に使う。 | `useAudioAnalysis` (`error`, `dismissError`) |
 | **AnalysisResult** | **[廃止予定]** 旧形式の解析結果表示。現在は `UnifiedFeedback` に移行中。 | `analysisResult` |
 | **SettingsForm** | 音声解析の設定。数値入力は `inputMode` 指定・44px 高・16px フォント、A4 周波数は −/＋ ステッパー (430-450Hz にクランプ)。高度な設定はアコーディオン。 | `audioSettingsAtoms` |
-| **CentDisplay** | 解析結果の数値詳細表示。構成音ごとの行に音名・音程・平均律との差と、平均律/純正律の再生トグル (`aria-pressed`, 44px 高) を並べる。 | `analysisResult` |
-| **FeedbackTypeSwitch** | メイン画面のフィードバックカードヘッダに置く 3 分割のセグメント (`role=radiogroup`, 各 44px 高、ラベルは `FEEDBACK_TYPE_LABELS`)。`feedbackTypeAtom` を設定ドロワーの FeedbackTypeSelector と共有 (同じ localStorage 永続化)。 | `feedbackTypeAtom` |
-| **UnifiedFeedback** | フィードバック形式 (メーター/バー/サークル) の描画。カードのヘッダに FeedbackTypeSwitch を置き、カード上の横スワイプ (`useSwipeNav`、60px またはフリング、`touch-action: pan-y`、左端 24px 起点は OS の戻るジェスチャと区別するため無視) で前後の形式へ移動。切替時はカード本体が左右からスライドイン (reduced-motion では無効)。 | `feedbackTypeAtom` |
+| **CentDisplay** | 解析結果の数値詳細表示。構成音ごとの行に音名・音程・平均律との差と、平均律/純正律の再生トグル (`aria-pressed`, 44px 高) を並べる。`minRows` で不足ぶんを見えない行で埋めて高さを確保する (メイン画面は自動追従中に 4。構成音の数が変わるたびに高さが変わると、下までスクロールしているときに画面全体が跳ぶため)。 | `analysisResult` |
+| **UnifiedFeedback** | **評価実験画面専用**のフィードバック表示。被験者条件を変えないため従来のメーター (legacy 描画) に固定し、形式の切替 UI・スワイプは持たない (メイン画面の形式の選択にも影響されない)。メイン画面は FeedbackCarousel を使う。 | - |
+| **FeedbackCarousel** | メイン画面のフィードバック表示。全形式 (`FEEDBACK_TYPES`) をカルーセルで並べ、タブは置かない。横スワイプ (`useSwipeNav`、60px またはフリング、`touch-action: pan-y`、左端 24px 起点は無視) で前後の形式へ移り、端の形式からは反対側の端へ循環する (`stepItemLoop`)。操作中はカードが指に追従 (`onDrag`)。確定時はカードが操作した向きに合わせて左右からスライドイン (端をまたぐ循環でも同じ。reduced-motion では無効)。スワイプできない環境向けに前後ボタン (44px、循環するため端でも押せる) と現在位置のドット・形式名を出す。`header` に ChordHeader を載せ、`transitioning` (和音の切替中) はカードを灰色に落として「和音を判定中…」を重ねる (軌跡は切替区間を自前で描くため対象外)。 | `feedbackTypeAtom` |
+| **ChordHeader** | カルーセル上部の和音名ヘッダ。1 台を全員で見る前提で和音名 (`nameChord`)・根音を大きく出し (和音名は 1 行目に単独で置き、根音は 2 行目の固定幅の枠に置いて、和音名の長さで他の表示が横に動かないようにする)、追従状態 (手動 / 待機 / 追従中 / 判定中 / 固定中) を `role=status` で示す。自動追従中は和音の固定ボタン (`aria-pressed`, 44px) を出す。 | `chordFollowEnabledAtom`, `chordFollowStatusAtom`, `chordFollowPendingAtom`, `chordFollowLockedAtom` |
 | **PresetManager** | プリセットの保存・読み込み・削除機能 (設定ドロワー内)。一覧は共有 atom `presetsAtom` で、保存・削除後に `refreshPresetsAtom` で再読み込みする。 | `presetsAtom`, `refreshPresetsAtom`, `localStorage` |
 | **PresetSwitcher** | メイン画面の下部固定バー (AnalysisControl の `topSlot`) に置く、プリセットの横スクロールチップ列 (スナップ・スクロールバー非表示・44px 高)。タップで確認なしに即 `loadPresetWithUndoAtom` (直前と内容が違えば「元に戻す」通知)。現在の構成音と一致するチップを `aria-pressed` で強調し、各チップに構成音 (根音は太字) を併記。プリセット 0 件のときは設定ドロワーを開くヒントを表示。 | `presetsAtom`, `pitchListAtom`, `loadPresetWithUndoAtom` |
 | **PresetList** | 保存されたプリセットの一覧表示。削除は確認なしで実行し、トーストの「元に戻す」で復元 (読み込みは従来どおり確認ダイアログ)。 | `presets`, `deletePresetWithUndoAtom` |
@@ -45,12 +46,23 @@ components/
 
 | コンポーネント | 責務 | Props |
 |----------------|------|-------|
-| **UnifiedFeedback** | フィードバック表示のコンテナ。設定に応じて以下のコンポーネントを切り替える。 | `feedbackType`, `analysisData` |
-| **MeterFeedback** | アナログメーター風の表示。針の角度でズレを表現。ホールド機能に対応。 | `deviation`, `pitch` |
-| **BarFeedback** | シンプルなバーグラフ表示。1 つのカード内に音ごとの行 (左に音名、右にバー) と共通の目盛り凡例を並べる。 | `deviation`, `pitch` |
-| **CircleFeedback** | 12音を円周状に配置し、和音の形（Geometry）を可視化。 | `pitchList`, `deviations` |
+| **UnifiedFeedback** | 評価実験画面のフィードバック表示 (メーター固定)。 | `analysisData` |
+| **FeedbackSlide** | メイン画面のカルーセルの 1 枚。形式に応じて以下を enhanced 表示で描く。 | `feedbackType`, `analysisData`, `transitioning` |
+| **MeterFeedback** | アナログメーター風の表示。針の角度でズレを表現。ホールド機能に対応。`variant="enhanced"` (メイン画面) では針・凡例を役割 (度数) の色にし、凡例を声部順に「長3度 E4」で出し、和音が変わったら針の状態を捨てる。`hideHeader` でカードヘッダを省く。 | `deviation`, `pitch`, `variant` |
+| **BarFeedback** | バーグラフ表示 (1 行)。`BarListFeedback` (メイン画面) は上から高い声部の順に並べ、最低 4 行を確保し、役割ラベル・平均律との差・セント値を出す。 | `deviation`, `pitch`, `enhanced` |
+| **CircleFeedback** | 12音を円周状に配置し、和音の形（Geometry）を可視化。`layout` で半音順/5度圏、`variant="enhanced"` で塗りを偏差に応じた連続色に、針の振れを平方根で拡大し、中央に和音名。`CircleSlide` (メイン画面) は並び順を `circleLayoutAtom` から読む。 | `analysisData`, `layout`, `variant` |
+| **VoiceLanesFeedback** | 声部レーン形式。声部 (音の高さ順) ごとの縦レーンを低い声部から左に並べ、役割・音名・偏差・方向の指示 (上げる/下げる)・平均律との差を出す。最低 4 レーンを確保して幅を固定。 | `analysisData`, `evalRangeCents` |
+| **PurityFeedback** | 純正度インジケータ形式。最大絶対偏差 (`summarizePurity`) をリングと大きな数値で出し、最もずれた音と直す方向、全音の内訳を並べる。 | `analysisData`, `evalRangeCents` |
+| **TrajectoryFeedback** | ピッチ軌跡形式。直近 10 秒の偏差を声部ごとの線 (役割の色) で描き、和音ごとの区間に帯と和音名を付ける。切替区間 (判定中とその直前 0.5 秒、`TrajectoryBuffer`) は灰色の帯・破線。縦軸は `scaleDeviationForDisplay` (asinh) で 0 付近を拡大し、拡大の基準は「合っている」の閾値 (`inTuneDeviation`)。 | `analysisData`, `transitioning`, `inTuneDeviation`, `smoothingMs` |
 | **NumericFeedback** | シンプルな数値のみの表示。デバッグや精密確認用。 | `centDeviation` |
 | **WaveformFeedback** | **[実験的]** 波形表示。 | `analyserNode` |
+
+**レイアウトの安定 (メイン画面)**: 自動追従で構成音の数・役割・和音名が変わっても、カードの高さや要素の位置が変わらないようにする。新しい表示を足すときも次に従う。
+
+- 構成音の数で増減する並び (レーン・バーの行・純正度の内訳・軌跡の凡例) は最低 4 枠を確保し、空き枠で埋める
+- 行の高さは固定し、音によって有無が変わる表示 (平均律との差など) も空の行として確保する
+- 強調で枠線の太さを変えない (常に同じ太さで色だけ変える)。流し込み (`flex-wrap`) で行数が変わる凡例は、固定グリッドか最低高さで確保する
+- 長さの変わる文言 (和音名・助言) は 1 行に収め (`truncate`)、後ろに他の要素を並べない
 
 ---
 

@@ -43,6 +43,7 @@ export function useAudioAnalysis({
   const {
     analysisResult,
     centDeviations,
+    analyzedPitchList,
     peakSearchDebug,
     comparisonResults,
     startLoop,
@@ -107,6 +108,8 @@ export function useAudioAnalysis({
     dismissError,
     analysisResult,
     centDeviations,
+    /** analysisResult を計算したときの構成音リスト (音のキーでの対応付け用) */
+    analyzedPitchList,
     peakSearchDebug,
     comparisonResults,
     startProcessing,
