@@ -8,11 +8,13 @@ import {
 } from "@chordlens/core/constants";
 import { chordKey as toChordKey, nameChord } from "@chordlens/core/feedback/chordName";
 import { describeVoices, type ChordRole } from "@chordlens/core/feedback/chordRoles";
+import { scaleDeviationForDisplay } from "@chordlens/core/feedback/tuningMetrics";
 import {
   TrajectoryBuffer,
   type TrajectorySample,
 } from "@chordlens/core/feedback/trajectory";
 import { Card, CardContent } from "@/components/ui/card";
+import { useStabilizedFeedback } from "@/lib/hooks/useStabilizedFeedback";
 import type { FeedbackDatum } from "./FeedbackSlide";
 
 interface TrajectoryFeedbackProps {
@@ -20,6 +22,10 @@ interface TrajectoryFeedbackProps {
   evalRangeCents: number;
   /** 和音の切替中 (この間のサンプルは切替区間として灰色で描く) */
   transitioning: boolean;
+  /** 「合っている」の閾値 (±1 正規化)。緑の帯と縦軸の拡大の基準 */
+  inTuneDeviation?: number;
+  /** 表示の平滑化 (EMA) の時定数 (ms)。0 で平滑化なし */
+  smoothingMs?: number;
 }
 
 const W = 360;
@@ -34,9 +40,15 @@ const TRANSITION_COLOR = "#9ca3af";
 /** 凡例の最低枠数 (2 列 × 2 行) */
 const MIN_LEGEND_SLOTS = 4;
 
-const clamp1 = (v: number) => Math.max(-1, Math.min(1, v));
-const yOf = (deviation: number) =>
-  PLOT_TOP + ((1 - clamp1(deviation)) / 2) * (PLOT_BOTTOM - PLOT_TOP);
+/** 目盛りラベルが重ならない最小の間隔 */
+const MIN_TICK_GAP = 12;
+
+/**
+ * 縦軸は 0 付近を拡大する非線形スケール (「合っている」帯を合わせやすい幅にする)。
+ * 拡大の基準 (knee) は「合っている」の閾値
+ */
+const makeYOf = (knee: number) => (deviation: number) =>
+  PLOT_TOP + ((1 - scaleDeviationForDisplay(deviation, knee)) / 2) * (PLOT_BOTTOM - PLOT_TOP);
 
 interface Run {
   key: string;
@@ -46,7 +58,11 @@ interface Run {
 }
 
 /** サンプル列を、音ごと・連続区間ごとの折れ線に分ける (未検出・役割の変化・切替区間で切る) */
-function buildRuns(samples: readonly TrajectorySample[], xOf: (t: number) => number): Run[] {
+function buildRuns(
+  samples: readonly TrajectorySample[],
+  xOf: (t: number) => number,
+  yOf: (deviation: number) => number,
+): Run[] {
   const runs: Run[] = [];
   const open = new Map<string, Run>();
   for (const s of samples) {
@@ -70,7 +86,8 @@ function buildRuns(samples: readonly TrajectorySample[], xOf: (t: number) => num
 }
 
 function formatCents(cents: number): string {
-  const r = Math.round(cents);
+  // 「合っている」帯の境界 (既定 ±2.5) のような 10 未満の端数は小数 1 桁で出す
+  const r = Math.abs(cents) < 10 ? Math.round(cents * 10) / 10 : Math.round(cents);
   return r > 0 ? `+${r}` : r < 0 ? `−${Math.abs(r)}` : "0";
 }
 
@@ -84,31 +101,32 @@ export const TrajectoryFeedback: React.FC<TrajectoryFeedbackProps> = ({
   analysisData,
   evalRangeCents,
   transitioning,
+  inTuneDeviation = IN_TUNE_DEVIATION,
+  smoothingMs = 0,
 }) => {
+  // 保持 (ホールド) はかけない: 未検出の間は線を切って見せる
+  const { voices: stabilized } = useStabilizedFeedback(analysisData, false, smoothingMs);
   const bufferRef = useRef<TrajectoryBuffer | null>(null);
   bufferRef.current ??= new TrajectoryBuffer();
   const buffer = bufferRef.current;
 
-  // 新しい解析結果が届くたびに 1 サンプル追加する
+  // 新しい解析結果が届くたびに 1 サンプル追加する (平滑化後の値を使う)
   const now = useMemo(() => {
     const t = performance.now();
     const pitchList = analysisData.map((d) => d.pitch);
-    const rawByKey = new Map(
-      analysisData.map((d) => [`${d.pitch.pitchName}${d.pitch.octaveNum}`, d.deviation]),
-    );
     const chord = nameChord(pitchList);
     buffer.push(t, {
       chordKey: toChordKey(pitchList),
       chordLabel: chord?.symbol ?? chord?.rootName ?? "?",
       transitioning,
-      voices: describeVoices(pitchList).map((v) => ({
-        key: v.key,
-        role: v.role,
-        deviation: rawByKey.get(v.key) ?? null,
-      })),
+      voices: stabilized.map((v) => ({ key: v.key, role: v.role, deviation: v.deviation })),
     });
     return t;
+    // stabilized は analysisData から作られるので、解析フレームの更新は analysisData で判定する
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analysisData, transitioning, buffer]);
+
+  const yOf = makeYOf(inTuneDeviation);
 
   const windowStart = now - buffer.windowMs;
   const xOf = (t: number) =>
@@ -116,11 +134,21 @@ export const TrajectoryFeedback: React.FC<TrajectoryFeedbackProps> = ({
 
   const samples = buffer.getSamples();
   const segments = buffer.getSegments();
-  const runs = buildRuns(samples, xOf);
+  const runs = buildRuns(samples, xOf, yOf);
   const latest = samples[samples.length - 1];
   const currentVoices = describeVoices(analysisData.map((d) => d.pitch));
 
-  const ticks = [1, CLOSE_DEVIATION, 0, -CLOSE_DEVIATION, -1];
+  // 正解幅が「近い」の閾値に近いとラベルが重なるので、そのときは「近い」の目盛りを省く
+  const showClose = Math.abs(yOf(inTuneDeviation) - yOf(CLOSE_DEVIATION)) >= MIN_TICK_GAP;
+  const ticks = [
+    1,
+    ...(showClose ? [CLOSE_DEVIATION] : []),
+    inTuneDeviation,
+    0,
+    -inTuneDeviation,
+    ...(showClose ? [-CLOSE_DEVIATION] : []),
+    -1,
+  ];
 
   return (
     <Card className="mx-auto w-full max-w-md">
@@ -133,20 +161,20 @@ export const TrajectoryFeedback: React.FC<TrajectoryFeedbackProps> = ({
         >
           {/* 和音ごとの区間の帯と和音名 */}
           {segments.map((seg, i) => {
+            if (seg.chordKey === null) return null;
             const x1 = Math.max(PLOT_LEFT, xOf(seg.start));
             const x2 = Math.min(PLOT_RIGHT, xOf(seg.end));
             if (x2 <= x1) return null;
-            const isTransition = seg.chordKey === null;
             return (
-              <g key={`seg-${seg.start}`} data-testid={isTransition ? "trajectory-transition" : "trajectory-segment"}>
+              <g key={`seg-${seg.start}`} data-testid="trajectory-segment">
                 <rect
                   x={x1}
                   y={PLOT_TOP}
                   width={x2 - x1}
                   height={PLOT_BOTTOM - PLOT_TOP}
-                  fill={isTransition ? "#e5e7eb" : i % 2 === 0 ? "#f8fafc" : "#eef2f7"}
+                  fill={i % 2 === 0 ? "#f8fafc" : "#eef2f7"}
                 />
-                {!isTransition && x2 - x1 > 24 && (
+                {x2 - x1 > 24 && (
                   <text x={x1 + 3} y={PLOT_TOP - 5} fontSize="12" fontWeight="700" fill="#111827">
                     {seg.chordLabel}
                   </text>
@@ -155,15 +183,40 @@ export const TrajectoryFeedback: React.FC<TrajectoryFeedbackProps> = ({
             );
           })}
 
-          {/* 合っている帯と目盛り */}
+          {/* 合っている帯 */}
           <rect
+            data-testid="trajectory-in-tune-band"
             x={PLOT_LEFT}
-            y={yOf(IN_TUNE_DEVIATION)}
+            y={yOf(inTuneDeviation)}
             width={PLOT_RIGHT - PLOT_LEFT}
-            height={yOf(-IN_TUNE_DEVIATION) - yOf(IN_TUNE_DEVIATION)}
+            height={yOf(-inTuneDeviation) - yOf(inTuneDeviation)}
             fill="#dcfce7"
             opacity="0.9"
           />
+
+          {/*
+            切替区間の帯は合っている帯より手前に描く。切替中の偏差は旧和音基準で
+            信頼できないため、緑の帯で「合っている」ように見せない
+          */}
+          {segments.map((seg) => {
+            if (seg.chordKey !== null) return null;
+            const x1 = Math.max(PLOT_LEFT, xOf(seg.start));
+            const x2 = Math.min(PLOT_RIGHT, xOf(seg.end));
+            if (x2 <= x1) return null;
+            return (
+              <rect
+                key={`transition-${seg.start}`}
+                data-testid="trajectory-transition"
+                x={x1}
+                y={PLOT_TOP}
+                width={x2 - x1}
+                height={PLOT_BOTTOM - PLOT_TOP}
+                fill="#e5e7eb"
+              />
+            );
+          })}
+
+          {/* 目盛り */}
           {ticks.map((d) => (
             <g key={d}>
               <line

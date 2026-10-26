@@ -42,6 +42,11 @@ interface TunerMeterProps {
    *   針の保持・平滑化の状態を捨て、旧和音の針を残さない
    */
   variant?: "legacy" | "enhanced";
+  /**
+   * 針の平滑化 (EMA) の時定数 (ms)。0 (既定) で平滑化なし。
+   * 評価実験画面は既定のまま (条件を変えない)
+   */
+  smoothingMs?: number;
 }
 
 export const TunerMeter: React.FC<TunerMeterProps> = ({
@@ -52,6 +57,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
   holdEnabled = true,
   hideHeader = false,
   variant = "legacy",
+  smoothingMs = 0,
 }) => {
   const enhanced = variant === "enhanced";
   // 表示用のデータを保持する state
@@ -95,6 +101,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
       now,
       {
         alpha: METER_NEEDLE_SMOOTHING_ALPHA,
+        timeConstantMs: smoothingMs,
         holdMs: holdEnabled ? METER_NEEDLE_HOLD_MS : 0,
       }
     );
@@ -131,7 +138,7 @@ export const TunerMeter: React.FC<TunerMeterProps> = ({
       }
       // 既にタイマー待ち中の場合は何もしない（タイマーは継続）
     }
-  }, [analysisData, holdEnabled, enhanced]); // analysisData が変更されるたびに effect を実行
+  }, [analysisData, holdEnabled, enhanced, smoothingMs]); // analysisData が変更されるたびに effect を実行
 
   // コンポーネントがアンマウントされるときにタイマーをクリア
   useEffect(() => {

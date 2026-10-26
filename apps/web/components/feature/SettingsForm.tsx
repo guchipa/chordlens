@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAtom } from "jotai";
 import {
   SettingsSection,
@@ -35,8 +36,16 @@ import {
   experimentModeAtom,
   pitchAlgorithmAtom,
   swipeBandwidthCentsAtom,
+  inTuneCentsAtom,
+  displaySmoothingAtom,
 } from "@/lib/store";
 import {
+  DISPLAY_SMOOTHING_LABELS,
+  DISPLAY_SMOOTHING_LEVELS,
+  IN_TUNE_CENTS_MAX,
+  IN_TUNE_CENTS_MIN,
+  IN_TUNE_CENTS_STEP,
+  type DisplaySmoothing,
   SENSITIVITY_MIN,
   SENSITIVITY_MAX,
   PITCH_ALGORITHMS,
@@ -47,6 +56,13 @@ import {
 const A4_MIN = 430;
 const A4_MAX = 450;
 const FFT_SIZE_OPTIONS = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
+
+/** 正解幅を範囲内に収め、刻み (0.5 セント) に丸める */
+const normalizeInTuneCents = (cents: number) =>
+  Math.min(
+    IN_TUNE_CENTS_MAX,
+    Math.max(IN_TUNE_CENTS_MIN, Math.round(cents / IN_TUNE_CENTS_STEP) * IN_TUNE_CENTS_STEP)
+  );
 
 export function SettingsForm() {
   // Jotai atoms を直接使用
@@ -61,6 +77,15 @@ export function SettingsForm() {
   const [experimentMode, setExperimentMode] = useAtom(experimentModeAtom);
   const [pitchAlgorithm, setPitchAlgorithm] = useAtom(pitchAlgorithmAtom);
   const [swipeBandwidthCents, setSwipeBandwidthCents] = useAtom(swipeBandwidthCentsAtom);
+  const [inTuneCents, setInTuneCents] = useAtom(inTuneCentsAtom);
+  const [displaySmoothing, setDisplaySmoothing] = useAtom(displaySmoothingAtom);
+  // 小数の入力途中 ("0." など) を受け付けるため、確定 (blur / Enter) までは文字列で持つ
+  const [inTuneDraft, setInTuneDraft] = useState<string | null>(null);
+
+  const commitInTuneCents = (cents: number) => {
+    if (Number.isFinite(cents)) setInTuneCents(normalizeInTuneCents(cents));
+    setInTuneDraft(null);
+  };
 
   const handleEvalRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -169,6 +194,75 @@ export function SettingsForm() {
             max="100"
           />
           <p className={helpClass}>±この値の範囲で音程のズレを評価します。</p>
+        </div>
+        <div>
+          <Label htmlFor="inTuneCents" className={labelClass}>
+            ピッチの正解幅 (セント)
+          </Label>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-background size-11 shrink-0"
+              aria-label="正解幅を狭める"
+              onClick={() => commitInTuneCents(inTuneCents - IN_TUNE_CENTS_STEP)}
+              disabled={inTuneCents <= IN_TUNE_CENTS_MIN}
+            >
+              <Minus className="size-4" />
+            </Button>
+            <Input
+              id="inTuneCents"
+              type="number"
+              inputMode="decimal"
+              className={`${FIELD_TOUCH} bg-background text-center`}
+              value={inTuneDraft ?? String(inTuneCents)}
+              onChange={(e) => setInTuneDraft(e.target.value)}
+              onBlur={(e) => commitInTuneCents(parseFloat(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitInTuneCents(parseFloat(e.currentTarget.value));
+              }}
+              min={IN_TUNE_CENTS_MIN}
+              max={IN_TUNE_CENTS_MAX}
+              step={IN_TUNE_CENTS_STEP}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-background size-11 shrink-0"
+              aria-label="正解幅を広げる"
+              onClick={() => commitInTuneCents(inTuneCents + IN_TUNE_CENTS_STEP)}
+              disabled={inTuneCents >= IN_TUNE_CENTS_MAX}
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
+          <p className={helpClass}>
+            純正律から±この値以内を「合っている」(緑) と判定します ({IN_TUNE_CENTS_MIN}〜
+            {IN_TUNE_CENTS_MAX})。「近い」(黄) の範囲 (評価範囲の 1/5) より広くはなりません。
+          </p>
+        </div>
+        <div>
+          <Label htmlFor="displaySmoothing" className={labelClass}>
+            表示の平滑化
+          </Label>
+          <Select
+            value={displaySmoothing}
+            onValueChange={(v) => setDisplaySmoothing(v as DisplaySmoothing)}
+          >
+            <SelectTrigger id="displaySmoothing" className={`${SELECT_TOUCH} bg-background`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DISPLAY_SMOOTHING_LEVELS.map((level) => (
+                <SelectItem key={level} value={level} className={itemClass}>
+                  {DISPLAY_SMOOTHING_LABELS[level]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className={helpClass}>
+            強いほど表示の揺れが落ち着きますが、音程の変化への追従が遅れます。
+          </p>
         </div>
         <div>
           <Label htmlFor="a4Freq" className={labelClass}>

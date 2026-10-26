@@ -46,6 +46,21 @@ describe("PurityFeedback", () => {
     expect(screen.getByRole("status").textContent).toBe("純正に合っています");
   });
 
+  it("「合っている」の閾値を渡すとそれで判定する", () => {
+    render(
+      <PurityFeedback
+        evalRangeCents={50}
+        holdEnabled={false}
+        inTuneDeviation={0.2}
+        analysisData={[
+          { pitch: p("C", 4, true), deviation: 0.01 },
+          { pitch: p("G", 4), deviation: -0.15 },
+        ]}
+      />
+    );
+    expect(screen.getByRole("status").textContent).toBe("純正に合っています");
+  });
+
   it("何も検出されなければ待機表示", () => {
     render(
       <PurityFeedback

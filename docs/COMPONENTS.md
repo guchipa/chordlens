@@ -53,7 +53,7 @@ components/
 | **CircleFeedback** | 12音を円周状に配置し、和音の形（Geometry）を可視化。`layout` で半音順/5度圏、`variant="enhanced"` で塗りを偏差に応じた連続色に、針の振れを平方根で拡大し、中央に和音名。`CircleSlide` (メイン画面) は並び順を `circleLayoutAtom` から読む。 | `analysisData`, `layout`, `variant` |
 | **VoiceLanesFeedback** | 声部レーン形式。声部 (音の高さ順) ごとの縦レーンを低い声部から左に並べ、役割・音名・偏差・方向の指示 (上げる/下げる)・平均律との差を出す。最低 4 レーンを確保して幅を固定。 | `analysisData`, `evalRangeCents` |
 | **PurityFeedback** | 純正度インジケータ形式。最大絶対偏差 (`summarizePurity`) をリングと大きな数値で出し、最もずれた音と直す方向、全音の内訳を並べる。 | `analysisData`, `evalRangeCents` |
-| **TrajectoryFeedback** | ピッチ軌跡形式。直近 10 秒の偏差を声部ごとの線 (役割の色) で描き、和音ごとの区間に帯と和音名を付ける。切替区間 (判定中とその直前 0.5 秒、`TrajectoryBuffer`) は灰色の帯・破線。 | `analysisData`, `transitioning` |
+| **TrajectoryFeedback** | ピッチ軌跡形式。直近 10 秒の偏差を声部ごとの線 (役割の色) で描き、和音ごとの区間に帯と和音名を付ける。切替区間 (判定中とその直前 0.5 秒、`TrajectoryBuffer`) は灰色の帯・破線。縦軸は `scaleDeviationForDisplay` (asinh) で 0 付近を拡大し、拡大の基準は「合っている」の閾値 (`inTuneDeviation`)。 | `analysisData`, `transitioning`, `inTuneDeviation`, `smoothingMs` |
 | **NumericFeedback** | シンプルな数値のみの表示。デバッグや精密確認用。 | `centDeviation` |
 | **WaveformFeedback** | **[実験的]** 波形表示。 | `analyserNode` |
 

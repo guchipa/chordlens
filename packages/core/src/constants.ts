@@ -243,6 +243,36 @@ export const PITCH_COLOR_MAP: { [key: string]: string } = {
 export const IN_TUNE_DEVIATION = 0.05;
 export const CLOSE_DEVIATION = 0.2;
 
+/**
+ * 「ピッチの正解幅」設定 (セント)。合っている判定の閾値を ±この値にする。
+ * 既定は evalRangeCents=50 での IN_TUNE_DEVIATION と同じ ±2.5 セント
+ */
+export const IN_TUNE_CENTS_DEFAULT = 2.5;
+export const IN_TUNE_CENTS_MIN = 0.5;
+export const IN_TUNE_CENTS_MAX = 10;
+export const IN_TUNE_CENTS_STEP = 0.5;
+
+/**
+ * 表示の平滑化の強さ。偏差表示の EMA の時定数 (ms) で指定する。
+ * 解析は requestAnimationFrame 駆動でフレームレート (60/120Hz) が端末で変わるため、
+ * フレームあたりの係数ではなく時定数で決める。0 で平滑化なし
+ */
+export const DISPLAY_SMOOTHING_LEVELS = ["off", "weak", "medium", "strong"] as const;
+export type DisplaySmoothing = (typeof DISPLAY_SMOOTHING_LEVELS)[number];
+export const DISPLAY_SMOOTHING_DEFAULT: DisplaySmoothing = "off";
+export const DISPLAY_SMOOTHING_TIME_CONSTANT_MS: Record<DisplaySmoothing, number> = {
+  off: 0,
+  weak: 100,
+  medium: 250,
+  strong: 500,
+};
+export const DISPLAY_SMOOTHING_LABELS: Record<DisplaySmoothing, string> = {
+  off: "なし",
+  weak: "弱",
+  medium: "中",
+  strong: "強",
+};
+
 /** 偏差の段階ごとの色 (合っている / 近い / ずれている) */
 export const TUNING_LEVEL_COLORS = {
   inTune: "#22c55e",

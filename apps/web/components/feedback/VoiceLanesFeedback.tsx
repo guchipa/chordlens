@@ -27,6 +27,10 @@ interface VoiceLanesFeedbackProps {
   analysisData: FeedbackDatum[];
   evalRangeCents: number;
   holdEnabled: boolean;
+  /** 「合っている」の閾値 (±1 正規化) */
+  inTuneDeviation?: number;
+  /** 表示の平滑化 (EMA) の時定数 (ms) */
+  smoothingMs?: number;
 }
 
 const clamp1 = (v: number) => Math.max(-1, Math.min(1, v));
@@ -51,8 +55,10 @@ export const VoiceLanesFeedback: React.FC<VoiceLanesFeedbackProps> = ({
   analysisData,
   evalRangeCents,
   holdEnabled,
+  inTuneDeviation = IN_TUNE_DEVIATION,
+  smoothingMs = 0,
 }) => {
-  const { voices, chordKey } = useStabilizedFeedback(analysisData, holdEnabled);
+  const { voices, chordKey } = useStabilizedFeedback(analysisData, holdEnabled, smoothingMs);
   const shownDeviations = useThrottledValue(
     voices.map((v) => v.deviation),
     FEEDBACK_NUMBER_UPDATE_MS,
@@ -76,6 +82,7 @@ export const VoiceLanesFeedback: React.FC<VoiceLanesFeedbackProps> = ({
               voice={voice}
               shownDeviation={shownDeviations[i] ?? null}
               evalRangeCents={evalRangeCents}
+              inTuneDeviation={inTuneDeviation}
             />
           ))}
           {Array.from({ length: emptyCount }, (_, i) => (
@@ -106,14 +113,21 @@ interface VoiceLaneProps {
   /** 数値表示用 (間引き後) の偏差 */
   shownDeviation: number | null;
   evalRangeCents: number;
+  inTuneDeviation: number;
 }
 
-const VoiceLane: React.FC<VoiceLaneProps> = ({ voice, shownDeviation, evalRangeCents }) => {
+const VoiceLane: React.FC<VoiceLaneProps> = ({
+  voice,
+  shownDeviation,
+  evalRangeCents,
+  inTuneDeviation,
+}) => {
   const { deviation, role, intervalLabel, justOffsetCents } = voice;
   const pitchLabel = `${voice.pitch.pitchName}${voice.pitch.octaveNum}`;
-  const level = deviation === null ? null : tuningLevel(deviation);
+  const level = deviation === null ? null : tuningLevel(deviation, inTuneDeviation);
   const color = level ? TUNING_LEVEL_COLORS[level] : undefined;
-  const shownLevel = shownDeviation === null ? null : tuningLevel(shownDeviation);
+  const shownLevel =
+    shownDeviation === null ? null : tuningLevel(shownDeviation, inTuneDeviation);
 
   // 平均律の位置: 純正律の目標から見て −justOffset セント
   const etDeviation =
@@ -148,8 +162,8 @@ const VoiceLane: React.FC<VoiceLaneProps> = ({ voice, shownDeviation, evalRangeC
         <div
           className="absolute inset-x-0 bg-green-100"
           style={{
-            top: `${toTopPercent(IN_TUNE_DEVIATION)}%`,
-            bottom: `${100 - toTopPercent(-IN_TUNE_DEVIATION)}%`,
+            top: `${toTopPercent(inTuneDeviation)}%`,
+            bottom: `${100 - toTopPercent(-inTuneDeviation)}%`,
           }}
         />
         <div className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-gray-500" />

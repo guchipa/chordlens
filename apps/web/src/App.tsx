@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { useAtomValue } from "jotai";
 
-import { alignResultsByKey } from "@chordlens/core/feedback/tuningMetrics";
+import { DISPLAY_SMOOTHING_TIME_CONSTANT_MS } from "@chordlens/core/constants";
+import {
+  alignResultsByKey,
+  inTuneDeviationFromCents,
+} from "@chordlens/core/feedback/tuningMetrics";
 import { useAudioAnalysis } from "@/lib/hooks/useAudioAnalysis";
 import { useChordFollow } from "@/lib/hooks/useChordFollow";
 import { useWakeLock } from "@/lib/hooks/useWakeLock";
@@ -30,6 +34,8 @@ import {
   chordFollowEnabledAtom,
   chordFollowLockedAtom,
   chordFollowPendingAtom,
+  inTuneCentsAtom,
+  displaySmoothingAtom,
 } from "@/lib/store";
 
 export function App() {
@@ -48,6 +54,8 @@ export function App() {
   const chordFollowEnabled = useAtomValue(chordFollowEnabledAtom);
   const chordFollowLocked = useAtomValue(chordFollowLockedAtom);
   const chordFollowPending = useAtomValue(chordFollowPendingAtom);
+  const inTuneCents = useAtomValue(inTuneCentsAtom);
+  const displaySmoothing = useAtomValue(displaySmoothingAtom);
 
   const {
     isProcessing,
@@ -132,6 +140,8 @@ export function App() {
           evalRangeCents={evalRangeCents}
           a4Freq={a4Freq}
           holdEnabled={holdEnabled}
+          inTuneDeviation={inTuneDeviationFromCents(inTuneCents, evalRangeCents)}
+          smoothingMs={DISPLAY_SMOOTHING_TIME_CONSTANT_MS[displaySmoothing]}
         />
 
         <CentDisplay

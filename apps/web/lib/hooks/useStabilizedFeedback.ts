@@ -32,6 +32,8 @@ interface FeedbackInput {
 export function useStabilizedFeedback(
   analysisData: FeedbackInput[],
   holdEnabled: boolean,
+  /** EMA の時定数 (ms)。0 で平滑化なし */
+  smoothingMs = 0,
 ): { voices: StabilizedVoice[]; chordKey: string } {
   const stabilizerRef = useRef<DeviationStabilizer | null>(null);
   const lastChordKeyRef = useRef<string | null>(null);
@@ -43,6 +45,7 @@ export function useStabilizedFeedback(
     const key = chordKey(pitchList);
     const options = {
       alpha: METER_NEEDLE_SMOOTHING_ALPHA,
+      timeConstantMs: smoothingMs,
       holdMs: holdEnabled ? METER_NEEDLE_HOLD_MS : 0,
       remainMs: holdEnabled ? METER_REMAIN_MS : 0,
     };
@@ -72,7 +75,7 @@ export function useStabilizedFeedback(
     };
     // expireTick は保持の期限切れで再計算させるためだけの依存
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analysisData, holdEnabled, expireTick]);
+  }, [analysisData, holdEnabled, smoothingMs, expireTick]);
 
   // 停止直後など、保持中のまま解析結果が更新されなくなった場合に保持を切る
   const { holdUntilMs } = result;

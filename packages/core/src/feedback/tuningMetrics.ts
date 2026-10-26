@@ -9,12 +9,41 @@ import { pitchKey } from "./chordRoles";
 
 export type TuningLevel = "inTune" | "close" | "off";
 
-/** 偏差の段階 (合っている / 近い / ずれている) */
-export function tuningLevel(deviation: number): TuningLevel {
+/**
+ * 「ピッチの正解幅」(セント) を、±evalRangeCents 正規化の閾値に直す。
+ * 「近い」の閾値 (CLOSE_DEVIATION) を超えると段階が逆転するため、そこで頭打ちにする
+ */
+export function inTuneDeviationFromCents(inTuneCents: number, evalRangeCents: number): number {
+  if (!(inTuneCents > 0) || !(evalRangeCents > 0)) return IN_TUNE_DEVIATION;
+  return Math.min(inTuneCents / evalRangeCents, CLOSE_DEVIATION);
+}
+
+/** 偏差の段階 (合っている / 近い / ずれている)。inTune は「合っている」の閾値 (正規化) */
+export function tuningLevel(
+  deviation: number,
+  inTune: number = IN_TUNE_DEVIATION
+): TuningLevel {
   const abs = Math.abs(deviation);
-  if (abs < IN_TUNE_DEVIATION) return "inTune";
+  if (abs < inTune) return "inTune";
   if (abs < CLOSE_DEVIATION) return "close";
   return "off";
+}
+
+/**
+ * 偏差を表示用の軸 (±1) に写す非線形スケール。
+ * 線形だと「合っている」帯 (±IN_TUNE_DEVIATION) が軸の 5% しかなく合わせにくいため、
+ * asinh で 0 付近を拡大し、大きなずれを対数的に圧縮する。
+ * knee には「合っている」の閾値を渡す。knee=0.05 (既定) なら「合っている」帯が約 24%、
+ * 「近い」帯が約 57% を占める (knee=0.01 で約 17%、0.2 で約 38%)。
+ * sqrt と違い 0 での傾きが有限 (約 5.4 倍) なので、0 付近の揺れを過剰に増幅しない。
+ * 単調・奇関数で ±1 は ±1 に写る。範囲外は ±1 に丸める
+ */
+export function scaleDeviationForDisplay(
+  deviation: number,
+  knee: number = IN_TUNE_DEVIATION
+): number {
+  const d = Math.max(-1, Math.min(1, deviation));
+  return Math.asinh(d / knee) / Math.asinh(1 / knee);
 }
 
 export interface PurityEntry {

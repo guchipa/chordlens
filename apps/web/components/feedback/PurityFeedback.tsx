@@ -4,6 +4,7 @@ import React from "react";
 import {
   CHORD_ROLE_COLORS,
   FEEDBACK_NUMBER_UPDATE_MS,
+  IN_TUNE_DEVIATION,
   TUNING_LEVEL_COLORS,
 } from "@chordlens/core/constants";
 import { summarizePurity, tuningLevel, type TuningLevel } from "@chordlens/core/feedback/tuningMetrics";
@@ -16,6 +17,10 @@ interface PurityFeedbackProps {
   analysisData: FeedbackDatum[];
   evalRangeCents: number;
   holdEnabled: boolean;
+  /** 「合っている」の閾値 (±1 正規化) */
+  inTuneDeviation?: number;
+  /** 表示の平滑化 (EMA) の時定数 (ms) */
+  smoothingMs?: number;
 }
 
 const LEVEL_LABELS: Record<TuningLevel, string> = {
@@ -47,8 +52,10 @@ export const PurityFeedback: React.FC<PurityFeedbackProps> = ({
   analysisData,
   evalRangeCents,
   holdEnabled,
+  inTuneDeviation = IN_TUNE_DEVIATION,
+  smoothingMs = 0,
 }) => {
-  const { voices, chordKey } = useStabilizedFeedback(analysisData, holdEnabled);
+  const { voices, chordKey } = useStabilizedFeedback(analysisData, holdEnabled, smoothingMs);
   const summary = summarizePurity(voices.map((v) => ({ key: v.key, deviation: v.deviation })));
   // 数値と文言は間引いて表示する (毎フレーム変わると読めない)
   const shown = useThrottledValue(
@@ -58,13 +65,13 @@ export const PurityFeedback: React.FC<PurityFeedbackProps> = ({
   );
 
   const worst = summary.worst;
-  const level = worst ? tuningLevel(worst.deviation) : null;
+  const level = worst ? tuningLevel(worst.deviation, inTuneDeviation) : null;
   const ringColor = level ? TUNING_LEVEL_COLORS[level] : "#d1d5db";
   // 合っているほどリングが満ちる (最大偏差 0 で満、±evalRange で空)
   const fill = worst ? 1 - Math.min(1, Math.abs(worst.deviation)) : 0;
 
   const shownWorst = shown.summary.worst;
-  const shownLevel = shownWorst ? tuningLevel(shownWorst.deviation) : null;
+  const shownLevel = shownWorst ? tuningLevel(shownWorst.deviation, inTuneDeviation) : null;
   const worstVoice = shownWorst ? voices.find((v) => v.key === shownWorst.key) : undefined;
 
   let advice: string | null = null;
@@ -130,7 +137,7 @@ export const PurityFeedback: React.FC<PurityFeedbackProps> = ({
         >
           {voices.map((v, i) => {
             const d = shown.deviations[i] ?? null;
-            const lv = d === null ? null : tuningLevel(d);
+            const lv = d === null ? null : tuningLevel(d, inTuneDeviation);
             const isWorst = shownWorst?.key === v.key && lv !== "inTune";
             return (
               <li

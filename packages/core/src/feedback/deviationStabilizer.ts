@@ -18,6 +18,8 @@ import { updateEmaHoldList, type EmaHoldState } from "../utils/emaHold";
 export interface DeviationStabilizerOptions {
   /** EMA 係数 (0〜1)。1 で平滑化なし */
   alpha: number;
+  /** EMA の時定数 (ms)。正の値なら alpha より優先する (emaHold 参照) */
+  timeConstantMs?: number;
   /** 音ごとの保持時間 (ms) */
   holdMs: number;
   /** 全音が未検出になったときに最後の表示を保持する時間 (ms) */
@@ -53,6 +55,7 @@ export class DeviationStabilizer {
   update(keys: string[], raw: ReadonlyArray<number | null>, nowMs: number): Array<number | null> {
     const { values } = updateEmaHoldList(this.perKey, keys, [...raw], nowMs, {
       alpha: this.options.alpha,
+      timeConstantMs: this.options.timeConstantMs,
       holdMs: this.options.holdMs,
     });
 

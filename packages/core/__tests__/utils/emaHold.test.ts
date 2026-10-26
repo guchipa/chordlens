@@ -17,6 +17,27 @@ describe("emaHold", () => {
         expect(r2.isHeldList[0]).toBe(false);
     });
 
+    it("時定数指定時は経過時間で係数を決め、更新間隔に依存しない", () => {
+        const opts = { alpha: 1, holdMs: 0, timeConstantMs: 100 };
+        // 60Hz 相当で 100ms 追従
+        const s60 = new Map();
+        updateEmaHoldList(s60, ["A4"], [0], 0, opts);
+        let v60 = 0;
+        for (let t = 1; t <= 6; t++) {
+            v60 = updateEmaHoldList(s60, ["A4"], [1], (t * 100) / 6, opts).values[0]!;
+        }
+        // 120Hz 相当で 100ms 追従
+        const s120 = new Map();
+        updateEmaHoldList(s120, ["A4"], [0], 0, opts);
+        let v120 = 0;
+        for (let t = 1; t <= 12; t++) {
+            v120 = updateEmaHoldList(s120, ["A4"], [1], (t * 100) / 12, opts).values[0]!;
+        }
+        // 時定数ぶん経過で 1 - 1/e
+        expect(v60).toBeCloseTo(1 - Math.exp(-1), 6);
+        expect(v120).toBeCloseTo(1 - Math.exp(-1), 6);
+    });
+
     it("holds last value when temporarily not detected", () => {
         const state = new Map();
         const keys = ["A4"];

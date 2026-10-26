@@ -49,7 +49,12 @@ export {
 } from "./undoAtoms";
 
 // フィードバック
-export { feedbackTypeAtom, circleLayoutAtom } from "./feedbackAtoms";
+export {
+    feedbackTypeAtom,
+    circleLayoutAtom,
+    inTuneCentsAtom,
+    displaySmoothingAtom,
+} from "./feedbackAtoms";
 
 // 構成音自動追従
 export {

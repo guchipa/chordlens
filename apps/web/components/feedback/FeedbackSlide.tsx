@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import type { FeedbackType } from "@chordlens/core/constants";
+import { IN_TUNE_DEVIATION, type FeedbackType } from "@chordlens/core/constants";
 import type { Pitch } from "@chordlens/core/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { TunerMeter } from "./MeterFeedback";
@@ -23,6 +23,10 @@ export interface FeedbackSlideProps {
   evalRangeCents: number;
   a4Freq: number;
   holdEnabled: boolean;
+  /** 「合っている」の閾値 (±1 正規化)。設定「ピッチの正解幅」から求める */
+  inTuneDeviation?: number;
+  /** 表示の平滑化 (EMA) の時定数 (ms)。0 で平滑化なし */
+  smoothingMs?: number;
   /**
    * 和音の切替中 (自動追従の推定が確定値と食い違う間)。この間の偏差は
    * 旧和音を基準にしているため、信頼できない値として扱う
@@ -44,6 +48,8 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
   evalRangeCents,
   a4Freq,
   holdEnabled,
+  inTuneDeviation = IN_TUNE_DEVIATION,
+  smoothingMs = 0,
   transitioning = false,
 }) => {
   const rootPitch = analysisData.find((d) => d.pitch.isRoot);
@@ -66,6 +72,7 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
         rootPitchName={rootPitchName}
         a4Freq={a4Freq}
         holdEnabled={holdEnabled}
+        smoothingMs={smoothingMs}
         variant="enhanced"
       />
     );
@@ -77,6 +84,8 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
         analysisData={enabled}
         evalRangeCents={evalRangeCents}
         holdEnabled={holdEnabled}
+        inTuneDeviation={inTuneDeviation}
+        smoothingMs={smoothingMs}
       />
     );
   }
@@ -87,6 +96,8 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
         analysisData={enabled}
         evalRangeCents={evalRangeCents}
         holdEnabled={holdEnabled}
+        inTuneDeviation={inTuneDeviation}
+        smoothingMs={smoothingMs}
       />
     );
   }
@@ -97,6 +108,8 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
         analysisData={enabled}
         evalRangeCents={evalRangeCents}
         transitioning={transitioning}
+        inTuneDeviation={inTuneDeviation}
+        smoothingMs={smoothingMs}
       />
     );
   }
@@ -118,6 +131,8 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
             evalRangeCents={evalRangeCents}
             a4Freq={a4Freq}
             holdEnabled={holdEnabled}
+            inTuneDeviation={inTuneDeviation}
+            smoothingMs={smoothingMs}
           />
           <div
             aria-hidden="true"
@@ -139,6 +154,8 @@ export const FeedbackSlide: React.FC<FeedbackSlideProps> = ({
         <CircleSlide
           analysisData={enabled}
           holdEnabled={holdEnabled}
+          inTuneDeviation={inTuneDeviation}
+          smoothingMs={smoothingMs}
           className="w-full max-w-[360px]"
         />
       </CardContent>

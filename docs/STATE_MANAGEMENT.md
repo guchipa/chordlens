@@ -92,8 +92,12 @@ apps/web/lib/store/
 |--------|----|------------|-------------|
 | `feedbackTypeAtom` | `FeedbackType` (`FEEDBACK_TYPES`) | `"trajectory"` | `feedbackType` |
 | `circleLayoutAtom` | `"chromatic" \| "fifths"` | `"chromatic"` | `circleLayout` |
+| `inTuneCentsAtom` | `number` (0.5〜10、0.5 刻み) | `2.5` | `chordlens-inTuneCents` |
+| `displaySmoothingAtom` | `DisplaySmoothing` (`"off" \| "weak" \| "medium" \| "strong"`) | `"off"` | `chordlens-displaySmoothing` |
 
 メイン画面の `FeedbackCarousel` (横スワイプ・前後ボタン) と、設定ドロワーの `FeedbackTypeSelector` は同じ atom を読み書きするため常に同期します。評価実験画面 (`UnifiedFeedback`) はメーターに固定しているため、フィードバック形式の atom を参照しません。`circleLayoutAtom` はメイン画面のサークルのみが参照します。
+
+`inTuneCentsAtom` (ピッチの正解幅) と `displaySmoothingAtom` (表示の平滑化) は `App` が読み、`FeedbackCarousel` → 各形式へ props (`inTuneDeviation` = `inTuneDeviationFromCents()` で正規化した閾値、`smoothingMs` = EMA の時定数) で渡します。評価実験画面は参照せず、既定値 (閾値 0.05・平滑化なし) のままです。
 
 **カスタムストレージロジック**:
 `localStorage`に不正な値が入っていた場合、アプリケーションがクラッシュしないよう、読み込み時にバリデーション（`FEEDBACK_TYPES.includes` / `CIRCLE_LAYOUTS.includes`）を行い、無効な値はデフォルト値にフォールバックします。

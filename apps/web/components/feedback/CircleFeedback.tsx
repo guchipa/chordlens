@@ -30,15 +30,17 @@ interface CircleFeedbackProps {
    */
   variant?: 'legacy' | 'enhanced';
   centerLabel?: string | null;
+  /** enhanced の塗り色で「合っている」とみなす閾値 (±1 正規化) */
+  inTuneDeviation?: number;
 }
 
 /** enhanced の塗り色: 合っている=緑、近い=緑→黄、それ以上=黄→赤 (|偏差| 0.5 で赤) */
-function continuousColor(deviation: number): string {
+function continuousColor(deviation: number, inTune: number): string {
   const abs = Math.abs(deviation);
-  if (abs < IN_TUNE_DEVIATION) return TUNING_LEVEL_COLORS.inTune;
+  if (abs < inTune) return TUNING_LEVEL_COLORS.inTune;
   const hue =
     abs <= CLOSE_DEVIATION
-      ? 142 - (142 - 48) * ((abs - IN_TUNE_DEVIATION) / (CLOSE_DEVIATION - IN_TUNE_DEVIATION))
+      ? 142 - (142 - 48) * ((abs - inTune) / Math.max(1e-9, CLOSE_DEVIATION - inTune))
       : Math.max(0, 48 - 48 * ((abs - CLOSE_DEVIATION) / (0.5 - CLOSE_DEVIATION)));
   return `hsl(${hue.toFixed(0)} 75% 50%)`;
 }
@@ -83,6 +85,7 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({
   layout = 'chromatic',
   variant = 'legacy',
   centerLabel,
+  inTuneDeviation = IN_TUNE_DEVIATION,
 }) => {
   const enhanced = variant === 'enhanced';
   const order = layout === 'fifths' ? CIRCLE_OF_FIFTHS : PITCH_NAME_LIST;
@@ -176,7 +179,7 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({
 
             // 塗りつぶし色を決定（領域全体を塗りつぶす）
             const fillColor = enhanced
-              ? continuousColor(deviation)
+              ? continuousColor(deviation, inTuneDeviation)
               : isInTune ? '#22c55e' : '#ef4444'; // 緑 or 赤
 
             return (
@@ -284,10 +287,12 @@ export const CircleFeedback: React.FC<CircleFeedbackProps> = ({
 export const CircleSlide: React.FC<{
   analysisData: Array<{ pitch: Pitch; deviation: number | null }>;
   holdEnabled: boolean;
+  inTuneDeviation?: number;
+  smoothingMs?: number;
   className?: string;
-}> = ({ analysisData, holdEnabled, className }) => {
+}> = ({ analysisData, holdEnabled, inTuneDeviation, smoothingMs = 0, className }) => {
   const layout = useAtomValue(circleLayoutAtom);
-  const { voices } = useStabilizedFeedback(analysisData, holdEnabled);
+  const { voices } = useStabilizedFeedback(analysisData, holdEnabled, smoothingMs);
   const chord = nameChord(analysisData.map((d) => d.pitch));
   return (
     <CircleFeedback
@@ -295,6 +300,7 @@ export const CircleSlide: React.FC<{
       layout={layout}
       variant="enhanced"
       centerLabel={chord?.symbol ?? chord?.rootName ?? null}
+      inTuneDeviation={inTuneDeviation}
       className={className}
     />
   );

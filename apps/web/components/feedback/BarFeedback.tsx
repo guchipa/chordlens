@@ -5,6 +5,7 @@ import { getSingleEqualJustDiff } from "@chordlens/core/audio_analysis/calcJustF
 import {
   CHORD_ROLE_COLORS,
   FEEDBACK_NUMBER_UPDATE_MS,
+  IN_TUNE_DEVIATION,
   TUNING_LEVEL_COLORS,
 } from "@chordlens/core/constants";
 import { tuningLevel, type TuningLevel } from "@chordlens/core/feedback/tuningMetrics";
@@ -28,6 +29,8 @@ interface BarFeedbackProps {
     shownLevel: TuningLevel | null;
     /** 純正律 − 平均律 (セント) */
     justOffsetCents: number | null;
+    /** 「合っている」の閾値 (±1 正規化)。緑の帯と ✓・バーの色に使う */
+    inTuneDeviation: number;
   };
 }
 
@@ -62,8 +65,12 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
     : null;
 
   // チューニング判定
-  const isInTune = deviation !== null && Math.abs(deviation) < 0.05;
+  // legacy は従来の閾値と帯 (±0.1 幅) のまま。enhanced は設定の正解幅に合わせる
+  const inTune = enhanced?.inTuneDeviation ?? 0.05;
+  const isInTune = deviation !== null && Math.abs(deviation) < inTune;
   const isClose = deviation !== null && Math.abs(deviation) < 0.2;
+  const bandLeftPercent = enhanced ? 50 - inTune * 50 : 45;
+  const bandWidthPercent = enhanced ? inTune * 100 : 10;
 
   const shownLevel = enhanced?.shownLevel ?? null;
 
@@ -119,9 +126,10 @@ export const BarFeedback: React.FC<BarFeedbackProps> = ({
         {/* 許容範囲の表示 */}
         <div
           className="absolute top-0 bottom-0 bg-green-100 dark:bg-green-900/30"
+          data-testid="bar-in-tune-band"
           style={{
-            left: "45%",
-            width: "10%",
+            left: `${bandLeftPercent}%`,
+            width: `${bandWidthPercent}%`,
           }}
         />
 
@@ -190,6 +198,10 @@ interface BarListFeedbackProps {
   evalRangeCents: number;
   a4Freq: number;
   holdEnabled: boolean;
+  /** 「合っている」の閾値 (±1 正規化) */
+  inTuneDeviation?: number;
+  /** 表示の平滑化 (EMA) の時定数 (ms) */
+  smoothingMs?: number;
 }
 
 /**
@@ -203,8 +215,10 @@ export const BarListFeedback: React.FC<BarListFeedbackProps> = ({
   evalRangeCents,
   a4Freq,
   holdEnabled,
+  inTuneDeviation = IN_TUNE_DEVIATION,
+  smoothingMs = 0,
 }) => {
-  const { voices, chordKey } = useStabilizedFeedback(analysisData, holdEnabled);
+  const { voices, chordKey } = useStabilizedFeedback(analysisData, holdEnabled, smoothingMs);
   const shown = useThrottledValue(
     voices.map((v) => v.deviation),
     FEEDBACK_NUMBER_UPDATE_MS,
@@ -227,8 +241,10 @@ export const BarListFeedback: React.FC<BarListFeedbackProps> = ({
             roleLabel: v.intervalLabel,
             roleColor: v.role ? CHORD_ROLE_COLORS[v.role] : "#9ca3af",
             shownCents: shownDeviation === null ? null : shownDeviation * evalRangeCents,
-            shownLevel: shownDeviation === null ? null : tuningLevel(shownDeviation),
+            shownLevel:
+              shownDeviation === null ? null : tuningLevel(shownDeviation, inTuneDeviation),
             justOffsetCents: v.justOffsetCents,
+            inTuneDeviation,
           }}
         />
       ))}
