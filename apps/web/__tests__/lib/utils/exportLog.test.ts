@@ -320,7 +320,12 @@ describe("exportLog", () => {
   describe("exportLogSession", () => {
     // DOM操作のモック
     let createElementSpy: MockInstance;
-    let mockLink: any;
+    let mockLink: {
+      href: string;
+      download: string;
+      style: { display: string };
+      click: MockInstance;
+    };
 
     beforeEach(() => {
       // document.createElement のモック
@@ -333,15 +338,15 @@ describe("exportLog", () => {
 
       createElementSpy = vi
         .spyOn(document, "createElement")
-        .mockReturnValue(mockLink as any);
+        .mockReturnValue(mockLink as unknown as HTMLElement);
 
       // appendChild/removeChild のモック
-      vi.spyOn(document.body, "appendChild").mockImplementation(() => mockLink as any);
-      vi.spyOn(document.body, "removeChild").mockImplementation(() => mockLink as any);
+      vi.spyOn(document.body, "appendChild").mockImplementation(() => mockLink as unknown as HTMLElement);
+      vi.spyOn(document.body, "removeChild").mockImplementation(() => mockLink as unknown as HTMLElement);
 
       // URL API のモック
-      (global as any).URL.createObjectURL = vi.fn(() => "blob:mock-url");
-      (global as any).URL.revokeObjectURL = vi.fn();
+      URL.createObjectURL = vi.fn(() => "blob:mock-url");
+      URL.revokeObjectURL = vi.fn();
     });
 
     afterEach(() => {
@@ -379,7 +384,7 @@ describe("exportLog", () => {
       expect(createElementSpy).toHaveBeenCalledWith("a");
 
       // Blob URLが作成されたか
-      expect((global as any).URL.createObjectURL).toHaveBeenCalled();
+      expect(URL.createObjectURL).toHaveBeenCalled();
 
       // link要素のclickが呼ばれたか
       expect(mockLink.click).toHaveBeenCalled();
@@ -388,7 +393,7 @@ describe("exportLog", () => {
       expect(mockLink.download).toContain("chordlens_log_abc123");
 
       // クリーンアップが呼ばれたか
-      expect((global as any).URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
     });
   });
 });

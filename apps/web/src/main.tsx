@@ -1,15 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  createBrowserRouter,
-  RouterProvider,
-  Outlet,
-} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
 import "./globals.css";
 import { App } from "./App";
-import { UpdateNotification } from "@/components/feature/UpdateNotification";
+import { RootLayout } from "./routes/RootLayout";
 import { ExperimentsLayout } from "./routes/experiments/ExperimentsLayout";
 import { SurveyPage } from "./routes/experiments/SurveyPage";
 import { Test1Page } from "./routes/experiments/Test1Page";
@@ -19,15 +15,6 @@ import { PostSurveyPage } from "./routes/experiments/PostSurveyPage";
 import { CompletePage } from "./routes/experiments/CompletePage";
 import { IneligiblePage } from "./routes/experiments/IneligiblePage";
 import { InvalidPage } from "./routes/experiments/InvalidPage";
-
-function RootLayout() {
-  return (
-    <>
-      <Outlet />
-      <UpdateNotification />
-    </>
-  );
-}
 
 const router = createBrowserRouter([
   {
