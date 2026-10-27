@@ -68,6 +68,7 @@ export function useSpectrumAnalysis(
     const animationFrameIdRef = useRef<number | null>(null);
     const lastPeakDebugUpdateMsRef = useRef<number>(0);
     const hasPeakSearchDebugRef = useRef<boolean>(false);
+    const hasComparisonResultsRef = useRef<boolean>(false);
     // SWIPE モード用の時間領域バッファ (analyserNode.fftSize と同サイズ)
     const timeDomainBufferRef = useRef<Float32Array | null>(null);
 
@@ -319,8 +320,10 @@ export function useSpectrumAnalysis(
                     phaseVocoderCentDeviation: phaseVocoderCents[i] ?? null,
                 }))
             );
-        } else if (comparisonResults !== null) {
+            hasComparisonResultsRef.current = true;
+        } else if (hasComparisonResultsRef.current) {
             setComparisonResults(null);
+            hasComparisonResultsRef.current = false;
         }
 
         setAnalysisResult(deviations);
@@ -350,6 +353,7 @@ export function useSpectrumAnalysis(
         setPeakSearchDebug(null);
         setComparisonResults(null);
         hasPeakSearchDebugRef.current = false;
+        hasComparisonResultsRef.current = false;
     }, []);
 
     // コンポーネントアンマウント時にループ停止

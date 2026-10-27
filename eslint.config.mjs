@@ -38,4 +38,9 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
+  {
+    // shadcn/ui は variants 等を同一ファイルから export する慣習
+    files: ["apps/web/components/ui/**/*.{ts,tsx}"],
+    rules: { "react-refresh/only-export-components": "off" },
+  },
 );
